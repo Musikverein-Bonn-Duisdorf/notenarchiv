@@ -6,7 +6,7 @@ $sql = array(
     'password' => "1949 e.V.",
 );
 
-$dbprefix = "meldeliste_";
+$dbprefix = "";
 
 $mailconfig = array(
     'server' => "smtp.myprovider.com",

@@ -12,21 +12,20 @@ else {
     $user = $_SESSION['userid'];
 }
 ?>
-<script src="js/getStatus.js?<?php echo $GLOBALS['version']['Hash']; ?>"></script>
 <div class="w3-container <?php echo $GLOBALS['optionsDB']['colorTitleBar'] ;?>">
     <h2>Stückliste</h2>
 </div>
 <?php
 $now = date("Y-m-d");
 if($GLOBALS['optionsDB']['entriesMainPage'] > 0) {
-    $sql = sprintf('SELECT `Index` FROM `%sCompositions` LIMIT %s;',
+    $sql = sprintf('SELECT `Index` FROM `%sCompositions` ORDER BY `RegistrationNumber` DESC LIMIT %s;',
 		   $GLOBALS['dbprefix'],
 		   $now,
 		   $GLOBALS['optionsDB']['entriesMainPage']
     );
 }
 else {
-    $sql = sprintf('SELECT `Index` FROM `%sCompositions`;',
+    $sql = sprintf('SELECT `Index` FROM `%sCompositions` ORDER BY `RegistrationNumber` DESC;',
 		   $GLOBALS['dbprefix'],
 		   $now,
     );
@@ -36,6 +35,7 @@ sqlerror();
 while($row = mysqli_fetch_array($dbr)) {
     $M = new Composition;
     $M->load_by_id($row['Index']);
+    echo $M->printLine();
 }
 ?>
 <?php

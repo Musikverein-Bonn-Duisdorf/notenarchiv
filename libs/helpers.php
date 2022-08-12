@@ -1,6 +1,6 @@
 <?php
 function loadconfig() {
-    $sql = sprintf('SELECT * FROM `%sconfig`;',
+    $sql = sprintf('SELECT * FROM `%sConfig`;',
 		   $GLOBALS['dbprefix']
     );
     $dbr = mysqli_query($GLOBALS['conn'], $sql);
@@ -55,6 +55,49 @@ function RegistersOption($val) {
         }
     }
 }
+
+function nextArchiverNumber() {
+    $sql = sprintf('SELECT `RegistrationNumber` FROM `%sCompositions` ORDER BY `RegistrationNumber` DESC LIMIT 1;',
+		   $GLOBALS['dbprefix']
+    );
+    $dbr = mysqli_query($GLOBALS['conn'], $sql);
+    sqlerror();
+    $row = mysqli_fetch_array($dbr);
+    return ((int)$row['RegistrationNumber'])+1;
+}
+
+function ComposersOption($val) {
+    $sql = sprintf('SELECT * FROM `%sComposers` ORDER BY `LastName` ASC;',
+		   $GLOBALS['dbprefix']
+    );
+    $dbr = mysqli_query($GLOBALS['conn'], $sql);
+    sqlerror();
+    while($row = mysqli_fetch_array($dbr)) {
+        if($val == $row['Index']) {
+            echo "<option value=\"".$row['Index']."\" selected>".$row['LastName'].", ".$row['FirstName']."</option>\n";
+        }
+        else {
+            echo "<option value=\"".$row['Index']."\">".$row['LastName'].", ".$row['FirstName']."</option>\n";
+        }
+    }
+}
+
+function PublishersOption($val) {
+    $sql = sprintf('SELECT * FROM `%sPublishers` ORDER BY `Name` ASC;',
+		   $GLOBALS['dbprefix']
+    );
+    $dbr = mysqli_query($GLOBALS['conn'], $sql);
+    sqlerror();
+    while($row = mysqli_fetch_array($dbr)) {
+        if($val == $row['Index']) {
+            echo "<option value=\"".$row['Index']."\" selected>".$row['Name']."</option>\n";
+        }
+        else {
+            echo "<option value=\"".$row['Index']."\">".$row['Name']."</option>\n";
+        }
+    }
+}
+
 function getPage($string) {
     if($string == $_SESSION['page']) {
         echo $GLOBALS['optionsDB']['colorTitleBar'];
@@ -170,7 +213,7 @@ function mkAdmin() {
 
 function validateLink($hash) {
     $_SESSION['userid'] = 0;
-    $sql = sprintf("SELECT * FROM `%sUser` WHERE `activeLink` = '%s';",
+    $sql = sprintf("SELECT * FROM `%sUsers` WHERE `activeLink` = '%s';",
 		   $GLOBALS['dbprefix'],
 		   $hash
     );
@@ -193,7 +236,7 @@ function validateLink($hash) {
 }
 function validateUser($login, $password) {
     $_SESSION['userid'] = 0;
-    $sql = sprintf("SELECT * FROM `%sUser` WHERE `login` = '%s';",
+    $sql = sprintf("SELECT * FROM `%sUsers` WHERE `login` = '%s';",
 		   $GLOBALS['dbprefix'],
 		   $login
     );
@@ -217,7 +260,7 @@ function validateUser($login, $password) {
 }
 
 function recordLogin() {
-    $sql = sprintf("UPDATE `%sUser` SET `LastLogin` = CURRENT_TIMESTAMP() WHERE `Index` = %d;",
+    $sql = sprintf("UPDATE `%sUsers` SET `LastLogin` = CURRENT_TIMESTAMP() WHERE `Index` = %d;",
 		   $GLOBALS['dbprefix'],
 		   $_SESSION['userid']
     );
