@@ -3,6 +3,11 @@ session_start();
 $_SESSION['page']='newcomposition';
 include "common/header.php";
 $fill = false;
+if(isset($_POST['insert']) && $_POST['insert'] == "speichern") {
+    $n = new Composition;
+    $n->fill_from_array($_POST);
+    $n->save();
+}
 if(isset($_POST['Index'])) {
     $n = new Composition;
     $n->load_by_id($_POST['Index']);
@@ -103,7 +108,13 @@ else {
     <div class="w3-container w3-row w3-center w3-padding w3-margin w3-card <?php echo $GLOBALS['optionsDB']['colorWarning']; ?>">Sind Sie sicher, dass sie <b><?php echo $n->Vorname." ".$n->Nachname; ?></b> l&ouml;schen wollen?</div>
     <div class="w3-container w3-mobile">
     <form action="musiker.php" method="POST">
+    <?php
+    if($fill) {
+        ?>
     <input type="hidden" name="Index" <?php if($fill) echo "value=\"".$n->Index."\""; ?>>
+    <?php
+    }
+    ?>
     <div class="w3-row">
     <div class="w3-col l4 m4 s2 w3-center">&nbsp;</div>
     <button class="w3-btn w3-col l4 m4 s8 w3-center <?php echo $GLOBALS['optionsDB']['colorBtnSubmit']; ?> w3-border w3-margin-bottom w3-mobile" type="submit" name="delete" value="delete">ja</button>

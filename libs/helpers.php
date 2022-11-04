@@ -19,10 +19,10 @@ function bool2string($val) {
     return "nein";
 }
 
-function instrumentsOption($val) {
+function instrumentsOptionNull($val) {
     $str='';
     $str=$str."<option value=\"0\">keins</option>\n";
-    $sql = sprintf('SELECT * FROM `%sInstruments` INNER JOIN (SELECT `Index` AS `rIndex`, `Sortierung` AS `rSort` FROM `%sRegisters`) `%sRegisters` ON `rIndex` = `Register` ORDER BY `rSort`, `Sortierung`;',
+    $sql = sprintf('SELECT * FROM `%sInstruments` INNER JOIN (SELECT `Index` AS `rIndex`, `CustomOrder` AS `rSort` FROM `%sRegisters`) `%sRegisters` ON `rIndex` = `Register` ORDER BY `rSort`, `CustomOrder`;',
     $GLOBALS['dbprefix'],
     $GLOBALS['dbprefix'],
     $GLOBALS['dbprefix']
@@ -40,8 +40,23 @@ function instrumentsOption($val) {
     return $str;
 }
 
+function instrumentsOption() {
+    $str='';
+    $sql = sprintf('SELECT * FROM `%sInstruments` INNER JOIN (SELECT `Index` AS `rIndex`, `CustomOrder` AS `rSort` FROM `%sRegisters`) `%sRegisters` ON `rIndex` = `Register` ORDER BY `rSort`, `CustomOrder`;',
+    $GLOBALS['dbprefix'],
+    $GLOBALS['dbprefix'],
+    $GLOBALS['dbprefix']
+    );
+    $dbr = mysqli_query($GLOBALS['conn'], $sql);
+    sqlerror();
+    while($row = mysqli_fetch_array($dbr)) {
+        $str=$str."<option value=\"".$row['Index']."\">".$row['Name']."</option>\n";
+    }
+    return $str;
+}
+
 function RegistersOption($val) {
-    $sql = sprintf('SELECT * FROM `%sRegisters` ORDER BY `Sortierung`;',
+    $sql = sprintf('SELECT * FROM `%sRegisters` ORDER BY `CustomOrder`;',
 		   $GLOBALS['dbprefix']
     );
     $dbr = mysqli_query($GLOBALS['conn'], $sql);
