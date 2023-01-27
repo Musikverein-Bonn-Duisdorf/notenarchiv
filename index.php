@@ -28,7 +28,7 @@ else {
     <h2>Stückliste</h2>
 </div>
 <div class="w3-row">
-  <input class="w3-input w3-border w3-padding w3-col l6 s6 m6" type="text" placeholder="Suche..." id="filterString" onkeyup="filterPieces()">
+         <input class="w3-input w3-border w3-padding w3-col l6 s12 m12" type="text" placeholder="Suche..." id="filterString" onkeyup="filterPieces()">
 </div>
 <div id="Liste">
 <?php
