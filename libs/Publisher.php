@@ -50,7 +50,6 @@ class Publisher
     }
     public function is_valid() {
         if(!$this->Name) return false;
-        if(!$this->Address) return false;
         return true;
     }
     protected function insert() {
