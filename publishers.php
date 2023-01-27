@@ -29,6 +29,7 @@ if($_SESSION['admin']) {
     $row = mysqli_fetch_array($dbr);
     $nPublishers = $row['Count'];
 ?>
+<script src="js/filterPieces.js?<?php echo $GLOBALS['version']['Hash']; ?>"></script>
 <div class="w3-container <?php echo $GLOBALS['optionsDB']['colorTitleBar']; ?>">
     <h2>Verl&auml;ge (<?php echo $nPublishers; ?>)</h2>
 </div>

@@ -29,6 +29,7 @@ if($_SESSION['admin']) {
     $row = mysqli_fetch_array($dbr);
     $nComposers = $row['Count'];
 ?>
+<script src="js/filterPieces.js?<?php echo $GLOBALS['version']['Hash']; ?>"></script>
 <div class="w3-container <?php echo $GLOBALS['optionsDB']['colorTitleBar']; ?>">
   <h2>Komponisten und Arrangeure (<?php echo $nComposers; ?>)</h2>
 </div>
@@ -70,7 +71,6 @@ if($_SESSION['admin']) {
     }
 ?>
 </div>
-<script src="js/filterInstruments.js?<?php echo $GLOBALS['version']['Hash']; ?>"></script>
 
 <?php }
     else {
