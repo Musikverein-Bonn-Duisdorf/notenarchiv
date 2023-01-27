@@ -250,7 +250,7 @@ class Composition
     }
 
     public function deleteCover() {
-        if($this->getCover()) {
+        if($this->getCover() != $GLOBALS['optionsDB']['defaultCompositionCover']) {
             unlink($this->getCover());
         }
     }
