@@ -22,10 +22,19 @@ if(isset($_POST['proxy'])) {
 else {
     $user = $_SESSION['userid'];
 }
+
+$sql = sprintf('SELECT COUNT(`Index`) AS `Count` FROM `%sCompositions`;',
+$GLOBALS['dbprefix']
+);
+$dbr = mysqli_query($conn, $sql);
+sqlerror();
+$row = mysqli_fetch_array($dbr);
+$nPieces = $row['Count'];
+
 ?>
 <script src="js/filterPieces.js?<?php echo $GLOBALS['version']['Hash']; ?>"></script>
 <div class="w3-container <?php echo $GLOBALS['optionsDB']['colorTitleBar'] ;?>">
-    <h2>Stückliste</h2>
+    <h2>Stückliste (<?php echo $nPieces; ?>)</h2>
 </div>
 <div class="w3-row">
          <input class="w3-input w3-border w3-padding w3-col l6 s12 m12" type="text" placeholder="Suche..." id="filterString" onkeyup="filterPieces()">
