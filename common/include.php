@@ -11,5 +11,7 @@ include "libs/Composition.php";
 include "libs/Part.php";
 include "libs/Collections.php";
 include "libs/Collection.php";
+include "libs/Composer.php";
+include "libs/Publisher.php";
 
 ?>

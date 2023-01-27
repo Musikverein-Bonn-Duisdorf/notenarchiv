@@ -10,13 +10,15 @@ echo $_SESSION['username'];
   <button onclick="showAll()" class="w3-bar-item w3-button w3-mobile w3-hide-large w3-hide-medium material-icons">menu</button>
   <a title="Home" alt="Home" href="<?php echo $GLOBALS['optionsDB']['WebSiteURL']; ?>" class="stdhide w3-hide-small w3-bar-item w3-button w3-mobile <?php getPage('home');?>"><i class="fas fa-home"></i></a>
   <a title="Mappen" alt="Mappen" href="collections.php" class="stdhide w3-hide-small w3-bar-item w3-button w3-mobile <?php getPage('collections');?>"><i class="fas fa-folder-open"></i></a>
-    <form action="new-musiker.php" method="POST">
-      <button title="Mein Profil" alt="Mein Profil" type="submit" class="stdhide w3-hide-small w3-bar-item w3-button w3-mobile <?php getPage('me');?>">
-	<i class="fas fa-user"></i>
-      </button>
-      <input type="hidden" name="id" value="<?php echo $_SESSION['userid']; ?>" />
-      <input type="hidden" name="mode" value="useredit" />
-    </form>
+  <a title="Komponisten" alt="Komponisten" href="composers.php" class="stdhide w3-hide-small w3-bar-item w3-button w3-mobile <?php getPage('composers');?>"><i class="fas fa-feather"></i></a>
+  <a title="Verl&auml;ge" alt="Verl&auml;ge" href="publishers.php" class="stdhide w3-hide-small w3-bar-item w3-button w3-mobile <?php getPage('publishers');?>"><i class="fas fa-industry"></i></a>
+    <!-- <form action="new-musiker.php" method="POST"> -->
+    <!--   <button title="Mein Profil" alt="Mein Profil" type="submit" class="stdhide w3-hide-small w3-bar-item w3-button w3-mobile <?php getPage('me');?>"> -->
+    <!-- 	<i class="fas fa-user"></i> -->
+    <!--   </button> -->
+    <!--   <input type="hidden" name="id" value="<?php echo $_SESSION['userid']; ?>" /> -->
+    <!--   <input type="hidden" name="mode" value="useredit" /> -->
+    <!-- </form> -->
 <?php if($_SESSION['admin']) {?>
 <div class="stdhide w3-hide-small w3-dropdown-hover w3-mobile">
   <button title="Admin" alt="Admin" class="w3-button w3-mobile w3-hide-small <?php getAdminPage($_SESSION['page']); ?>"><i class="fas fa-wrench"></i></button>
