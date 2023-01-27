@@ -45,11 +45,11 @@ if($_SESSION['admin']) {
     </header>
     <div class="w3-row w3-padding">
       <div class="w3-col l4 m6 s6"><b>Name</b></div>
-      <input name="FirstName" type="text" class="w3-input w3-col l4 m6 s6 <?php echo $GLOBALS['optionsDB']['colorInputBackground']; ?>"/>
+      <input name="Name" type="text" class="w3-input w3-col l4 m6 s6 <?php echo $GLOBALS['optionsDB']['colorInputBackground']; ?>"/>
     </div>
     <div class="w3-row w3-padding">
       <div class="w3-col l4 m6 s6"><b>Address</b></div>
-      <input name="LastName" type="text" class="w3-input w3-col l4 m6 s6 <?php echo $GLOBALS['optionsDB']['colorInputBackground']; ?>"/>
+      <input name="Address" type="text" class="w3-input w3-col l4 m6 s6 <?php echo $GLOBALS['optionsDB']['colorInputBackground']; ?>"/>
     </div>
     <div class="w3-row w3-padding">
       <input type="submit" name="insert" value="speichern" class="w3-input w3-button w3-col l8 m12 s12 <?php echo $GLOBALS['optionsDB']['colorBtnSubmit']; ?>"/>
