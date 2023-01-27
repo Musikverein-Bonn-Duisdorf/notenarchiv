@@ -60,7 +60,7 @@ class Composition
             $dbr = mysqli_query($GLOBALS['conn'], $sql);
             sqlerror();
             $row = mysqli_fetch_array($dbr);
-            $this->ComposerName = $row['FirstName']." ".$row['LastName'];
+            if($row) $this->ComposerName = $row['FirstName']." ".$row['LastName'];
         }
         if(!$this->ArrangerName) {
             $sql = sprintf('SELECT * FROM `%sComposers` WHERE `Index` = %d;',
@@ -80,7 +80,7 @@ class Composition
             $dbr = mysqli_query($GLOBALS['conn'], $sql);
             sqlerror();
             $row = mysqli_fetch_array($dbr);
-            $this->PublisherName = $row['Name'];
+            if($row) $this->PublisherName = $row['Name'];
         }
     }
     
@@ -93,7 +93,7 @@ class Composition
         }
         else {
             $this->insert();
-            $this->mkdir();
+            $this->makeFilePath();
             $logentry = new Log;
             $logentry->DBinsert($this->getVars());
         }
@@ -103,10 +103,14 @@ class Composition
         
     }
     
-    public function mkdir() {
-        $path = $GLOBALS['optionsDB']['dataDirectory']."/Compositions/".$this->Index;
-echo $path;
-        mkdir($path, 0700);
+    public function makeFilePath() {
+        $path = "data/Compositions/".$this->Index;
+        mkdir($path, 0775);
+        $this->FilePath = $path."/";
+    }
+
+    public function getFilePathPHP() {
+        return $GLOBALS['optionsDB']['dataDirectory'].$this->FilePath;
     }
     
     public function fill_from_array($row) {
@@ -116,20 +120,28 @@ echo $path;
     }
     public function is_valid() {
         if(!$this->Title) return false;
-        if(!$this->Composer) return false;
+        if($this->FilePath == null || $this->checkFilePath() == false) {
+            $this->makeFilePath();
+        }
         return true;
     }
+
+    protected function checkFilePath() {
+        return is_dir($this->getFilePathPHP());
+    }
+    
     protected function insert() {
-        $sql = sprintf('INSERT INTO `%sCompositions` (`RegistrationNumber`, `Title`, `Composer`, `Arranger`, `Publisher`, `Year`, `Grade`, `PerformanceTime`) VALUES ("%d", "%s", "%d", "%d", "%d", "%d", "%f", "%s");',
+        $sql = sprintf('INSERT INTO `%sCompositions` (`RegistrationNumber`, `Title`, `Composer`, `Arranger`, `Publisher`, `Year`, `Grade`, `PerformanceTime`, `FilePath`) VALUES (%s, "%s", %s, %s, %s, %s, "%f", "%s", "%s");',
         $GLOBALS['dbprefix'],
-        $this->RegistrationNumber,
+        mkNULLonNull($this->RegistrationNumber),
         mysqli_real_escape_string($GLOBALS['conn'], $this->Title),
-        $this->Composer,
-        $this->Arranger,
-        $this->Publisher,
-        $this->Year,
+        mkNULLonNull($this->Composer),
+        mkNULLonNull($this->Arranger),
+        mkNULLonNull($this->Publisher),
+        mkNULLonNull($this->Year),
         $this->Grade,
-        $this->PerformanceTime
+        $this->PerformanceTime,
+        $this->FilePath
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
         sqlerror();
@@ -138,16 +150,17 @@ echo $path;
         return true;
     }
     protected function update() {
-        $sql = sprintf('UPDATE `%sCompositions` SET `RegistrationNumber` = "%d", `Title` = "%s", `Composer` = "%d", `Arranger` = "%d", `Publisher` = "%d", `Year` = "%d", `Grade` = "%f", `PerformanceTime` = "%s" WHERE `Index` = "%d";',
+        $sql = sprintf('UPDATE `%sCompositions` SET `RegistrationNumber` = %s, `Title` = "%s", `Composer` = %s, `Arranger` = %s, `Publisher` = %s, `Year` = %s, `Grade` = "%.1f", `PerformanceTime` = "%s", `FilePath` = "%s" WHERE `Index` = "%d";',
         $GLOBALS['dbprefix'],
-        $this->RegistrationNumber,
+        mkNULLonNull($this->RegistrationNumber),
         mysqli_real_escape_string($GLOBALS['conn'], $this->Title),
-        $this->Composer,
-        $this->Arranger,
-        $this->Publisher,
-        $this->Year,
+        mkNULLonNull($this->Composer),
+        mkNULLonNull($this->Arranger),
+        mkNULLonNull($this->Publisher),
+        mkNULLonNull($this->Year),
         $this->Grade,
         $this->PerformanceTime,
+        $this->FilePath,
         $this->Index
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
@@ -173,7 +186,7 @@ echo $path;
     public function printLine() {
         $str = "";
         $maindiv = new div;
-        $maindiv->class="w3-card-4 w3-margin w3-row w3-padding";
+        $maindiv->class="w3-row w3-padding w3-mobile w3-border-bottom w3-border-black";
         $maindiv->id="pieceID".$this->Index;
         $str=$str.$maindiv->open();
 
@@ -228,11 +241,20 @@ echo $path;
     }
     public function getCover() {
         if($this->FilePath) {
-            return $this->FilePath+"/cover.png";
+            if(is_file($this->getFilePathPHP()."cover.png")) return $this->FilePath."cover.png";
+            if(is_file($this->getFilePathPHP()."cover.jpg")) return $this->FilePath."cover.jpg";
+            if(is_file($this->getFilePathPHP()."cover.jpeg")) return $this->FilePath."cover.jpeg";
+            if(is_file($this->getFilePathPHP()."cover.gif")) return $this->FilePath."cover.gif";
         }
-        return "";
+        return $GLOBALS['optionsDB']['defaultCompositionCover'];
     }
 
+    public function deleteCover() {
+        if($this->getCover()) {
+            unlink($this->getCover());
+        }
+    }
+    
     public function listParts() {
         $sql = sprintf('SELECT `Index` FROM `%sParts` INNER JOIN (SELECT `Index` AS `iIndex`, `CustomOrder` FROM `%sInstruments`) `%sInstruments` ON `iIndex` = `Instrument` WHERE `Composition` = "%d" ORDER BY `CustomOrder`, `Part`;',
         $GLOBALS['dbprefix'],

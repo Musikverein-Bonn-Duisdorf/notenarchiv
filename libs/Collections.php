@@ -1,0 +1,116 @@
+<?php
+class Collections
+{
+    private $_data = array('Index' => null, 'Name' => null);
+    public function __get($key) {
+        switch($key) {
+	    case 'Index':
+	    case 'Name':
+            return $this->_data[$key];
+            break;
+        default:
+            break;
+        }
+    }
+    public function __set($key, $val) {
+        switch($key) {
+	    case 'Index':
+	    case 'Name':
+            $this->_data[$key] = $val;
+            break;
+        default:
+            break;
+        }	
+    }
+    
+    public function save() {
+        if(!$this->is_valid()) return false;
+        if($this->Index > 0) {
+            $this->update();
+            $logentry = new Log;
+            $logentry->DBupdate($this->getVars());
+        }
+        else {
+            $this->insert();
+            $logentry = new Log;
+            $logentry->DBinsert($this->getVars());
+        }
+    }
+
+    public function getVars() {
+        
+    }
+        
+    public function fill_from_array($row) {
+        foreach($row as $key => $val) {
+                $this->_data[$key] = $val;
+        }
+    }
+    public function is_valid() {
+        if(!$this->Name) return false;
+        return true;
+    }
+    protected function insert() {
+        $sql = sprintf('INSERT INTO `%sCollections` (`Name`) VALUES ("%s");',
+        $GLOBALS['dbprefix'],
+        $this->Name
+        );
+        $dbr = mysqli_query($GLOBALS['conn'], $sql);
+        sqlerror();
+        if(!$dbr) return false;
+        $this->_data['Index'] = mysqli_insert_id($GLOBALS['conn']);
+        return true;
+    }
+    protected function update() {
+        $sql = sprintf('UPDATE `%sCollections` SET `Name` = "%s" WHERE `Index` = "%d";',
+        $GLOBALS['dbprefix'],
+        $this->Name,
+        $this->Index
+        );
+        $dbr = mysqli_query($GLOBALS['conn'], $sql);
+        sqlerror();
+        if(!$dbr) return false;
+        return true;
+    }
+    public function load_by_id($Index) {
+        $Index = (int) $Index;
+        $sql = sprintf('SELECT * FROM `%sCollections` WHERE `Index` = "%d";',
+        $GLOBALS['dbprefix'],
+        $Index
+        );
+        $dbr = mysqli_query($GLOBALS['conn'], $sql);
+        sqlerror();
+        $row = mysqli_fetch_array($dbr);
+        if(is_array($row)) {
+            $this->fill_from_array($row);
+        }
+    }
+    
+    public function printContent() {
+        $str = "";
+        $maindiv = new div;
+        $str=$str.$maindiv->open();
+
+        $header = new div;
+        $header->class=$GLOBALS['optionsDB']['colorTitleBar'];
+        $header->class="w3-container";
+        $header->body="<h3>".$this->Name."</h3>";
+        $str=$str.$header->print();
+        
+        $sql = sprintf('SELECT `Index` FROM `%sCollection` WHERE `Collections` = "%d" ORDER BY `CollectionNumber` ASC;',
+        $GLOBALS['dbprefix'],
+        $this->Index
+        );
+        $dbr = mysqli_query($GLOBALS['conn'], $sql);
+        sqlerror();
+        while($row = mysqli_fetch_array($dbr)) {
+            $content = new Collection;
+            $content->load_by_id($row['Index']);
+            $str=$str.$content->printLine();
+        }
+        
+        $str=$str.$maindiv->close();
+        return $str;
+    }
+};
+?>

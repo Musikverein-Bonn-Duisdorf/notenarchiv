@@ -3,6 +3,17 @@ session_start();
 $_SESSION['page']='home';
 $_SESSION['adminpage']=false;
 include "common/header.php";
+
+if(isset($_POST['save'])) {
+    $piece = new Composition;
+    if($_POST['Index'] > 0) {
+        $piece->load_by_id($_POST['Index']);
+    }
+    $piece->fill_from_array($_POST);
+    $piece->save();
+    $_POST['pieceID']=$piece->Index;
+}
+
 if(isset($_POST['proxy'])) {
     $user = $_POST['proxy'];
     $proxy = new User;
@@ -12,24 +23,20 @@ else {
     $user = $_SESSION['userid'];
 }
 ?>
+<script src="js/filterPieces.js?<?php echo $GLOBALS['version']['Hash']; ?>"></script>
 <div class="w3-container <?php echo $GLOBALS['optionsDB']['colorTitleBar'] ;?>">
     <h2>Stückliste</h2>
 </div>
+<div class="w3-row">
+  <input class="w3-input w3-border w3-padding w3-col l6 s6 m6" type="text" placeholder="Suche..." id="filterString" onkeyup="filterPieces()">
+</div>
+<div id="Liste">
 <?php
 $now = date("Y-m-d");
-if($GLOBALS['optionsDB']['entriesMainPage'] > 0) {
-    $sql = sprintf('SELECT `Index` FROM `%sCompositions` ORDER BY `RegistrationNumber` DESC LIMIT %s;',
-		   $GLOBALS['dbprefix'],
-		   $now,
-		   $GLOBALS['optionsDB']['entriesMainPage']
-    );
-}
-else {
-    $sql = sprintf('SELECT `Index` FROM `%sCompositions` ORDER BY `RegistrationNumber` DESC;',
-		   $GLOBALS['dbprefix'],
-		   $now,
-    );
-}
+$sql = sprintf('SELECT `Index` FROM `%sCompositions` ORDER BY `RegistrationNumber` DESC, `Title` ASC;',
+$GLOBALS['dbprefix'],
+$now,
+);
 $dbr = mysqli_query($conn, $sql);
 sqlerror();
 while($row = mysqli_fetch_array($dbr)) {
@@ -38,6 +45,7 @@ while($row = mysqli_fetch_array($dbr)) {
     echo $M->printLine();
 }
 ?>
+</div>
 <?php
 include "common/footer.php";
 ?>

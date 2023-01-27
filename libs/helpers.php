@@ -71,17 +71,36 @@ function RegistersOption($val) {
     }
 }
 
+function mkNULLonNull($val) {
+    if($val == 0 || $val == NULL) return "null";
+    return $val;
+}
+
 function nextArchiverNumber() {
-    $sql = sprintf('SELECT `RegistrationNumber` FROM `%sCompositions` ORDER BY `RegistrationNumber` DESC LIMIT 1;',
+    $sql = sprintf('SELECT `RegistrationNumber` FROM `%sCompositions` ORDER BY `RegistrationNumber` ASC;',
 		   $GLOBALS['dbprefix']
     );
     $dbr = mysqli_query($GLOBALS['conn'], $sql);
     sqlerror();
-    $row = mysqli_fetch_array($dbr);
-    return ((int)$row['RegistrationNumber'])+1;
+    $Numbers = array();
+    while($row = mysqli_fetch_array($dbr)) {
+        array_push($Numbers, $row['RegistrationNumber']);
+    }
+    $i = 1;
+    while(true) {
+        if(array_search($i, $Numbers)) $i++;
+        else break;
+    }
+    return $i;
 }
 
 function ComposersOption($val) {
+    if($val == 0) {
+        echo "<option value=\"null\" selected></option>\n";
+    }
+    else {
+        echo "<option value=\"null\"></option>\n";
+    }
     $sql = sprintf('SELECT * FROM `%sComposers` ORDER BY `LastName` ASC;',
 		   $GLOBALS['dbprefix']
     );
@@ -98,6 +117,12 @@ function ComposersOption($val) {
 }
 
 function PublishersOption($val) {
+    if($val == 0) {
+        echo "<option value=\"null\" selected></option>\n";
+    }
+    else {
+        echo "<option value=\"null\"></option>\n";
+    }
     $sql = sprintf('SELECT * FROM `%sPublishers` ORDER BY `Name` ASC;',
 		   $GLOBALS['dbprefix']
     );

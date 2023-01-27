@@ -9,6 +9,7 @@ echo $_SESSION['username'];
 <div class="w3-bar <?php echo $optionsDB['colorNav']; ?>">
   <button onclick="showAll()" class="w3-bar-item w3-button w3-mobile w3-hide-large w3-hide-medium material-icons">menu</button>
   <a title="Home" alt="Home" href="<?php echo $GLOBALS['optionsDB']['WebSiteURL']; ?>" class="stdhide w3-hide-small w3-bar-item w3-button w3-mobile <?php getPage('home');?>"><i class="fas fa-home"></i></a>
+  <a title="Mappen" alt="Mappen" href="collections.php" class="stdhide w3-hide-small w3-bar-item w3-button w3-mobile <?php getPage('collections');?>"><i class="fas fa-folder-open"></i></a>
     <form action="new-musiker.php" method="POST">
       <button title="Mein Profil" alt="Mein Profil" type="submit" class="stdhide w3-hide-small w3-bar-item w3-button w3-mobile <?php getPage('me');?>">
 	<i class="fas fa-user"></i>
@@ -22,7 +23,6 @@ echo $_SESSION['username'];
   <div class="w3-dropdown-content w3-bar-block w3-card-4 <?php echo $optionsDB['colorNavAdmin']; ?> w3-mobile">
   <a title="St&uuml;ck anlegen" alt="St&uuml;ck anlegen" href="new-composition.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('newcomposition');?>"><i class="fas fa-plus-circle"></i> St&uuml;ck anlegen</a>
 	    <a title="Konfiguration" alt="Konfiguration" href="config-menu.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('config');?>"><i class="fas fa-cogs"></i> Konfiguration</a>
-	    <a title="Statistik" alt="Statistik" href="evaluate.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('evaluate');?>"><i class="fas fa-chart-pie"></i> Statistik</a>
 	    <a title="Logfile anschauen" alt="Logfile anschauen" href="log.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('log');?>"><i class="fas fa-poll"></i> Log</a>
 	</div>
     </div>

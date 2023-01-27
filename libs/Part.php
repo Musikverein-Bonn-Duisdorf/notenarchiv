@@ -95,7 +95,8 @@ class Part
         $this->Composition,
         $this->Instrument,
         $this->Part,
-        $this->FilePath
+        $this->FilePath,
+        $this->Index
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
         sqlerror();
@@ -120,35 +121,145 @@ class Part
     public function printLine() {
         $str = "";
         $maindiv = new div;
-        $maindiv->class="w3-card-4 w3-margin w3-row w3-padding";
+        $maindiv->class="w3-margin w3-row w3-border-bottom w3-border-black";
         $str=$str.$maindiv->open();
 
         $row = new div;
         $row->col(1,3,3);
-        $row->body=$this->InstrumentName;
+        $row->body=$this->InstrumentName." ".$this->Part;
         $str=$str.$row->print();
 
-        $row = new div;
-        $row->col(1,3,3);
-        $row->body=$this->Part;
-        $str=$str.$row->print();
-
-        $row = new div;
-        $row->col(2,3,3);
-        $row->class="w3-red w3-center";
         if($this->FilePath) {
-            $row->body="<i class=\"fas fa-download\"></i>";
-            $row->body="<i class=\"fas fa-print\"></i>";
-            $row->body="<i class=\"fas fa-trash\"></i>";
+            $row = new div;
+            $row->col(1,3,3);
+            $row->class="w3-center";
+            $row->body="<a target=\"_blank\" href=\"".$this->getURL()."\" class=\"fas fa-download\"></a>";
+            $str=$str.$row->print();
+
+            $form = new div;
+            $form->col(1,3,3);
+            $form->tag="form";
+            $form->action="";
+            $form->method="POST";
+            $form->enctype="multipart/form-data";
+            $str=$str.$form->open();
+            
+            $hidden = new div;
+            $hidden->tag="input";
+            $hidden->type="hidden";
+            $hidden->name="pIndex";
+            $hidden->value=$this->Index;
+            $str=$str.$hidden->print();
+
+            $hidden = new div;
+            $hidden->tag="input";
+            $hidden->type="hidden";
+            $hidden->name="Index";
+            $hidden->value=$this->Composition;
+            $str=$str.$hidden->print();
+
+            $submit = new div;
+            $submit->tag="button";
+            $submit->type="submit";
+            $submit->name="partdelete";
+            $submit->value="delete";
+            $submit->body="<i class=\"fas fa-trash\"></i>";
+            $str=$str.$submit->print();
+
+            $str=$str.$form->close();
         }
         else {
-            $row->body="<i class=\"fas fa-exclamation-circle\"></i> keine Stimme gefunden";
-            $row->body="<i class=\"fas fa-upload\"></i>";
-        }
-        $str=$str.$row->print();
+            $row = new div;
+            $row->col(2,3,3);
+            $row->class="w3-red w3-center";
+            $row->body="<i class=\"fas fa-exclamation-circle\"></i> keine Stimme gefunden ";
+            $str=$str.$row->print();
 
+            $form = new div;
+            $form->col(1,3,3);
+            $form->tag="form";
+            $form->action="";
+            $form->method="POST";
+            $form->enctype="multipart/form-data";
+            $str=$str.$form->open();
+            
+            $hidden = new div;
+            $hidden->tag="input";
+            $hidden->type="hidden";
+            $hidden->name="pIndex";
+            $hidden->value=$this->Index;
+            $str=$str.$hidden->print();
+
+            $hidden = new div;
+            $hidden->tag="input";
+            $hidden->type="hidden";
+            $hidden->name="Index";
+            $hidden->value=$this->Composition;
+            $str=$str.$hidden->print();
+
+            $file = new div;
+            $file->tag="input";
+            $file->type="file";
+            $file->name="part";
+            $str=$str.$file->print();
+
+            $submit = new div;
+            $submit->tag="button";
+            $submit->type="submit";
+            $submit->name="partupload";
+            $submit->value="upload";
+            $submit->body="<i class=\"fas fa-upload\"></i>";
+            $str=$str.$submit->print();
+
+            $str=$str.$form->close();
+        }
+        
         $str=$str.$maindiv->close();
         return $str;
+    }
+    public function getURL() {
+        $piece = new Composition;
+        $piece->load_by_id($this->Composition);
+        return $piece->FilePath.$this->FilePath;
+    }
+
+    public function deleteFile() {
+        $piece = new Composition;
+        $piece->load_by_id($this->Composition);
+        unlink($piece->getFilePathPHP().$this->FilePath);
+        $this->FilePath=null;
+        $this->save();
+    }
+
+    public function upload($POST, $FILES) {
+        $piece = new Composition;
+        $piece->load_by_id($this->Composition);
+        $target_dir = $piece->getFilePathPHP();
+        $this->FilePath="part_".$this->Instrument."_".$this->Part.strrchr($FILES["part"]["name"], '.');
+        $target_file = $piece->getFilePathPHP().$this->FilePath;
+        $uploadOk = 1;
+        $imageFileType = strtolower(pathinfo($target_file,PATHINFO_EXTENSION));
+        if(isset($POST["submit"])) {
+            if ($FILES["part"]["size"] > 50000000) {
+                echo "Sorry, your file is too large.";
+                $uploadOk = 0;
+            }
+            if($imageFileType != "jpg" && $imageFileType != "png" && $imageFileType != "jpeg"
+            && $imageFileType != "gif" && $imageFileType != "pdf") {
+                echo "Sorry, only JPG, JPEG, PNG, GIF & PDF files are allowed.";
+                $uploadOk = 0;
+            }
+        }
+        if ($uploadOk == 0) {
+            echo "Sorry, your file was not uploaded.";
+            // if everything is ok, try to upload file
+        } else {
+            if (move_uploaded_file($FILES["part"]["tmp_name"], $target_file)) {
+                $this->save();
+            } else {
+                echo "Sorry, there was an error uploading your file.";
+            }
+        }
     }
 };
 ?>
