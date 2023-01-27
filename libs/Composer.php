@@ -49,7 +49,6 @@ class Composer
         }
     }
     public function is_valid() {
-        if(!$this->FirstName) return false;
         if(!$this->LastName) return false;
         return true;
     }

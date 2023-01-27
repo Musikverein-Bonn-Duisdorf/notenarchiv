@@ -1,7 +1,7 @@
 <?php
 session_start();
 $_SESSION['page']='composers';
-$_SESSION['adminpage']=true;
+$_SESSION['adminpage']=false;
 include "common/header.php";
 
 if(isset($_POST['insert'])) {
