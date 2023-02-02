@@ -183,6 +183,29 @@ class Composition
         $this->fillJoins();
     }
 
+    public function delete() {
+        $sql = sprintf('DELETE FROM `%sCollection` WHERE `Composition` = "%d";',
+        $GLOBALS['dbprefix'],
+        $this->Index
+        );
+        $dbr = mysqli_query($GLOBALS['conn'], $sql);
+        sqlerror();        
+
+        $sql = sprintf('DELETE FROM `%sParts` WHERE `Composition` = "%d";',
+        $GLOBALS['dbprefix'],
+        $this->Index
+        );
+        $dbr = mysqli_query($GLOBALS['conn'], $sql);
+        sqlerror();        
+
+        $sql = sprintf('DELETE FROM `%sCompositions` WHERE `Index` = "%d";',
+        $GLOBALS['dbprefix'],
+        $this->Index
+        );
+        $dbr = mysqli_query($GLOBALS['conn'], $sql);
+        sqlerror();        
+}
+
     public function printLine() {
         $str = "";
         $maindiv = new div;

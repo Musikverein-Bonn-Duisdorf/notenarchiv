@@ -14,15 +14,15 @@ if(isset($_POST['save'])) {
     $_POST['pieceID']=$piece->Index;
 }
 
-if(isset($_POST['proxy'])) {
-    $user = $_POST['proxy'];
-    $proxy = new User;
-    $proxy->load_by_id($user);
-}
-else {
-    $user = $_SESSION['userid'];
+if(isset($_POST['Delete'])) {
+    $piece = new Composition;
+    if($_POST['Delete'] > 0) {
+        $piece->load_by_id($_POST['Delete']);
+        $piece->delete();
+    }
 }
 
+    
 $sql = sprintf('SELECT COUNT(`Index`) AS `Count` FROM `%sCompositions`;',
 $GLOBALS['dbprefix']
 );

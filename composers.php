@@ -36,7 +36,7 @@ if($_SESSION['admin']) {
 
 <div class="w3-row">
   <input class="w3-input w3-border w3-padding w3-col l6 s6 m6" type="text" placeholder="Suchen..." id="filterString" onkeyup="filterPieces()">
-  <div onclick="document.getElementById('inputModal').style.display='block'" class="w3-col l1 m6 s6 w3-center w3-padding <?php echo $GLOBALS['optionsDB']['colorInputBackground']; ?>"><i class="fas fa-plus"></i></div>
+  <div onclick="document.getElementById('inputModal').style.display='block'" class="w3-col l1 m6 s6 w3-center w3-padding <?php echo $GLOBALS['optionsDB']['colorBtnSubmit']; ?>"><i class="fas fa-plus"></i></div>
 </div>
 <div id="inputModal" class="w3-modal">
   <form class="w3-modal-content" action="" method="POST">

@@ -89,10 +89,11 @@ class Collections
     public function printContent() {
         $str = "";
         $maindiv = new div;
+        $maindiv->class="w3-sand w3-margin-top w3-border-top w3-border-black w3-border-bottom";
         $str=$str.$maindiv->open();
 
         $header = new div;
-        $header->class=$GLOBALS['optionsDB']['colorTitleBar'];
+        /* $header->class=$GLOBALS['optionsDB']['colorTitleBar']; */
         $header->class="w3-container";
         $header->body="<h3>".$this->Name."</h3>";
         $str=$str.$header->print();
