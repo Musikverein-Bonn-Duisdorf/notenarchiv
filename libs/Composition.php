@@ -125,9 +125,6 @@ class Composition
     }
     public function is_valid() {
         if(!$this->Title) return false;
-        if($this->FilePath == null || $this->checkFilePath() == false) {
-            $this->makeFilePath();
-        }
         return true;
     }
 
@@ -151,7 +148,14 @@ class Composition
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
         sqlerror();
         if(!$dbr) return false;
-        $this->_data['Index'] = mysqli_insert_id($GLOBALS['conn']);
+
+        $sql = "SELECT LAST_INSERT_ID() AS `Index`;";
+        $dbr = mysqli_query($GLOBALS['conn'], $sql);
+        sqlerror();
+        if(!$dbr) return false;
+        
+        $row = mysqli_fetch_array($dbr);
+        $this->Index=$row['Index'];
         return true;
     }
     protected function update() {
@@ -186,7 +190,6 @@ class Composition
             $this->fill_from_array($row);
         }
         $this->fillJoins();
-        $this->makeFilePath();
     }
 
     public function delete() {

@@ -39,6 +39,15 @@ $nPieces = $row['Count'];
 <div class="w3-row">
          <input class="w3-input w3-border w3-padding w3-col l6 s12 m12" type="text" placeholder="Suche..." id="filterString" onkeyup="filterPieces()">
 </div>
+<div class="w3-row w3-padding w3-border-bottom w3-border-black">
+  <div class="w3-col l1 w3-center"><b>Archivnummer</b></div>
+  <div class="w3-col l3 w3-center"><b>Titel</b></div>
+  <div class="w3-col l2 w3-center"><b>Komponist</b></div>
+  <div class="w3-col l2 w3-center"><b>Arrangeur</b></div>
+  <div class="w3-col l2 w3-center"><b>Verlag</b></div>
+  <div class="w3-col l1 w3-center"><b>Jahr</b></div>
+  <div class="w3-col l1 w3-center"><b>Schwierigkeit</b></div>
+</div>
 <div id="Liste">
 <?php
 $now = date("Y-m-d");
