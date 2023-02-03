@@ -104,9 +104,14 @@ class Composition
     }
     
     public function makeFilePath() {
-        $path = "data/Compositions/".$this->Index;
-        mkdir($path, 0775);
-        $this->FilePath = $path."/";
+        if($this->Index) {
+            $path = "data/Compositions/".$this->Index;
+            if(!is_dir($path)) {
+                mkdir($path, 0775);
+            }
+            $this->FilePath = $path."/";
+            $this->save();
+        }
     }
 
     public function getFilePathPHP() {
@@ -181,6 +186,7 @@ class Composition
             $this->fill_from_array($row);
         }
         $this->fillJoins();
+        $this->makeFilePath();
     }
 
     public function delete() {
