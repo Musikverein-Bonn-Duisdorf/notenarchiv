@@ -51,6 +51,15 @@ class Collection
         
     }
 
+    public function delete() {
+        $sql = sprintf('DELETE FROM `%sCollection` WHERE `Index` = "%d";',
+        $GLOBALS['dbprefix'],
+        $this->Index
+        );
+        $dbr = mysqli_query($GLOBALS['conn'], $sql);
+        sqlerror();        
+    }
+
     public function fillJoins() {
         if(!$this->Title) {
             $sql = sprintf('SELECT * FROM `%sCompositions` WHERE `Index` = %d;',

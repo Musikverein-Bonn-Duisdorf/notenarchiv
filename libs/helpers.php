@@ -55,6 +55,19 @@ function instrumentsOption() {
     return $str;
 }
 
+function collectionsOption() {
+    $str='';
+    $sql = sprintf('SELECT * FROM `%sCollections` ORDER BY `Name`;',
+    $GLOBALS['dbprefix']
+    );
+    $dbr = mysqli_query($GLOBALS['conn'], $sql);
+    sqlerror();
+    while($row = mysqli_fetch_array($dbr)) {
+        $str=$str."<option value=\"".$row['Index']."\">".$row['Name']."</option>\n";
+    }
+    return $str;
+}
+
 function RegistersOption($val) {
     $sql = sprintf('SELECT * FROM `%sRegisters` ORDER BY `CustomOrder`;',
 		   $GLOBALS['dbprefix']
