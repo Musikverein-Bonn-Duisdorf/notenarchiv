@@ -100,7 +100,14 @@ class Composition
     }
 
     public function getVars() {
-        
+        $this->fillJoins();
+        return sprintf("Composition-ID: %d, Registration-Nr: %d, Title: %s, Composer: %s, Arranger: %s",
+        $this->Index,
+        $this->RegistrationNumber,
+        $this->Title,
+        $this->ComposerName,
+        $this->ArrangerName
+        );
     }
     
     public function makeFilePath() {
@@ -212,7 +219,9 @@ class Composition
         $this->Index
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
-        sqlerror();        
+        sqlerror();
+        $logentry = new Log;
+        $logentry->DBdelete($this->getVars());
 }
 
     public function printLine() {

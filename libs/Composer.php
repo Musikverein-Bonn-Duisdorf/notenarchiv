@@ -40,7 +40,11 @@ class Composer
     }
 
     public function getVars() {
-        
+        return sprintf("Composer-ID: %d, First Name: %s, Last Name: %s",
+        $this->Index,
+        $this->FirstName,
+        $this->LastName
+        );
     }
         
     public function delete() {
