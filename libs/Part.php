@@ -257,7 +257,7 @@ class Part
             if (move_uploaded_file($FILES["part"]["tmp_name"], $target_file)) {
                 $this->save();
             } else {
-                echo "Sorry, there was an error uploading your file.";
+                echo "Sorry, there was an error uploading your file to ".$target_file;
             }
         }
     }
