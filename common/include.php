@@ -19,4 +19,5 @@ include "libs/Stimmsatz.php";
 include "libs/NextcloudClient.php";
 include "libs/SQLtable.php";
 include "libs/SchemaManager.php";
+include "libs/ssoTicket.php";
 ?>

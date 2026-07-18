@@ -334,6 +334,45 @@ function loggedIn() {
     return false;
 }
 
+function loginUserBySsoId($userId) {
+    $userId = (int)$userId;
+    if($userId < 1) {
+        return false;
+    }
+    $sql = sprintf(
+        "SELECT * FROM `%sUser` WHERE `Index` = %d AND (`Deleted` IS NULL OR `Deleted` != 1) LIMIT 1;",
+        identityPrefix(),
+        $userId
+    );
+    $dbr = mysqli_query($GLOBALS['conn'], $sql);
+    sqlerror();
+    $row = $dbr ? mysqli_fetch_assoc($dbr) : null;
+    if(!$row) {
+        return false;
+    }
+    $_SESSION['userid'] = (int)$row['Index'];
+    $_SESSION['Vorname'] = $row['Vorname'];
+    $_SESSION['Nachname'] = $row['Nachname'];
+    $_SESSION['username'] = $row['Vorname'].' '.$row['Nachname'];
+    $_SESSION['admin'] = (bool)$row['Admin'];
+    $_SESSION['singleUsePW'] = (bool)$row['singleUsePW'];
+    $logentry = new Log();
+    $logentry->info('Login via Melde-SSO ticket.');
+    recordLogin();
+    return true;
+}
+
+function tryMeldeSsoLoginFromRequest() {
+    if(!isset($_GET['sso']) || trim((string)$_GET['sso']) === '') {
+        return false;
+    }
+    $userId = SsoTicket::redeem($_GET['sso']);
+    if(!$userId) {
+        return false;
+    }
+    return loginUserBySsoId($userId);
+}
+
 function sql2time($time) {
     if($time != '') {
         return sql2timeRaw($time)." Uhr";
