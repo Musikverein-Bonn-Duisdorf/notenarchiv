@@ -53,7 +53,7 @@ class Publisher
         return true;
     }
     protected function insert() {
-        $sql = sprintf('INSERT INTO `%sPublishers` (`Name`, `Address`) VALUES ("%s", "%s");',
+        $sql = sprintf('INSERT INTO `%sPublisher` (`Name`, `Address`) VALUES ("%s", "%s");',
         $GLOBALS['dbprefix'],
         $this->Name,
         $this->Address
@@ -65,7 +65,7 @@ class Publisher
         return true;
     }
     protected function update() {
-        $sql = sprintf('UPDATE `%sPublishers` SET `Name` = "%s", `Address` = "%s" WHERE `Index` = "%d";',
+        $sql = sprintf('UPDATE `%sPublisher` SET `Name` = "%s", `Address` = "%s" WHERE `Index` = "%d";',
         $GLOBALS['dbprefix'],
         $this->Name,
         $this->Address,
@@ -78,7 +78,7 @@ class Publisher
     }
     public function load_by_id($Index) {
         $Index = (int) $Index;
-        $sql = sprintf('SELECT * FROM `%sPublishers` WHERE `Index` = "%d";',
+        $sql = sprintf('SELECT * FROM `%sPublisher` WHERE `Index` = "%d";',
         $GLOBALS['dbprefix'],
         $Index
         );

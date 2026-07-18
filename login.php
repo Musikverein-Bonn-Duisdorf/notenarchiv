@@ -24,6 +24,12 @@ session_start();
 if(isset($_GET['alink'])) {
     validateLink($_GET['alink']);
 }
+if(tryMeldeSsoLoginFromRequest()) {
+      ?>
+    <meta http-equiv="refresh" content="0; URL='index.php'" />
+    <?php
+    die("<div class=\"w3-panel ".$GLOBALS['optionsDB']['colorSuccess']."\"><h2>Login erfolgreich (SSO).</h2></div>");
+}
 if(isset($_POST['triggerlogin'])) {
     $r=validateUser($_POST['login'], $_POST['password']);
     if(!$r) {

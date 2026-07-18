@@ -10,7 +10,7 @@ if($_GET['id'] != $GLOBALS['cronID']) {
 }
 switch($_GET['cmd']) {
 case "change":
-    $sql = sprintf('SELECT * FROM `%sConfig`;',
+    $sql = sprintf('SELECT * FROM `%sconfig`;',
     $GLOBALS['dbprefix']
     );
     $dbr = mysqli_query($conn, $sql);
@@ -25,7 +25,7 @@ case "change":
         case "color":
         default:
             if(isset($_GET['value'])) {
-                $sql = sprintf('UPDATE `%sConfig` SET `Value` = "%s" WHERE `Parameter` = "%s";',
+                $sql = sprintf('UPDATE `%sconfig` SET `Value` = "%s" WHERE `Parameter` = "%s";',
                 $GLOBALS['dbprefix'],
                 mysqli_real_escape_string($conn, $_GET['value']),
                 $_GET['para']

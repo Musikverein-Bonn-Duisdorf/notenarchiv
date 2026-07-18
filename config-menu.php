@@ -6,7 +6,7 @@ include "common/header.php";
 requireAdmin();
 $fill = false;
 if(isset($_POST['save'])) {
-    $sql = sprintf('SELECT * FROM `%sConfig`;',
+    $sql = sprintf('SELECT * FROM `%sconfig`;',
     $GLOBALS['dbprefix']
     );
     $dbr = mysqli_query($conn, $sql);
@@ -21,7 +21,7 @@ if(isset($_POST['save'])) {
                 }
             }
             if($val == $row['Value']) break;
-            $sql = sprintf('UPDATE `%sConfig` SET `Value` = "%s" WHERE `Parameter` = "%s";',
+            $sql = sprintf('UPDATE `%sconfig` SET `Value` = "%s" WHERE `Parameter` = "%s";',
             $GLOBALS['dbprefix'],
             $val,
             $row['Parameter']
@@ -37,7 +37,7 @@ if(isset($_POST['save'])) {
         case "color":
         default:
             if(isset($_POST[$row['Parameter']])) {
-                $sql = sprintf('UPDATE `%sConfig` SET `Value` = "%s" WHERE `Parameter` = "%s";',
+                $sql = sprintf('UPDATE `%sconfig` SET `Value` = "%s" WHERE `Parameter` = "%s";',
                 $GLOBALS['dbprefix'],
                 mysqli_real_escape_string($conn, $_POST[$row['Parameter']]),
                 $row['Parameter']
@@ -88,7 +88,7 @@ function savePara(Parameter, Value) {
     <div class="w3-col l4 w3-center"><b>Wert</b></div>
 </div>
 <?php
-    $sql = sprintf('SELECT * FROM `%sConfig` ORDER BY `Parameter`;',
+    $sql = sprintf('SELECT * FROM `%sconfig` ORDER BY `Parameter`;',
     $GLOBALS['dbprefix']
     );
 $dbr = mysqli_query($conn, $sql);

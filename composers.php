@@ -21,7 +21,7 @@ if(isset($_POST['delete'])) {
     $n->delete();
 }
 if($_SESSION['admin']) {
-    $sql = sprintf('SELECT COUNT(`Index`) AS `Count` FROM `%sComposers`;',
+    $sql = sprintf('SELECT COUNT(`Index`) AS `Count` FROM `%sComposer`;',
     $GLOBALS['dbprefix']
     );
     $dbr = mysqli_query($conn, $sql);
@@ -59,7 +59,7 @@ if($_SESSION['admin']) {
 </div>
 <div id="Liste">
 <?php
-    $sql = sprintf('SELECT `Index` FROM `%sComposers` ORDER BY `LastName`, `FirstName`;',
+    $sql = sprintf('SELECT `Index` FROM `%sComposer` ORDER BY `LastName`, `FirstName`;',
     $GLOBALS['dbprefix']
     );
     $dbr = mysqli_query($conn, $sql);

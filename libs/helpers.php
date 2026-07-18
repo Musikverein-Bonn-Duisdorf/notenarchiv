@@ -1,6 +1,9 @@
 <?php
+function identityPrefix() {
+    return isset($GLOBALS['identityPrefix']) ? $GLOBALS['identityPrefix'] : $GLOBALS['dbprefix'];
+}
 function loadconfig() {
-    $sql = sprintf('SELECT * FROM `%sConfig`;',
+    $sql = sprintf('SELECT * FROM `%sconfig`;',
 		   $GLOBALS['dbprefix']
     );
     $dbr = mysqli_query($GLOBALS['conn'], $sql);
@@ -22,10 +25,10 @@ function bool2string($val) {
 function instrumentsOptionNull($val) {
     $str='';
     $str=$str."<option value=\"0\">keins</option>\n";
-    $sql = sprintf('SELECT * FROM `%sInstruments` INNER JOIN (SELECT `Index` AS `rIndex`, `CustomOrder` AS `rSort` FROM `%sRegisters`) `%sRegisters` ON `rIndex` = `Register` ORDER BY `rSort`, `CustomOrder`;',
-    $GLOBALS['dbprefix'],
-    $GLOBALS['dbprefix'],
-    $GLOBALS['dbprefix']
+    $sql = sprintf('SELECT * FROM `%sInstrument` INNER JOIN (SELECT `Index` AS `rIndex`, `CustomOrder` AS `rSort` FROM `%sRegister`) `%sRegister` ON `rIndex` = `Register` ORDER BY `rSort`, `CustomOrder`;',
+    identityPrefix(),
+    identityPrefix(),
+    identityPrefix()
     );
     $dbr = mysqli_query($GLOBALS['conn'], $sql);
     sqlerror();
@@ -42,10 +45,10 @@ function instrumentsOptionNull($val) {
 
 function instrumentsOption() {
     $str='';
-    $sql = sprintf('SELECT * FROM `%sInstruments` INNER JOIN (SELECT `Index` AS `rIndex`, `CustomOrder` AS `rSort` FROM `%sRegisters`) `%sRegisters` ON `rIndex` = `Register` ORDER BY `rSort`, `CustomOrder`;',
-    $GLOBALS['dbprefix'],
-    $GLOBALS['dbprefix'],
-    $GLOBALS['dbprefix']
+    $sql = sprintf('SELECT * FROM `%sInstrument` INNER JOIN (SELECT `Index` AS `rIndex`, `CustomOrder` AS `rSort` FROM `%sRegister`) `%sRegister` ON `rIndex` = `Register` ORDER BY `rSort`, `CustomOrder`;',
+    identityPrefix(),
+    identityPrefix(),
+    identityPrefix()
     );
     $dbr = mysqli_query($GLOBALS['conn'], $sql);
     sqlerror();
@@ -57,7 +60,7 @@ function instrumentsOption() {
 
 function collectionsOption() {
     $str='';
-    $sql = sprintf('SELECT * FROM `%sCollections` ORDER BY `Name`;',
+    $sql = sprintf('SELECT * FROM `%sCollection` ORDER BY `Name`;',
     $GLOBALS['dbprefix']
     );
     $dbr = mysqli_query($GLOBALS['conn'], $sql);
@@ -69,8 +72,8 @@ function collectionsOption() {
 }
 
 function RegistersOption($val) {
-    $sql = sprintf('SELECT * FROM `%sRegisters` ORDER BY `CustomOrder`;',
-		   $GLOBALS['dbprefix']
+    $sql = sprintf('SELECT * FROM `%sRegister` ORDER BY `CustomOrder`;',
+		   identityPrefix()
     );
     $dbr = mysqli_query($GLOBALS['conn'], $sql);
     sqlerror();
@@ -90,7 +93,7 @@ function mkNULLonNull($val) {
 }
 
 function nextArchiverNumber() {
-    $sql = sprintf('SELECT `RegistrationNumber` FROM `%sCompositions` ORDER BY `RegistrationNumber` ASC;',
+    $sql = sprintf('SELECT `RegistrationNumber` FROM `%sComposition` ORDER BY `RegistrationNumber` ASC;',
 		   $GLOBALS['dbprefix']
     );
     $dbr = mysqli_query($GLOBALS['conn'], $sql);
@@ -114,7 +117,7 @@ function ComposersOption($val) {
     else {
         echo "<option value=\"null\"></option>\n";
     }
-    $sql = sprintf('SELECT * FROM `%sComposers` ORDER BY `LastName` ASC;',
+    $sql = sprintf('SELECT * FROM `%sComposer` ORDER BY `LastName` ASC;',
 		   $GLOBALS['dbprefix']
     );
     $dbr = mysqli_query($GLOBALS['conn'], $sql);
@@ -136,7 +139,7 @@ function PublishersOption($val) {
     else {
         echo "<option value=\"null\"></option>\n";
     }
-    $sql = sprintf('SELECT * FROM `%sPublishers` ORDER BY `Name` ASC;',
+    $sql = sprintf('SELECT * FROM `%sPublisher` ORDER BY `Name` ASC;',
 		   $GLOBALS['dbprefix']
     );
     $dbr = mysqli_query($GLOBALS['conn'], $sql);
@@ -266,8 +269,8 @@ function mkAdmin() {
 
 function validateLink($hash) {
     $_SESSION['userid'] = 0;
-    $sql = sprintf("SELECT * FROM `%sUsers` WHERE `activeLink` = '%s';",
-		   $GLOBALS['dbprefix'],
+    $sql = sprintf("SELECT * FROM `%sUser` WHERE `activeLink` = '%s';",
+		   identityPrefix(),
 		   $hash
     );
     $dbr = mysqli_query($GLOBALS['conn'], $sql);
@@ -289,8 +292,8 @@ function validateLink($hash) {
 }
 function validateUser($login, $password) {
     $_SESSION['userid'] = 0;
-    $sql = sprintf("SELECT * FROM `%sUsers` WHERE `login` = '%s';",
-		   $GLOBALS['dbprefix'],
+    $sql = sprintf("SELECT * FROM `%sUser` WHERE `login` = '%s';",
+		   identityPrefix(),
 		   $login
     );
     $dbr = mysqli_query($GLOBALS['conn'], $sql);
@@ -313,8 +316,8 @@ function validateUser($login, $password) {
 }
 
 function recordLogin() {
-    $sql = sprintf("UPDATE `%sUsers` SET `LastLogin` = CURRENT_TIMESTAMP() WHERE `Index` = %d;",
-		   $GLOBALS['dbprefix'],
+    $sql = sprintf("UPDATE `%sUser` SET `LastLogin` = CURRENT_TIMESTAMP() WHERE `Index` = %d;",
+		   identityPrefix(),
 		   $_SESSION['userid']
     );
     $dbr = mysqli_query($GLOBALS['conn'], $sql);
@@ -329,6 +332,45 @@ function loggedIn() {
     if($_SESSION['userid'] > 0) return true;
     session_destroy();
     return false;
+}
+
+function loginUserBySsoId($userId) {
+    $userId = (int)$userId;
+    if($userId < 1) {
+        return false;
+    }
+    $sql = sprintf(
+        "SELECT * FROM `%sUser` WHERE `Index` = %d AND (`Deleted` IS NULL OR `Deleted` != 1) LIMIT 1;",
+        identityPrefix(),
+        $userId
+    );
+    $dbr = mysqli_query($GLOBALS['conn'], $sql);
+    sqlerror();
+    $row = $dbr ? mysqli_fetch_assoc($dbr) : null;
+    if(!$row) {
+        return false;
+    }
+    $_SESSION['userid'] = (int)$row['Index'];
+    $_SESSION['Vorname'] = $row['Vorname'];
+    $_SESSION['Nachname'] = $row['Nachname'];
+    $_SESSION['username'] = $row['Vorname'].' '.$row['Nachname'];
+    $_SESSION['admin'] = (bool)$row['Admin'];
+    $_SESSION['singleUsePW'] = (bool)$row['singleUsePW'];
+    $logentry = new Log();
+    $logentry->info('Login via Melde-SSO ticket.');
+    recordLogin();
+    return true;
+}
+
+function tryMeldeSsoLoginFromRequest() {
+    if(!isset($_GET['sso']) || trim((string)$_GET['sso']) === '') {
+        return false;
+    }
+    $userId = SsoTicket::redeem($_GET['sso']);
+    if(!$userId) {
+        return false;
+    }
+    return loginUserBySsoId($userId);
 }
 
 function sql2time($time) {

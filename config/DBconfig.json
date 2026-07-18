@@ -1,0 +1,78 @@
+{
+    "Composer": {
+        "Index": {"Type": "int", "Extra": "AUTO_INCREMENT"},
+        "FirstName": {"Type": "text", "Null": "YES", "Collation": "utf8mb4_unicode_ci"},
+        "LastName": {"Type": "text", "Collation": "utf8mb4_unicode_ci"}
+    },
+    "Publisher": {
+        "Index": {"Type": "int", "Extra": "AUTO_INCREMENT"},
+        "Name": {"Type": "text", "Collation": "utf8mb4_unicode_ci"},
+        "Address": {"Type": "text", "Null": "YES", "Collation": "utf8mb4_unicode_ci"}
+    },
+    "Collection": {
+        "Index": {"Type": "int", "Extra": "AUTO_INCREMENT"},
+        "Name": {"Type": "text", "Collation": "utf8mb4_unicode_ci"}
+    },
+    "CollectionItem": {
+        "Index": {"Type": "int", "Extra": "AUTO_INCREMENT"},
+        "Collections": {"Type": "int"},
+        "CollectionNumber": {"Type": "int", "Null": "YES"},
+        "Composition": {"Type": "int"}
+    },
+    "Composition": {
+        "Index": {"Type": "int", "Extra": "AUTO_INCREMENT"},
+        "RegistrationNumber": {"Type": "int", "Null": "YES"},
+        "Title": {"Type": "text", "Collation": "utf8mb4_unicode_ci"},
+        "Composer": {"Type": "int", "Null": "YES"},
+        "Arranger": {"Type": "int", "Null": "YES"},
+        "Publisher": {"Type": "int", "Null": "YES"},
+        "Year": {"Type": "int", "Null": "YES"},
+        "PerformanceTime": {"Type": "text", "Null": "YES", "Collation": "utf8mb4_unicode_ci"},
+        "Grade": {"Type": "double", "Null": "YES"},
+        "FilePath": {"Type": "text", "Null": "YES", "Collation": "utf8mb4_unicode_ci"}
+    },
+    "ScoreFile": {
+        "Index": {"Type": "int", "Extra": "AUTO_INCREMENT"},
+        "Composition": {"Type": "int"},
+        "Instrument": {"Type": "int"},
+        "VoiceLabel": {"Type": "text", "Collation": "utf8mb4_unicode_ci"},
+        "NextcloudPath": {"Type": "text", "Null": "YES", "Collation": "utf8mb4_unicode_ci"},
+        "PageCount": {"Type": "int", "Null": "YES"},
+        "Checksum": {"Type": "text", "Null": "YES", "Collation": "utf8mb4_unicode_ci"},
+        "FilePath": {"Type": "text", "Null": "YES", "Collation": "utf8mb4_unicode_ci"}
+    },
+    "RehearsalPhase": {
+        "Index": {"Type": "int", "Extra": "AUTO_INCREMENT"},
+        "Name": {"Type": "text", "Collation": "utf8mb4_unicode_ci"},
+        "DateFrom": {"Type": "date", "Null": "YES"},
+        "DateTo": {"Type": "date", "Null": "YES"},
+        "Active": {"Type": "tinyint", "Default": 0}
+    },
+    "RehearsalPiece": {
+        "Index": {"Type": "int", "Extra": "AUTO_INCREMENT"},
+        "Phase": {"Type": "int"},
+        "Composition": {"Type": "int"},
+        "SortOrder": {"Type": "int", "Default": 0}
+    },
+    "PrintJob": {
+        "Index": {"Type": "int", "Extra": "AUTO_INCREMENT"},
+        "User": {"Type": "int"},
+        "Phase": {"Type": "int"},
+        "Created": {"Type": "timestamp", "Default": "CURRENT_TIMESTAMP", "Extra": "DEFAULT_GENERATED"},
+        "Detail": {"Type": "text", "Null": "YES", "Collation": "utf8mb4_unicode_ci"}
+    },
+    "config": {
+        "Index": {"Type": "int", "Extra": "AUTO_INCREMENT"},
+        "Parameter": {"Type": "text", "Collation": "utf8mb4_unicode_ci"},
+        "Value": {"Type": "text", "Collation": "utf8mb4_unicode_ci"},
+        "Type": {"Type": "text", "Collation": "utf8mb4_unicode_ci"},
+        "Description": {"Type": "text", "Collation": "utf8mb4_unicode_ci"}
+    },
+    "Log": {
+        "Index": {"Type": "int", "Extra": "AUTO_INCREMENT"},
+        "Timestamp": {"Type": "timestamp", "Default": "CURRENT_TIMESTAMP", "Extra": "DEFAULT_GENERATED"},
+        "User": {"Type": "int", "Null": "YES", "Default": 0},
+        "Type": {"Type": "int"},
+        "Message": {"Type": "text", "Collation": "utf8mb4_unicode_ci"}
+    }
+}

@@ -1,4 +1,7 @@
 <?php
+/**
+ * Legacy wrapper around ScoreFile (Part → VoiceLabel).
+ */
 class Part
 {
     private $_data = array('Index' => null, 'Composition' => null, 'Instrument' => null, 'Part' => null, 'FilePath' => null, 'InstrumentName' => null);
@@ -35,38 +38,49 @@ class Part
 
     public function fillJoins() {
         if(!$this->InstrumentName) {
-            $sql = sprintf('SELECT * FROM `%sInstruments` WHERE `Index` = %d;',
-            $GLOBALS['dbprefix'],
+            $sql = sprintf('SELECT * FROM `%sInstrument` WHERE `Index` = %d;',
+            identityPrefix(),
             $this->Instrument
             );
             $dbr = mysqli_query($GLOBALS['conn'], $sql);
             sqlerror();
             $row = mysqli_fetch_array($dbr);
-            $this->InstrumentName = $row['Name'];
+            if($row) $this->InstrumentName = $row['Name'];
         }
     }
     
     public function save() {
         if(!$this->is_valid()) return false;
+        $sf = new ScoreFile();
         if($this->Index > 0) {
-            $this->update();
-            $logentry = new Log;
-            $logentry->DBupdate($this->getVars());
+            $sf->load_by_id($this->Index);
         }
-        else {
-            $this->insert();
-            $logentry = new Log;
-            $logentry->DBinsert($this->getVars());
+        $sf->Composition = $this->Composition;
+        $sf->Instrument = $this->Instrument;
+        $sf->VoiceLabel = (string)$this->Part;
+        $sf->FilePath = $this->FilePath;
+        if($sf->save()) {
+            if(!$this->Index) {
+                $this->_data['Index'] = $sf->Index;
+            }
+            return true;
         }
+        return false;
     }
 
     public function getVars() {
-        
+        return sprintf('ScoreFile Index=%d Composition=%d Instrument=%d Voice=%d',
+            $this->Index, $this->Composition, $this->Instrument, $this->Part);
     }
         
     public function fill_from_array($row) {
         foreach($row as $key => $val) {
+            if($key === 'VoiceLabel') {
+                $this->_data['Part'] = (int)$val;
+            }
+            elseif(array_key_exists($key, $this->_data)) {
                 $this->_data[$key] = $val;
+            }
         }
     }
     public function is_valid() {
@@ -75,37 +89,10 @@ class Part
         if(!$this->Instrument) return false;
         return true;
     }
-    protected function insert() {
-        $sql = sprintf('INSERT INTO `%sParts` (`Composition`, `Instrument`, `Part`, `FilePath`) VALUES ("%d", "%d", "%d", "%s");',
-        $GLOBALS['dbprefix'],
-        $this->Composition,
-        $this->Instrument,
-        $this->Part,
-        $this->FilePath
-        );
-        $dbr = mysqli_query($GLOBALS['conn'], $sql);
-        sqlerror();
-        if(!$dbr) return false;
-        $this->_data['Index'] = mysqli_insert_id($GLOBALS['conn']);
-        return true;
-    }
-    protected function update() {
-        $sql = sprintf('UPDATE `%sParts` SET `Composition` = "%d", `Instrument` = "%d", `Part` = "%d", `FilePath` = "%s" WHERE `Index` = "%d";',
-        $GLOBALS['dbprefix'],
-        $this->Composition,
-        $this->Instrument,
-        $this->Part,
-        $this->FilePath,
-        $this->Index
-        );
-        $dbr = mysqli_query($GLOBALS['conn'], $sql);
-        sqlerror();
-        if(!$dbr) return false;
-        return true;
-    }
+
     public function load_by_id($Index) {
         $Index = (int) $Index;
-        $sql = sprintf('SELECT * FROM `%sParts` WHERE `Index` = "%d";',
+        $sql = sprintf('SELECT * FROM `%sScoreFile` WHERE `Index` = "%d";',
         $GLOBALS['dbprefix'],
         $Index
         );
@@ -252,7 +239,6 @@ class Part
         }
         if ($uploadOk == 0) {
             echo "Sorry, your file was not uploaded.";
-            // if everything is ok, try to upload file
         } else {
             if (move_uploaded_file($FILES["part"]["tmp_name"], $target_file)) {
                 $this->save();
