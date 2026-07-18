@@ -6,7 +6,8 @@ $sql = array(
     'password' => "password",
 );
 
-$dbprefix = "meldeliste_";
+$dbprefix = "archiv_";
+$identityPrefix = "meldeliste_";
 
 $mailconfig = array(
     'server' => "smtp.myprovider.com",
@@ -30,5 +31,6 @@ $googlemapsapi = "xxxx-xxxx-xxxx-xxxx";
 global $mailconfig;
 global $cronID;
 global $dbprefix;
+global $identityPrefix;
 global $googlemapsapi;
 ?>

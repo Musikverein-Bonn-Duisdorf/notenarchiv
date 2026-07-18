@@ -23,7 +23,7 @@ if(isset($_POST['Delete'])) {
 }
 
     
-$sql = sprintf('SELECT COUNT(`Index`) AS `Count` FROM `%sCompositions`;',
+$sql = sprintf('SELECT COUNT(`Index`) AS `Count` FROM `%sComposition`;',
 $GLOBALS['dbprefix']
 );
 $dbr = mysqli_query($conn, $sql);
@@ -51,7 +51,7 @@ $nPieces = $row['Count'];
 <div id="Liste">
 <?php
 $now = date("Y-m-d");
-$sql = sprintf('SELECT `Index` FROM `%sCompositions` ORDER BY `RegistrationNumber` DESC, `Title` ASC;',
+$sql = sprintf('SELECT `Index` FROM `%sComposition` ORDER BY `RegistrationNumber` DESC, `Title` ASC;',
 $GLOBALS['dbprefix'],
 $now,
 );

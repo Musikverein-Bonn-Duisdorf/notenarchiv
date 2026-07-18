@@ -113,7 +113,7 @@ class User
     }
     public function singleUsePW($val) {
         $sql = sprintf('UPDATE `%sUser` SET `singleUsePW` = %d WHERE `Index` = %d;',
-        $GLOBALS['dbprefix'],
+        identityPrefix(),
         (bool)$val,
         $this->Index
         );
@@ -164,8 +164,8 @@ class User
         return $GLOBALS['optionsDB']['WebSiteURL']."/login.php?alink=".$this->activeLink;
     }
     protected function insert() {
-        $sql = sprintf('INSERT INTO `%sUsers` (`Nachname`, `Vorname`, `login`, `Passhash`, `activeLink`, `Email`, `Email2`, `getMail`, `Admin`) VALUES ("%s", "%s", "%s", "%s", "%s", "%s", "%s", "%d", "%d");',
-        $GLOBALS['dbprefix'],
+        $sql = sprintf('INSERT INTO `%sUser` (`Nachname`, `Vorname`, `login`, `Passhash`, `activeLink`, `Email`, `Email2`, `getMail`, `Admin`) VALUES ("%s", "%s", "%s", "%s", "%s", "%s", "%s", "%d", "%d");',
+        identityPrefix(),
         mysqli_real_escape_string($GLOBALS['conn'], $this->Nachname),
         mysqli_real_escape_string($GLOBALS['conn'], $this->Vorname),
         mysqli_real_escape_string($GLOBALS['conn'], $this->login),
@@ -183,8 +183,8 @@ class User
         return true;
     }
     protected function update() {
-        $sql = sprintf('UPDATE `%sUsers` SET `Nachname` = "%s", `Vorname` = "%s", `login` = "%s", `Passhash` = "%s", `activeLink` = "%s", `Email` = "%s", `Email2` = "%s", `getMail` = "%d", `Admin` = "%d" WHERE `Index` = "%d";',
-        $GLOBALS['dbprefix'],
+        $sql = sprintf('UPDATE `%sUser` SET `Nachname` = "%s", `Vorname` = "%s", `login` = "%s", `Passhash` = "%s", `activeLink` = "%s", `Email` = "%s", `Email2` = "%s", `getMail` = "%d", `Admin` = "%d" WHERE `Index` = "%d";',
+        identityPrefix(),
         mysqli_real_escape_string($GLOBALS['conn'], $this->Nachname),
         mysqli_real_escape_string($GLOBALS['conn'], $this->Vorname),
         mysqli_real_escape_string($GLOBALS['conn'], $this->login),
@@ -206,8 +206,8 @@ class User
     }
     public function delete() {
         if(!$this->Index) return false;
-        $sql = sprintf('UPDATE `%sUsers` SET `Deleted` = 1, `DeletedOn` = CURRENT_TIMESTAMP, `Vorname` = "gel&ouml;schter", `Nachname` = "Benutzer", `Email` = "", `Email2` = "", `login` = "", `Passhash` = "", `getMail` = 0 WHERE `Index` = "%d";',
-        $GLOBALS['dbprefix'],
+        $sql = sprintf('UPDATE `%sUser` SET `Deleted` = 1, `DeletedOn` = CURRENT_TIMESTAMP, `Vorname` = "gel&ouml;schter", `Nachname` = "Benutzer", `Email` = "", `Email2` = "", `login` = "", `Passhash` = "", `getMail` = 0 WHERE `Index` = "%d";',
+        identityPrefix(),
         $this->Index
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
@@ -225,8 +225,8 @@ class User
     }
     public function load_by_id($Index) {
         $Index = (int) $Index;
-        $sql = sprintf('SELECT * FROM `%sUsers` WHERE `Index` = "%d";',
-        $GLOBALS['dbprefix'],
+        $sql = sprintf('SELECT * FROM `%sUser` WHERE `Index` = "%d";',
+        identityPrefix(),
         $Index
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);

@@ -4,12 +4,11 @@ $_SESSION['page']='update';
 $_SESSION['adminpage']=true;
 include "common/header.php";
 requireAdmin();
-?>
-<div class="w3-container <?php echo $GLOBALS['optionsDB']['colorTitleBar'] ;?>">
-    <h2>Updater</h2>
-</div>
-<div class="w3-container <?php echo $GLOBALS['optionsDB']['colorTitleBar'] ;?>"></div>
-<?php
+
+require_once __DIR__.'/libs/SQLtable.php';
+require_once __DIR__.'/config/ConfigDefaults.php';
+require_once __DIR__.'/libs/SchemaManager.php';
+
 $para=array(
     'defaultCompositionCover'
 );
@@ -25,15 +24,15 @@ $type=array(
 
 $N = count($para);
 for($i=0; $i<$N; $i++) {
-    $sql = sprintf("SELECT * FROM `%sConfig` WHERE `Parameter` = '%s';",
+    $sql = sprintf("SELECT * FROM `%sconfig` WHERE `Parameter` = '%s';",
 		   $GLOBALS['dbprefix'],
 		   $para[$i]
     );
     $dbr = mysqli_query($GLOBALS['conn'], $sql);
     sqlerror();
     $row = mysqli_fetch_array($dbr);
-    if($row['Parameter'] != $para[$i]) {
-        $sql = sprintf("INSERT INTO `%sConfig` (`Parameter`, `Value`, `Type`, `Description`) VALUES ('%s', '%s', '%s', '%s');",
+    if(!$row || $row['Parameter'] != $para[$i]) {
+        $sql = sprintf("INSERT INTO `%sconfig` (`Parameter`, `Value`, `Type`, `Description`) VALUES ('%s', '%s', '%s', '%s');",
                        $GLOBALS['dbprefix'],
                        $para[$i],
                        $value[$i],
@@ -48,8 +47,9 @@ for($i=0; $i<$N; $i++) {
     }
 }
 
-?>
+$schemaMgr = new SchemaManager();
+$schemaMgr->repair();
+echo "<div class=\"w3-row w3-container w3-border w3-border-black w3-padding ".$GLOBALS['optionsDB']['colorLogInfo']."\"><div class=\"w3-col l2 m2 s2\"><b>Schema</b></div><div class=\"w3-col l10 m10 s10\"><pre>".htmlspecialchars($schemaMgr->formatReportText())."</pre></div></div>";
 
-<?php
 include "common/footer.php";
 ?>

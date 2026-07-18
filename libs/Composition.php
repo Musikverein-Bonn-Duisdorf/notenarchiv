@@ -53,7 +53,7 @@ class Composition
 
     public function fillJoins() {
         if(!$this->ComposerName) {
-            $sql = sprintf('SELECT * FROM `%sComposers` WHERE `Index` = %d;',
+            $sql = sprintf('SELECT * FROM `%sComposer` WHERE `Index` = %d;',
             $GLOBALS['dbprefix'],
             $this->Composer
             );
@@ -63,7 +63,7 @@ class Composition
             if($row) $this->ComposerName = $row['FirstName']." ".$row['LastName'];
         }
         if(!$this->ArrangerName) {
-            $sql = sprintf('SELECT * FROM `%sComposers` WHERE `Index` = %d;',
+            $sql = sprintf('SELECT * FROM `%sComposer` WHERE `Index` = %d;',
             $GLOBALS['dbprefix'],
             $this->Arranger
             );
@@ -73,7 +73,7 @@ class Composition
             if($row) $this->ArrangerName = $row['FirstName']." ".$row['LastName'];
         }
         if(!$this->PublisherName) {
-            $sql = sprintf('SELECT * FROM `%sPublishers` WHERE `Index` = %d;',
+            $sql = sprintf('SELECT * FROM `%sPublisher` WHERE `Index` = %d;',
             $GLOBALS['dbprefix'],
             $this->Publisher
             );
@@ -140,7 +140,7 @@ class Composition
     }
     
     protected function insert() {
-        $sql = sprintf('INSERT INTO `%sCompositions` (`RegistrationNumber`, `Title`, `Composer`, `Arranger`, `Publisher`, `Year`, `Grade`, `PerformanceTime`, `FilePath`) VALUES (%s, "%s", %s, %s, %s, %s, "%f", "%s", "%s");',
+        $sql = sprintf('INSERT INTO `%sComposition` (`RegistrationNumber`, `Title`, `Composer`, `Arranger`, `Publisher`, `Year`, `Grade`, `PerformanceTime`, `FilePath`) VALUES (%s, "%s", %s, %s, %s, %s, "%f", "%s", "%s");',
         $GLOBALS['dbprefix'],
         mkNULLonNull($this->RegistrationNumber),
         mysqli_real_escape_string($GLOBALS['conn'], $this->Title),
@@ -166,7 +166,7 @@ class Composition
         return true;
     }
     protected function update() {
-        $sql = sprintf('UPDATE `%sCompositions` SET `RegistrationNumber` = %s, `Title` = "%s", `Composer` = %s, `Arranger` = %s, `Publisher` = %s, `Year` = %s, `Grade` = "%.1f", `PerformanceTime` = "%s", `FilePath` = "%s" WHERE `Index` = "%d";',
+        $sql = sprintf('UPDATE `%sComposition` SET `RegistrationNumber` = %s, `Title` = "%s", `Composer` = %s, `Arranger` = %s, `Publisher` = %s, `Year` = %s, `Grade` = "%.1f", `PerformanceTime` = "%s", `FilePath` = "%s" WHERE `Index` = "%d";',
         $GLOBALS['dbprefix'],
         mkNULLonNull($this->RegistrationNumber),
         mysqli_real_escape_string($GLOBALS['conn'], $this->Title),
@@ -186,7 +186,7 @@ class Composition
     }
     public function load_by_id($Index) {
         $Index = (int) $Index;
-        $sql = sprintf('SELECT * FROM `%sCompositions` WHERE `Index` = "%d";',
+        $sql = sprintf('SELECT * FROM `%sComposition` WHERE `Index` = "%d";',
         $GLOBALS['dbprefix'],
         $Index
         );
@@ -200,21 +200,21 @@ class Composition
     }
 
     public function delete() {
-        $sql = sprintf('DELETE FROM `%sCollection` WHERE `Composition` = "%d";',
+        $sql = sprintf('DELETE FROM `%sCollectionItem` WHERE `Composition` = "%d";',
         $GLOBALS['dbprefix'],
         $this->Index
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
         sqlerror();        
 
-        $sql = sprintf('DELETE FROM `%sParts` WHERE `Composition` = "%d";',
+        $sql = sprintf('DELETE FROM `%sScoreFile` WHERE `Composition` = "%d";',
         $GLOBALS['dbprefix'],
         $this->Index
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
         sqlerror();        
 
-        $sql = sprintf('DELETE FROM `%sCompositions` WHERE `Index` = "%d";',
+        $sql = sprintf('DELETE FROM `%sComposition` WHERE `Index` = "%d";',
         $GLOBALS['dbprefix'],
         $this->Index
         );
@@ -297,10 +297,10 @@ class Composition
     }
     
     public function listParts() {
-        $sql = sprintf('SELECT `Index` FROM `%sParts` INNER JOIN (SELECT `Index` AS `iIndex`, `CustomOrder` FROM `%sInstruments`) `%sInstruments` ON `iIndex` = `Instrument` WHERE `Composition` = "%d" ORDER BY `CustomOrder`, `Part`;',
+        $sql = sprintf('SELECT `Index` FROM `%sScoreFile` INNER JOIN (SELECT `Index` AS `iIndex`, `CustomOrder` FROM `%sInstrument`) `%sInstrument` ON `iIndex` = `Instrument` WHERE `Composition` = "%d" ORDER BY `CustomOrder`, `VoiceLabel`;',
         $GLOBALS['dbprefix'],
-        $GLOBALS['dbprefix'],
-        $GLOBALS['dbprefix'],
+        identityPrefix(),
+        identityPrefix(),
         $this->Index
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
@@ -315,7 +315,7 @@ class Composition
     }
 
     public function listCollections() {
-        $sql = sprintf('SELECT `Index`, `CollectionNumber`, `cName` FROM `%sCollection` INNER JOIN (SELECT `Index` AS `iIndex`, `Name` AS `cName` FROM `%sCollections`) `%sCollections` ON `iIndex` = `Collections` WHERE `Composition` = "%d" ORDER BY `cName`;',
+        $sql = sprintf('SELECT `Index`, `CollectionNumber`, `cName` FROM `%sCollectionItem` INNER JOIN (SELECT `Index` AS `iIndex`, `Name` AS `cName` FROM `%sCollection`) `%sCollection` ON `iIndex` = `Collections` WHERE `Composition` = "%d" ORDER BY `cName`;',
         $GLOBALS['dbprefix'],
         $GLOBALS['dbprefix'],
         $GLOBALS['dbprefix'],

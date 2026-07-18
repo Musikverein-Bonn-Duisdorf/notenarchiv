@@ -48,7 +48,7 @@ class Composer
     }
         
     public function delete() {
-        $sql = sprintf('DELETE FROM `%sComposers` WHERE `Index` = "%d";',
+        $sql = sprintf('DELETE FROM `%sComposer` WHERE `Index` = "%d";',
         $GLOBALS['dbprefix'],
         $this->Index
         );
@@ -66,7 +66,7 @@ class Composer
         return true;
     }
     protected function insert() {
-        $sql = sprintf('INSERT INTO `%sComposers` (`FirstName`, `LastName`) VALUES ("%s", "%s");',
+        $sql = sprintf('INSERT INTO `%sComposer` (`FirstName`, `LastName`) VALUES ("%s", "%s");',
         $GLOBALS['dbprefix'],
         $this->FirstName,
         $this->LastName
@@ -78,7 +78,7 @@ class Composer
         return true;
     }
     protected function update() {
-        $sql = sprintf('UPDATE `%sComposers` SET `FirstName` = "%s", `LastName` = "%s" WHERE `Index` = "%d";',
+        $sql = sprintf('UPDATE `%sComposer` SET `FirstName` = "%s", `LastName` = "%s" WHERE `Index` = "%d";',
         $GLOBALS['dbprefix'],
         $this->FirstName,
         $this->LastName,
@@ -91,7 +91,7 @@ class Composer
     }
     public function load_by_id($Index) {
         $Index = (int) $Index;
-        $sql = sprintf('SELECT * FROM `%sComposers` WHERE `Index` = "%d";',
+        $sql = sprintf('SELECT * FROM `%sComposer` WHERE `Index` = "%d";',
         $GLOBALS['dbprefix'],
         $Index
         );

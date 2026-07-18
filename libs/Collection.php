@@ -52,7 +52,7 @@ class Collection
     }
 
     public function delete() {
-        $sql = sprintf('DELETE FROM `%sCollection` WHERE `Index` = "%d";',
+        $sql = sprintf('DELETE FROM `%sCollectionItem` WHERE `Index` = "%d";',
         $GLOBALS['dbprefix'],
         $this->Index
         );
@@ -62,7 +62,7 @@ class Collection
 
     public function fillJoins() {
         if(!$this->Title) {
-            $sql = sprintf('SELECT * FROM `%sCompositions` WHERE `Index` = %d;',
+            $sql = sprintf('SELECT * FROM `%sComposition` WHERE `Index` = %d;',
             $GLOBALS['dbprefix'],
             $this->Composition
             );
@@ -72,7 +72,7 @@ class Collection
             if($row) $this->Title = $row['Title'];
         }
         if(!$this->CollectionName) {
-            $sql = sprintf('SELECT * FROM `%sCollections` WHERE `Index` = %d;',
+            $sql = sprintf('SELECT * FROM `%sCollection` WHERE `Index` = %d;',
             $GLOBALS['dbprefix'],
             $this->Collections
             );
@@ -95,7 +95,7 @@ class Collection
         return true;
     }
     protected function insert() {
-        $sql = sprintf('INSERT INTO `%sCollection` (`Collections`, `Composition`, `CollectionNumber`) VALUES ("%d", "%d", %s);',
+        $sql = sprintf('INSERT INTO `%sCollectionItem` (`Collections`, `Composition`, `CollectionNumber`) VALUES ("%d", "%d", %s);',
         $GLOBALS['dbprefix'],
         $this->Collections,
         $this->Composition,
@@ -108,7 +108,7 @@ class Collection
         return true;
     }
     protected function update() {
-        $sql = sprintf('UPDATE `%sCollection` SET `Collections` = "%d", `Composition` = "%d", `CollectionNumber` = %s WHERE `Index` = "%d";',
+        $sql = sprintf('UPDATE `%sCollectionItem` SET `Collections` = "%d", `Composition` = "%d", `CollectionNumber` = %s WHERE `Index` = "%d";',
         $GLOBALS['dbprefix'],
         $this->Collections,
         $this->Composition,
@@ -122,7 +122,7 @@ class Collection
     }
     public function load_by_id($Index) {
         $Index = (int) $Index;
-        $sql = sprintf('SELECT * FROM `%sCollection` WHERE `Index` = "%d";',
+        $sql = sprintf('SELECT * FROM `%sCollectionItem` WHERE `Index` = "%d";',
         $GLOBALS['dbprefix'],
         $Index
         );

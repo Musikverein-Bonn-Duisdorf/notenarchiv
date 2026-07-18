@@ -11,7 +11,7 @@ include "common/header.php";
 <div id="Liste">
 <?php
 $now = date("Y-m-d");
-$sql = sprintf('SELECT `Index` FROM `%sCollections` ORDER BY `Name`;',
+$sql = sprintf('SELECT `Index` FROM `%sCollection` ORDER BY `Name`;',
 $GLOBALS['dbprefix']
 );
 $dbr = mysqli_query($conn, $sql);

@@ -13,6 +13,10 @@ include "libs/Part.php";
 include "libs/Collections.php";
 include "libs/Collection.php";
 include "libs/Composer.php";
-include "libs/Publisher.php";
-
+include "libs/ScoreFile.php";
+include "libs/RehearsalPhase.php";
+include "libs/Stimmsatz.php";
+include "libs/NextcloudClient.php";
+include "libs/SQLtable.php";
+include "libs/SchemaManager.php";
 ?>

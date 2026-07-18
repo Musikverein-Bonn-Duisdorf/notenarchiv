@@ -51,7 +51,7 @@ class Collections
         return true;
     }
     protected function insert() {
-        $sql = sprintf('INSERT INTO `%sCollections` (`Name`) VALUES ("%s");',
+        $sql = sprintf('INSERT INTO `%sCollection` (`Name`) VALUES ("%s");',
         $GLOBALS['dbprefix'],
         $this->Name
         );
@@ -62,7 +62,7 @@ class Collections
         return true;
     }
     protected function update() {
-        $sql = sprintf('UPDATE `%sCollections` SET `Name` = "%s" WHERE `Index` = "%d";',
+        $sql = sprintf('UPDATE `%sCollection` SET `Name` = "%s" WHERE `Index` = "%d";',
         $GLOBALS['dbprefix'],
         $this->Name,
         $this->Index
@@ -74,7 +74,7 @@ class Collections
     }
     public function load_by_id($Index) {
         $Index = (int) $Index;
-        $sql = sprintf('SELECT * FROM `%sCollections` WHERE `Index` = "%d";',
+        $sql = sprintf('SELECT * FROM `%sCollection` WHERE `Index` = "%d";',
         $GLOBALS['dbprefix'],
         $Index
         );
@@ -98,7 +98,7 @@ class Collections
         $header->body="<h3>".$this->Name."</h3>";
         $str=$str.$header->print();
         
-        $sql = sprintf('SELECT `Index` FROM `%sCollection` WHERE `Collections` = "%d" ORDER BY `CollectionNumber` ASC;',
+        $sql = sprintf('SELECT `Index` FROM `%sCollectionItem` WHERE `Collections` = "%d" ORDER BY `CollectionNumber` ASC;',
         $GLOBALS['dbprefix'],
         $this->Index
         );
