@@ -7,15 +7,40 @@ requireAdmin();
 
 $phaseId = isset($_REQUEST['phase']) ? (int)$_REQUEST['phase'] : 0;
 $instrumentId = isset($_REQUEST['instrument']) ? (int)$_REQUEST['instrument'] : 0;
-$voiceLabel = isset($_REQUEST['voice']) ? trim((string)$_REQUEST['voice']) : '1';
+$voiceLabel = isset($_REQUEST['voice']) ? trim((string)$_REQUEST['voice']) : '';
+$tryUserVoice = ($phaseId > 0 && $instrumentId === 0 && $voiceLabel === '' && isset($_SESSION['userid']));
 
 $phases = RehearsalPhase::listAll(false);
 $pieces = array();
 $printNote = '';
+$userVoiceHint = '';
 if($phaseId && $instrumentId && $voiceLabel !== '') {
     $stimmsatz = new Stimmsatz($phaseId, $instrumentId, $voiceLabel);
     $pieces = $stimmsatz->resolvePieces();
     $printNote = $stimmsatz->getPrintModeNote();
+}
+elseif($tryUserVoice && Stimmsatz::userVoiceTableExists()) {
+    $stimmsatz = new Stimmsatz($phaseId, 0, '');
+    $resolved = $stimmsatz->resolvePiecesWithUserVoice((int)$_SESSION['userid']);
+    if($resolved) {
+        $pieces = $resolved['pieces'];
+        $instrumentId = $resolved['instrumentId'];
+        $voiceLabel = $resolved['voiceLabel'];
+        $printNote = (new Stimmsatz($phaseId, $instrumentId, $voiceLabel))->getPrintModeNote();
+        $userVoiceHint = $resolved['usedFallback']
+            ? 'Fallback-Stimme aus Meldeliste UserVoice verwendet.'
+            : 'Primär-Stimme aus Meldeliste UserVoice verwendet.';
+    }
+}
+if($voiceLabel === '' && $instrumentId === 0 && isset($_SESSION['userid']) && Stimmsatz::userVoiceTableExists()) {
+    $candidates = Stimmsatz::userVoiceCandidates((int)$_SESSION['userid']);
+    if(!empty($candidates)) {
+        $instrumentId = (int)$candidates[0]['instrument'];
+        $voiceLabel = (string)$candidates[0]['voice'];
+    }
+}
+if($voiceLabel === '') {
+    $voiceLabel = '1';
 }
 ?>
 <div class="w3-container <?php echo $GLOBALS['optionsDB']['colorTitleBar']; ?>">
@@ -49,6 +74,12 @@ if($phaseId && $instrumentId && $voiceLabel !== '') {
       <button class="w3-button <?php echo $GLOBALS['optionsDB']['colorBtnSubmit']; ?>" type="submit">Anzeigen</button>
     </div>
   </form>
+
+  <?php if($userVoiceHint) { ?>
+  <div class="w3-panel w3-pale-blue w3-margin-top">
+    <p><?php echo htmlspecialchars($userVoiceHint); ?></p>
+  </div>
+  <?php } ?>
 
   <?php if($printNote) { ?>
   <div class="w3-panel w3-pale-yellow w3-margin-top">
