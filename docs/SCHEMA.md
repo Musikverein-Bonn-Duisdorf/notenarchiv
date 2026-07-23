@@ -8,7 +8,8 @@
 | Composition | Werk inkl. RegistrationNumber (Inventar) |
 | ScoreFile | PDF-Stimme (Nextcloud-Pfad, Instrument, voice_label) |
 | RehearsalPhase / RehearsalPiece | Probenphase + Repertoire |
-| PrintJob | Druckprotokoll |
 | config / Log | App-Config + Audit |
 
-Prefix: `archiv_`. Identity bleibt `meldeliste_User`.
+Prefix: `archiv_` (bzw. `archiv-dev_`). Identity bleibt `meldeliste_User`.
+
+Schema-Repair/`pruneObsoleteSchema` droppt nur `{dbprefix}*`-Tabellen (z. B. veraltetes `PrintJob`) — nie `meldeliste_*` oder `mit_*`.

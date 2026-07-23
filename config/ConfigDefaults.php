@@ -6,15 +6,11 @@
  *
  * Melde-colliding keys are stored as Archiv* in archiv_config; loadconfig()
  * aliases them to logical names (colorNav, WebSiteURL, …) for UI code.
+ *
+ * No Melde-RSVP (BtnYes/Maybe/No) or unused log-chip colors — Log UI uses CSS chips.
  */
 function getConfigDefaults() {
     return array(
-        array(
-            'Parameter' => 'ArchivColorLogDefault',
-            'Value' => '#FDFFFC',
-            'Type' => 'color',
-            'Description' => 'Farbe von DEFAULT Logeintr&auml;gen',
-        ),
         array(
             'Parameter' => 'ArchivColorLogFatal',
             'Value' => '#F44336',
@@ -32,60 +28,6 @@ function getConfigDefaults() {
             'Value' => '#FFC300',
             'Type' => 'color',
             'Description' => 'Farbe von WARNING Logeintr&auml;gen',
-        ),
-        array(
-            'Parameter' => 'ArchivColorLogDBDelete',
-            'Value' => '#FDFFFC',
-            'Type' => 'color',
-            'Description' => 'Farbe von DB DELETE Logeintr&auml;gen',
-        ),
-        array(
-            'Parameter' => 'ArchivColorLogDBInsert',
-            'Value' => '#FDFFFC',
-            'Type' => 'color',
-            'Description' => 'Farbe von DB INSERT Logeintr&auml;gen',
-        ),
-        array(
-            'Parameter' => 'ArchivColorLogDBUpdate',
-            'Value' => '#FDFFFC',
-            'Type' => 'color',
-            'Description' => 'Farbe von DB UPDATE Logeintr&auml;gen',
-        ),
-        array(
-            'Parameter' => 'ArchivColorLogEmail',
-            'Value' => '#FDFFFC',
-            'Type' => 'color',
-            'Description' => 'Farbe von EMAIL Logeintr&auml;gen',
-        ),
-        array(
-            'Parameter' => 'ArchivColorLogInfo',
-            'Value' => '#FDFFFC',
-            'Type' => 'color',
-            'Description' => 'Farbe von INFO Logeintr&auml;gen',
-        ),
-        array(
-            'Parameter' => 'ArchivColorBtnYes',
-            'Value' => '#4CAF50',
-            'Type' => 'color',
-            'Description' => 'Farbe von Ja-Buttons',
-        ),
-        array(
-            'Parameter' => 'ArchivColorBtnNo',
-            'Value' => '#F44336',
-            'Type' => 'color',
-            'Description' => 'Farbe von Nein-Buttons',
-        ),
-        array(
-            'Parameter' => 'ArchivColorBtnMaybe',
-            'Value' => '#2196F3',
-            'Type' => 'color',
-            'Description' => 'Farbe von Vielleicht-Buttons',
-        ),
-        array(
-            'Parameter' => 'ArchivColorDisabled',
-            'Value' => '#9E9E9E',
-            'Type' => 'color',
-            'Description' => 'Farbe von deaktivierten Elementen',
         ),
         array(
             'Parameter' => 'ArchivColorBtnEdit',
