@@ -14,7 +14,7 @@ Verkaufbare / installierbare Module:
 
 - **Self-Host** und **gehostet**: gleiche Artefakte; Unterschied nur Betrieb/Config.
 - Single-Tenant zuerst (eine Installation = ein Verein).
-- **Eine gemeinsame MySQL**; Domänen nur über Prefix getrennt.
+- **Eine gemeinsame MySQL**; Domänen nur über Prefix getrennt. Keine separate User-DB.
 
 ## Constraints
 
@@ -22,6 +22,11 @@ Verkaufbare / installierbare Module:
 - White-Label: Vereinsname/URLs/Branding in Config, nicht hardcoded.
 - Feature-Flags / Lizenz-Hook später andockbar (`modules.enabled` o. Ä.).
 - Melde-Eingriffe minimal (SSO-Hook, UserVoice).
+
+## Reihenfolge
+
+1. **Phase 1 (aktuell):** Notenarchiv an Melde andocken (ARCHIV-4: Identity → SSO → Permissions → Security).
+2. **Phase 2:** Mitgliederverwaltung als Mitgliedschafts-Hub (`mit_Person`, Fördernde) — blockiert Archiv nicht.
 
 ## Ops-Grenzen (ARCHIV-16)
 
@@ -35,3 +40,15 @@ Sibling-App: **eigene** Config- und Update-Fläche; **kein** Melde-Admin-Host.
 | Backup praktisch | Hosting/mysqldump der gemeinsamen DB (+ optional Dateien unter `data/`) |
 
 Siehe Melde Ownership-Matrix Abschnitte A/B (MELD-157).
+
+## Session / Security (ARCHIV-8)
+
+- `libs/sessionBootstrap.php` → `archivConfigureSession()` (Secure/HttpOnly/SameSite=Lax, analog Melde).
+- SSO-Login wird geloggt (`Login via Melde-SSO ticket.`).
+
+## UI-Shell (Melde-Parität)
+
+- Layout: `body.app-layout` → `.app-titlebar` → `.app-shell` → `nav.app-nav` → `.app-main` (siehe Melde).
+- Assets: `styles/custom.css`, `styles/w3-color-mvd.css`, lokale Font Awesome 6, `js/app-nav.js` / `toast.js` / `modal.js`.
+- Listen-Chrome: `adminListPageBegin` / `adminListSearchField` / `adminListPageEnd` in `libs/uiShell.php`.
+- Modals: `#ajaxModalHost` + `deferPageModalHtml()` außerhalb von `.app-main`.

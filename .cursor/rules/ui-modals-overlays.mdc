@@ -1,0 +1,38 @@
+---
+description: Modal-/Overlay-Design und Platzierung außerhalb des Hauptinhalts
+alwaysApply: true
+---
+
+# Modals & Overlays
+
+(Übernommen aus Meldeliste — Zielbild für neue Dialoge; bestehende `w3-modal`+Titelbalken-Dialoge nicht ohne Ticket nachbauen.)
+
+## Shell-Markup (Pflicht für neue Dialoge)
+
+Wenn Melde-ähnliche Shell-Klassen im Archiv verfügbar sind (oder parallel eingeführt werden):
+
+- Inhalt in `profile-shell modal-shell` (Referenz Melde: `views/termin/calendar_melde_modal.php`).
+- Hero: `profile-hero` mit `profile-kicker`, `profile-title`, optional `profile-actions` / `profile-btn-primary`, Schließen als `modal-close w3-button`.
+- Körper: `profile-grid` + `profile-col` / `profile-field` — **kein** altes `w3-container`+`colorTitleBar`-Header-Card-Layout.
+- Bestätigungen (Löschen): gleiche Shell; Primäraktion klar („Löschen“), Abbrechen sekundär — nicht „ja“/„nein“ in alten Grid-Spalten.
+
+Solange die Shell-CSS noch fehlt: neue Dialoge trotzdem **ohne** farbigen Titelbalken-Card-Stil anlegen; Struktur (Hero + Felder + klare Primäraktion) beibehalten.
+
+## Platzierung
+
+Feste Overlays in scrollenden/overflow-Containern kollidieren mit Nav und Inhalt (Melde: MELD-147 / `.app-main`).
+
+- **AJAX-Dialoge:** Host außerhalb der Seitenkarte (Ziel: `#ajaxModalHost` in `common/footer.php`, analog Melde).
+- **Seiten-lokale `.w3-modal`:** nicht tief in Listen-/Karten-Markup begraben; am Seitenende bzw. Footer-Host ausgeben.
+- `.w3-modal` soll über Nav/Titlebar liegen (Ziel-`z-index` analog Melde: Modal ≥ 2000).
+- Sheets/Bottom-Bars: an `document.body` hängen, nicht in den Seiteninhalt.
+
+## Nicht tun
+
+- Keine **neuen** Dialoge im Stil `w3-modal-content w3-card` + farbiger `w3-container`-Titelbalken.
+- Kein `position:fixed`-Overlay als Kind eines overflow-/Karten-Containers ohne Herausheben ans Body/Footer-Host.
+- Keine zweite parallele Modal-Infrastruktur, wenn ein gemeinsamer Host reicht.
+
+## Bestand
+
+Bestehende Composer-/Publisher-/Lösch-Modals dürfen bis zum Umbau alt bleiben; bei Touch an diesen Stellen Richtung Shell/Platzierung migrieren.

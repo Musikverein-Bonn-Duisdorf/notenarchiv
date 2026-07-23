@@ -3,19 +3,73 @@ function identityPrefix() {
     return isset($GLOBALS['identityPrefix']) ? $GLOBALS['identityPrefix'] : $GLOBALS['dbprefix'];
 }
 function loadconfig() {
+    $optionsDB = array();
     $sql = sprintf('SELECT * FROM `%sconfig`;',
 		   $GLOBALS['dbprefix']
     );
     $dbr = mysqli_query($GLOBALS['conn'], $sql);
-    sqlerror();
-    $optionsDB = array();
-    while($row = mysqli_fetch_array($dbr)) {
-        $optionsDB += [$row['Parameter'] => $row['Value']];
+    if($dbr) {
+        while($row = mysqli_fetch_array($dbr)) {
+            $optionsDB[$row['Parameter']] = $row['Value'];
+        }
+    }
+    if(function_exists('getConfigDefaults')) {
+        foreach(getConfigDefaults() as $item) {
+            if(!array_key_exists($item['Parameter'], $optionsDB)) {
+                $optionsDB[$item['Parameter']] = $item['Value'];
+            }
+        }
+    }
+    if(function_exists('getColorConfigParameters') && function_exists('colorToCssClass')) {
+        $colorParams = getColorConfigParameters();
+        foreach($optionsDB as $param => $value) {
+            if(isset($colorParams[$param]) || (function_exists('isHexColor') && isHexColor($value))) {
+                $optionsDB[$param] = colorToCssClass($value);
+            }
+        }
     }
     return $optionsDB;
 }
 function requireAdmin() {
-    if(!$_SESSION['admin']) die("Admin permissions required.");
+    refreshSessionAdmin();
+    if(empty($_SESSION['admin'])) die("Admin permissions required.");
+}
+
+/**
+ * Admin = Melde User.Admin OR any Melde Permissions flag (ARCHIV-6).
+ * @param int $userId
+ * @param bool $legacyAdmin User.Admin column
+ * @return bool
+ */
+function computeAdminForUser($userId, $legacyAdmin = false) {
+    if($legacyAdmin) {
+        return true;
+    }
+    $userId = (int)$userId;
+    if($userId < 1) {
+        return false;
+    }
+    return IdentityPermissions::loadForUser($userId)->isAdmin();
+}
+
+/** Refresh $_SESSION['admin'] from Melde User.Admin OR Permissions. */
+function refreshSessionAdmin() {
+    if(!isset($_SESSION['userid'])) {
+        return;
+    }
+    $uid = (int)$_SESSION['userid'];
+    if($uid < 1) {
+        return;
+    }
+    $sql = sprintf(
+        "SELECT `Admin` FROM `%sUser` WHERE `Index` = %d LIMIT 1;",
+        identityPrefix(),
+        $uid
+    );
+    $dbr = @mysqli_query($GLOBALS['conn'], $sql);
+    $row = ($dbr) ? mysqli_fetch_assoc($dbr) : null;
+    $legacy = $row ? (bool)$row['Admin'] : false;
+    $_SESSION['admin'] = computeAdminForUser($uid, $legacy);
 }
 function bool2string($val) {
     if($val) return "ja";
@@ -154,13 +208,16 @@ function PublishersOption($val) {
     }
 }
 
-function getPage($string) {
+function getPage($string, $groupId = '') {
     if($string == $_SESSION['page']) {
         echo $GLOBALS['optionsDB']['colorTitleBar'];
+        return;
     }
-    else {
-        echo $GLOBALS['optionsDB']['colorNav'];
+    if($groupId !== '' && function_exists('navGroupClass')) {
+        echo navGroupClass($groupId);
+        return;
     }
+    echo $GLOBALS['optionsDB']['colorNav'];
 }
 
 function getAdminPage($string) {
@@ -280,7 +337,7 @@ function validateLink($hash) {
         $_SESSION['Vorname'] = $row['Vorname'];
         $_SESSION['Nachname'] = $row['Nachname'];
         $_SESSION['username'] = $row['Vorname']." ".$row['Nachname'];
-        $_SESSION['admin'] = (bool)$row['Admin'];
+        $_SESSION['admin'] = computeAdminForUser((int)$row['Index'], (bool)$row['Admin']);
         $_SESSION['singleUsePW'] = (bool)$row['singleUsePW'];
         $logentry = new Log;
         $logentry->info("Login via Link.");
@@ -304,7 +361,7 @@ function validateUser($login, $password) {
             $_SESSION['Vorname'] = $row['Vorname'];
             $_SESSION['Nachname'] = $row['Nachname'];
             $_SESSION['username'] = $row['Vorname']." ".$row['Nachname'];
-            $_SESSION['admin'] = (bool)$row['Admin'];
+            $_SESSION['admin'] = computeAdminForUser((int)$row['Index'], (bool)$row['Admin']);
             $_SESSION['singleUsePW'] = (bool)$row['singleUsePW'];
             $logentry = new Log;
             $logentry->info("Login via Password.");
@@ -354,7 +411,7 @@ function loginUserBySsoId($userId) {
     $_SESSION['Vorname'] = $row['Vorname'];
     $_SESSION['Nachname'] = $row['Nachname'];
     $_SESSION['username'] = $row['Vorname'].' '.$row['Nachname'];
-    $_SESSION['admin'] = (bool)$row['Admin'];
+    $_SESSION['admin'] = computeAdminForUser((int)$row['Index'], (bool)$row['Admin']);
     $_SESSION['singleUsePW'] = (bool)$row['singleUsePW'];
     $logentry = new Log();
     $logentry->info('Login via Melde-SSO ticket.');

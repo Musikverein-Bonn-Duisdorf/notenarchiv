@@ -1,29 +1,36 @@
 <?php
-session_start();
+require_once __DIR__.'/libs/sessionBootstrap.php';
+archivConfigureSession();
 ?>
 <!DOCTYPE html>
 <html lang="de">
   <head>
-      <meta name="viewport" content="width=device-width, initial-scale=1">      
-      <link rel="stylesheet" href="styles/w3.css">
-	<link rel="stylesheet" href="styles/w3-colors-highway.css">
       <?php
           include 'common/include.php';
+          $assetV = isset($GLOBALS['version']['Hash']) ? $GLOBALS['version']['Hash'] : '0';
+          $cssUrl = function ($rel) use ($assetV) {
+              $mtime = @filemtime(__DIR__ . '/' . $rel);
+              return htmlspecialchars($rel . '?' . $assetV . '-' . $mtime, ENT_QUOTES, 'UTF-8');
+          };
       ?>
-      <link rel="icon" href="<?php echo $GLOBALS['optionsDB']['favicon']; ?>" type="image/x-icon">
-      <!-- successfully included php libraries -->
       <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title><?php echo $optionsDB['WebSiteName']; ?></title>
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <link rel="stylesheet" href="<?php echo $cssUrl('styles/w3.css'); ?>">
+      <link rel="stylesheet" href="<?php echo $cssUrl('styles/w3-colors-highway.css'); ?>">
+      <link rel="stylesheet" href="<?php echo $cssUrl('styles/w3-color-mvd.css'); ?>">
+      <link rel="stylesheet" href="<?php echo $cssUrl('styles/custom.css'); ?>">
+      <?php echo renderConfigColorCss(); ?>
+      <link rel="icon" href="<?php echo htmlspecialchars((string)$GLOBALS['optionsDB']['favicon'], ENT_QUOTES, 'UTF-8'); ?>" type="image/x-icon">
+      <title><?php echo htmlspecialchars((string)$optionsDB['WebSiteName'], ENT_QUOTES, 'UTF-8'); ?></title>
   </head>
-  <body class="<?php echo $GLOBALS['optionsDB']['colorBackground']; ?>">
-      <div class="w3-container <?php echo $optionsDB['colorTitle']; ?>">
-<h1><?php echo $optionsDB['WebSiteName']; ?></h1>
-</div>
+  <body class="<?php echo htmlspecialchars((string)$GLOBALS['optionsDB']['colorBackground'], ENT_QUOTES, 'UTF-8'); ?> app-layout">
+      <div class="app-titlebar <?php echo htmlspecialchars((string)$optionsDB['colorTitle'], ENT_QUOTES, 'UTF-8'); ?>">
+        <h1 class="app-titlebar-name"><?php echo htmlspecialchars((string)$optionsDB['WebSiteName'], ENT_QUOTES, 'UTF-8'); ?></h1>
+      </div>
 <meta http-equiv="refresh" content="3; URL='login.php'" />
   <div class="w3-panel w3-mobile w3-center <?php echo $GLOBALS['optionsDB']['colorSuccess']; ?>"><h2>Logout erfolgreich.</h2></div>
 <?php
-    if($_SESSION['userid']) {
+    if(!empty($_SESSION['userid'])) {
         $logentry = new Log;
         $logentry->info("Logout.");
     }

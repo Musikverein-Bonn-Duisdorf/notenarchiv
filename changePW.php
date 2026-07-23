@@ -1,5 +1,6 @@
 <?php
- session_start();
+require_once __DIR__.'/libs/sessionBootstrap.php';
+archivConfigureSession();
 include 'common/include.php';
 ?>
 <!DOCTYPE html>

@@ -17,6 +17,12 @@ function getConfigDefaults() {
             'Type' => 'string',
             'Description' => 'Nextcloud WebDAV base URL (empty = disabled)',
         ),
+        array(
+            'Parameter' => 'urlMeldeliste',
+            'Value' => '',
+            'Type' => 'string',
+            'Description' => 'Basis-URL Meldeliste (Nav-Rücklink; leer = ausgeblendet)',
+        ),
     );
 }
 ?>

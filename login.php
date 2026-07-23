@@ -1,24 +1,36 @@
 <?php
-session_start();
+require_once __DIR__.'/libs/sessionBootstrap.php';
+archivConfigureSession();
 ?>
 <!DOCTYPE html>
 <html lang="de">
   <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">      
-    <link rel="stylesheet" href="styles/w3.css">
-    <link rel="stylesheet" href="styles/w3-colors-highway.css">
     <?php
+      if(!headers_sent()) {
+          header('Content-Type: text/html; charset=utf-8');
+      }
       include 'common/include.php';
-      ?>
-    <link rel="icon" href="<?php echo $GLOBALS['optionsDB']['favicon']; ?>" type="image/x-icon">
-    <!-- successfully included php libraries -->
+      $assetV = isset($GLOBALS['version']['Hash']) ? $GLOBALS['version']['Hash'] : '0';
+      $cssUrl = function ($rel) use ($assetV) {
+          $mtime = @filemtime(__DIR__ . '/' . $rel);
+          return htmlspecialchars($rel . '?' . $assetV . '-' . $mtime, ENT_QUOTES, 'UTF-8');
+      };
+    ?>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $optionsDB['WebSiteName']; ?></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="<?php echo $cssUrl('styles/w3.css'); ?>">
+    <link rel="stylesheet" href="<?php echo $cssUrl('styles/w3-colors-highway.css'); ?>">
+    <link rel="stylesheet" href="<?php echo $cssUrl('styles/w3-color-mvd.css'); ?>">
+    <link rel="stylesheet" href="<?php echo $cssUrl('styles/custom.css'); ?>">
+    <link rel="stylesheet" href="<?php echo $cssUrl('styles/fontawesome-free-6.4.2-web/css/fontawesome.css'); ?>">
+    <link rel="stylesheet" href="<?php echo $cssUrl('styles/fontawesome-free-6.4.2-web/css/solid.css'); ?>">
+    <?php echo renderConfigColorCss(); ?>
+    <link rel="icon" href="<?php echo htmlspecialchars((string)$GLOBALS['optionsDB']['favicon'], ENT_QUOTES, 'UTF-8'); ?>" type="image/x-icon">
+    <title><?php echo htmlspecialchars((string)$optionsDB['WebSiteName'], ENT_QUOTES, 'UTF-8'); ?></title>
   </head>
-  <body class="<?php echo $GLOBALS['optionsDB']['colorBackground']; ?>">
-    <div class="w3-container <?php echo $optionsDB['colorTitle']; ?>">
-      <h1><?php echo $optionsDB['WebSiteName']; ?></h1>
+  <body class="<?php echo htmlspecialchars((string)$GLOBALS['optionsDB']['colorBackground'], ENT_QUOTES, 'UTF-8'); ?> app-layout">
+    <div class="app-titlebar <?php echo htmlspecialchars((string)$optionsDB['colorTitle'], ENT_QUOTES, 'UTF-8'); ?>">
+      <h1 class="app-titlebar-name"><?php echo htmlspecialchars((string)$optionsDB['WebSiteName'], ENT_QUOTES, 'UTF-8'); ?></h1>
     </div>
     <?php
 if(isset($_GET['alink'])) {
@@ -39,7 +51,7 @@ if(isset($_POST['triggerlogin'])) {
     }
 }
 if(loggedIn()) {
-    if($_SESSION['singleUsePW']) {
+    if(!empty($_SESSION['singleUsePW'])) {
       ?>
     <meta http-equiv="refresh" content="0; URL='changePW.php'" />
     <?php
@@ -53,20 +65,17 @@ if(loggedIn()) {
       ?>
     <div class="w3-panel w3-mobile w3-center w3-col s3 l4">
     </div>
-    <div class="w3-panel w3-mobile w3-center w3-border w3-col s6 l4">
+    <div class="w3-panel w3-mobile w3-center w3-border w3-col s6 l4 profile-shell">
       <div class="w3-panel <?php echo $GLOBALS['optionsDB']['colorTitleBar']; ?> w3-mobile">
 	<h2>Login</h2>
       </div>
       <form class="w3-container" action="" method="POST">
-	
 	<label>Benutzer</label>
 	<input class="w3-input w3-border <?php echo $GLOBALS['optionsDB']['colorInputBackground']; ?> w3-margin-bottom w3-mobile" type="text" name="login" />
-	
 	<label>Passwort</label>
 	<input class="w3-input w3-border <?php echo $GLOBALS['optionsDB']['colorInputBackground']; ?> w3-margin-bottom w3-mobile" type="password" name="password" />
-	
 	<button class="w3-btn <?php echo $GLOBALS['optionsDB']['colorBtnSubmit']; ?> w3-border w3-mobile" type="submit" name="triggerlogin">Login</button>
-	<a class="w3-btn w3-margin-top w3-margin-bottom <?php echo $GLOBALS['optionsDB']['colorBtnSubmit']; ?> w3-border w3-mobile" href="<?php echo $optionsDB['MasterPage']; ?>">Vereinshomepage</a>
+	<a class="w3-btn w3-margin-top w3-margin-bottom <?php echo $GLOBALS['optionsDB']['colorBtnSubmit']; ?> w3-border w3-mobile" href="<?php echo htmlspecialchars((string)$optionsDB['MasterPage'], ENT_QUOTES, 'UTF-8'); ?>">Vereinshomepage</a>
       </form>
     </div>
     <div class="w3-panel w3-mobile w3-center w3-col s3 l4">

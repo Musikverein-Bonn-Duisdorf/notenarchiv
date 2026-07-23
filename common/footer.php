@@ -1,2 +1,27 @@
+<?php
+if(!empty($GLOBALS['mlHeaderRendered'])) {
+?>
+</div><!-- .app-main -->
+</div><!-- .app-shell -->
+<?php
+}
+if(!empty($GLOBALS['mlDeferredPageModals'])) {
+    echo $GLOBALS['mlDeferredPageModals'];
+    unset($GLOBALS['mlDeferredPageModals']);
+}
+if(!empty($GLOBALS['mlDeferredToasts'])) {
+    echo '<div class="app-toast-host" aria-live="polite">'
+        .$GLOBALS['mlDeferredToasts']
+        .'</div>';
+    unset($GLOBALS['mlDeferredToasts']);
+}
+if(!empty($GLOBALS['mlHeaderRendered'])) {
+?>
+<div id="ajaxModalHost" class="w3-modal" onclick="if(event.target===this)closeModal();">
+  <div id="ajaxModalContent" class="w3-modal-content"></div>
+</div>
+<script src="<?php echo assetUrl('js/modal.js'); ?>"></script>
+<script src="<?php echo assetUrl('js/toast.js'); ?>"></script>
+<?php } ?>
   </body>
 </html>

@@ -1,5 +1,6 @@
 <?php
-session_start();
+require_once __DIR__.'/libs/sessionBootstrap.php';
+archivConfigureSession();
 $_SESSION['page']='home';
 $_SESSION['adminpage']=false;
 include "common/header.php";
@@ -22,7 +23,6 @@ if(isset($_POST['Delete'])) {
     }
 }
 
-    
 $sql = sprintf('SELECT COUNT(`Index`) AS `Count` FROM `%sComposition`;',
 $GLOBALS['dbprefix']
 );
@@ -31,14 +31,10 @@ sqlerror();
 $row = mysqli_fetch_array($dbr);
 $nPieces = $row['Count'];
 
+adminListPageBegin('Archiv', 'Stückliste ('.$nPieces.')');
+adminListSearchField('Suche…', array('onkeyup' => 'filterPieces()'));
 ?>
-<script src="js/filterPieces.js?<?php echo $GLOBALS['version']['Hash']; ?>"></script>
-<div class="w3-container <?php echo $GLOBALS['optionsDB']['colorTitleBar'] ;?>">
-    <h2>Stückliste (<?php echo $nPieces; ?>)</h2>
-</div>
-<div class="w3-row">
-         <input class="w3-input w3-border w3-padding w3-col l6 s12 m12" type="text" placeholder="Suche..." id="filterString" onkeyup="filterPieces()">
-</div>
+<script src="<?php echo assetUrl('js/filterPieces.js'); ?>"></script>
 <div class="w3-row w3-padding w3-border-bottom w3-border-black">
   <div class="w3-col l1 w3-center"><b>Archivnummer</b></div>
   <div class="w3-col l3 w3-center"><b>Titel</b></div>
@@ -50,10 +46,8 @@ $nPieces = $row['Count'];
 </div>
 <div id="Liste">
 <?php
-$now = date("Y-m-d");
 $sql = sprintf('SELECT `Index` FROM `%sComposition` ORDER BY `RegistrationNumber` DESC, `Title` ASC;',
-$GLOBALS['dbprefix'],
-$now,
+$GLOBALS['dbprefix']
 );
 $dbr = mysqli_query($conn, $sql);
 sqlerror();
@@ -65,5 +59,6 @@ while($row = mysqli_fetch_array($dbr)) {
 ?>
 </div>
 <?php
+adminListPageEnd();
 include "common/footer.php";
 ?>

@@ -1,5 +1,6 @@
 <?php
-session_start();
+require_once __DIR__.'/libs/sessionBootstrap.php';
+archivConfigureSession();
 $_SESSION['page']='update';
 $_SESSION['adminpage']=true;
 include "common/header.php";
@@ -9,6 +10,9 @@ require_once __DIR__.'/libs/SQLtable.php';
 require_once __DIR__.'/config/ConfigDefaults.php';
 require_once __DIR__.'/libs/SchemaManager.php';
 
+adminListPageBegin('System', 'Update');
+?>
+<?php
 $para=array(
     'defaultCompositionCover'
 );
@@ -51,5 +55,6 @@ $schemaMgr = new SchemaManager();
 $schemaMgr->repair();
 echo "<div class=\"w3-row w3-container w3-border w3-border-black w3-padding ".$GLOBALS['optionsDB']['colorLogInfo']."\"><div class=\"w3-col l2 m2 s2\"><b>Schema</b></div><div class=\"w3-col l10 m10 s10\"><pre>".htmlspecialchars($schemaMgr->formatReportText())."</pre></div></div>";
 
+adminListPageEnd();
 include "common/footer.php";
 ?>
