@@ -1,5 +1,6 @@
 <?php
-session_start();
+require_once __DIR__.'/libs/sessionBootstrap.php';
+archivConfigureSession();
 $_SESSION['page']='publishers';
 $_SESSION['adminpage']=false;
 include "common/header.php";
@@ -28,35 +29,42 @@ if($_SESSION['admin']) {
     sqlerror();
     $row = mysqli_fetch_array($dbr);
     $nPublishers = $row['Count'];
-?>
-<script src="js/filterPieces.js?<?php echo $GLOBALS['version']['Hash']; ?>"></script>
-<div class="w3-container <?php echo $GLOBALS['optionsDB']['colorTitleBar']; ?>">
-    <h2>Verl&auml;ge (<?php echo $nPublishers; ?>)</h2>
-</div>
 
-<div class="w3-row">
-  <input class="w3-input w3-border w3-padding w3-col l6 s6 m6" type="text" placeholder="Suchen..." id="filterString" onkeyup="filterPieces()">
-  <div onclick="document.getElementById('inputModal').style.display='block'" class="w3-col l1 m6 s6 w3-center w3-padding <?php echo $GLOBALS['optionsDB']['colorInputBackground']; ?>"><i class="fas fa-plus"></i></div>
-</div>
+    $addBtn = '<button type="button" class="w3-button '.htmlspecialchars($GLOBALS['optionsDB']['colorBtnSubmit'], ENT_QUOTES, 'UTF-8').'" onclick="document.getElementById(\'inputModal\').style.display=\'block\'" title="Anlegen"><i class="fas fa-plus"></i></button>';
+    adminListPageBegin('Verlage', 'Verlage ('.$nPublishers.')', array('actionsHtml' => $addBtn));
+    adminListSearchField('Suchen…', array('onkeyup' => 'filterPieces()'));
+?>
+<script src="<?php echo assetUrl('js/filterPieces.js'); ?>"></script>
+<?php
+    ob_start();
+?>
 <div id="inputModal" class="w3-modal">
-  <form class="w3-modal-content" action="" method="POST">
-    <header class="w3-container w3-row <?php echo $GLOBALS['optionsDB']['colorTitleBar']; ?>">
-      <span onclick="document.getElementById('inputModal').style.display='none'" class="w3-button w3-display-topright">&times;</span>
-      <h2>Verlag anlegen</h2>
+  <form class="w3-modal-content profile-shell modal-shell" action="" method="POST">
+    <header class="profile-hero">
+      <div class="profile-hero-text">
+        <p class="profile-kicker">Verlage</p>
+        <h2 class="profile-title">Anlegen</h2>
+      </div>
+      <button type="button" class="modal-close w3-button" onclick="document.getElementById('inputModal').style.display='none'" aria-label="Schließen">&times;</button>
     </header>
-    <div class="w3-row w3-padding">
-      <div class="w3-col l4 m6 s6"><b>Name</b></div>
-      <input name="Name" type="text" class="w3-input w3-col l4 m6 s6 <?php echo $GLOBALS['optionsDB']['colorInputBackground']; ?>"/>
-    </div>
-    <div class="w3-row w3-padding">
-      <div class="w3-col l4 m6 s6"><b>Address</b></div>
-      <input name="Address" type="text" class="w3-input w3-col l4 m6 s6 <?php echo $GLOBALS['optionsDB']['colorInputBackground']; ?>"/>
-    </div>
-    <div class="w3-row w3-padding">
-      <input type="submit" name="insert" value="speichern" class="w3-input w3-button w3-col l8 m12 s12 <?php echo $GLOBALS['optionsDB']['colorBtnSubmit']; ?>"/>
+    <div class="profile-grid">
+      <div class="profile-field">
+        <label class="profile-label">Name</label>
+        <input name="Name" type="text" class="w3-input w3-border profile-control <?php echo $GLOBALS['optionsDB']['colorInputBackground']; ?>"/>
+      </div>
+      <div class="profile-field">
+        <label class="profile-label">Adresse</label>
+        <input name="Address" type="text" class="w3-input w3-border profile-control <?php echo $GLOBALS['optionsDB']['colorInputBackground']; ?>"/>
+      </div>
+      <div class="profile-field">
+        <button type="submit" name="insert" value="1" class="w3-button <?php echo $GLOBALS['optionsDB']['colorBtnSubmit']; ?>">Speichern</button>
+      </div>
     </div>
   </form>
 </div>
+<?php
+    deferPageModalHtml(ob_get_clean());
+?>
 <div id="Liste">
 <?php
     $sql = sprintf('SELECT `Index` FROM `%sPublisher` ORDER BY `Name`;',
@@ -71,14 +79,14 @@ if($_SESSION['admin']) {
     }
 ?>
 </div>
-<script src="js/filterInstruments.js?<?php echo $GLOBALS['version']['Hash']; ?>"></script>
-
-<?php }
-    else {
+<?php
+    adminListPageEnd();
+}
+else {
  ?>
 <meta http-equiv="refresh" content="0; URL=index.php" />
 <?php
-    }
+}
 
  include "common/footer.php";
 ?>

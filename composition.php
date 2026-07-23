@@ -1,5 +1,6 @@
 <?php
-session_start();
+require_once __DIR__.'/libs/sessionBootstrap.php';
+archivConfigureSession();
 $_SESSION['page']='composition';
 include "common/header.php";
 
@@ -90,13 +91,9 @@ if(isset($_POST['pieceID'])) {
     }
 }
 
+adminListPageBegin('Archiv', $piece->Title.($piece->ComposerName ? ' ('.$piece->ComposerName.')' : ''));
 ?>
-<div class="w3-container <?php echo $GLOBALS['optionsDB']['colorTitleBar']; ?>">
-  <h2><?php
-       echo $piece->Title;
-if($piece->ComposerName) echo " (".$piece->ComposerName.")";
-?></h2>
-</div>
+<div class="w3-hide"><?php /* legacy titlebar removed */ ?></div>
 <div class="w3-row">
   <div class="w3-col l5">
     <div class="w3-row w3-card w3-padding w3-margin">
@@ -203,5 +200,6 @@ if($piece->ComposerName) echo " (".$piece->ComposerName.")";
   <?php echo $piece->listParts(); ?>
 </div>
 <?php
+adminListPageEnd();
 include "common/footer.php";
 ?>

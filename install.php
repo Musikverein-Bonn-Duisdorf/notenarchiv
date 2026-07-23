@@ -3,7 +3,8 @@
  * First-time database setup for Notenarchiv.
  * Open without login on fresh instances; otherwise requires Admin session.
  */
-session_start();
+require_once __DIR__.'/libs/sessionBootstrap.php';
+archivConfigureSession();
 
 $configFile = __DIR__.'/common/config.php';
 if(!is_readable($configFile)) {

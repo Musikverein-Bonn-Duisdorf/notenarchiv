@@ -1,5 +1,6 @@
 <?php
-session_start();
+require_once __DIR__.'/libs/sessionBootstrap.php';
+archivConfigureSession();
 $_SESSION['page'] = 'print-stimmsatz';
 $_SESSION['adminpage'] = true;
 include "common/header.php";
@@ -42,10 +43,8 @@ if($voiceLabel === '' && $instrumentId === 0 && isset($_SESSION['userid']) && St
 if($voiceLabel === '') {
     $voiceLabel = '1';
 }
+adminListPageBegin('Archiv', 'Stimmsatz drucken');
 ?>
-<div class="w3-container <?php echo $GLOBALS['optionsDB']['colorTitleBar']; ?>">
-  <h2>Stimmsatz drucken</h2>
-</div>
 <div class="w3-container w3-padding">
   <form method="get" class="w3-row-padding">
     <div class="w3-col m4 s12">
@@ -115,4 +114,7 @@ if($voiceLabel === '') {
   </div>
   <?php } ?>
 </div>
-<?php include "common/footer.php"; ?>
+<?php
+adminListPageEnd();
+include "common/footer.php";
+?>

@@ -1,5 +1,6 @@
 <?php
-session_start();
+require_once __DIR__.'/libs/sessionBootstrap.php';
+archivConfigureSession();
 $_SESSION['page']='config';
 $_SESSION['adminpage']=true;
 include "common/header.php";
@@ -66,9 +67,9 @@ function savePara(Parameter, Value) {
 	xmlhttp.send();    
 }
 </script>
-<div class="w3-container <?php echo $GLOBALS['optionsDB']['colorTitleBar']; ?>">
-    <h2>globale Einstellungen</h2>
-</div>
+<?php
+adminListPageBegin('System', 'globale Einstellungen');
+?>
 <div class="w3-container w3-card w3-margin w3-padding <?php echo $GLOBALS['optionsDB']['colorWarning']; ?>">
   <div class="w3-col l3 m3 s2 w3-center">
     <i class="fas fa-exclamation-triangle"></i>
@@ -163,9 +164,10 @@ while($row = mysqli_fetch_array($dbr)) {
     echo "</div>";
 }
 ?>
-<button class="w3-btn w3-padding <?php echo $GLOBALS['optionsDB']['colorBtnSubmit']; ?> w3-border w3-margin w3-mobile" type="submit" name="save" value="speichern" >speichern</button>
+<button class="w3-btn w3-padding <?php echo $GLOBALS['optionsDB']['colorBtnSubmit']; ?> w3-border w3-margin w3-mobile" type="submit" name="save" value="speichern" >Speichern</button>
     </form>
       
 <?php
+adminListPageEnd();
 include "common/footer.php";
 ?>

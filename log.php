@@ -1,18 +1,14 @@
 <?php
-session_start();
+require_once __DIR__.'/libs/sessionBootstrap.php';
+archivConfigureSession();
 $_SESSION['page']='log';
 $_SESSION['adminpage']=true;
 include "common/header.php";
 requireAdmin();
-/* $sql = sprintf('SELECT * FROM `User`;'); */
-/* $dbr = mysqli_query($conn, $sql); */
-/* sqlerror(); */
+adminListPageBegin('System', 'Log');
 ?>
-<div id="header" class="w3-container <?php echo $GLOBALS['optionsDB']['colorTitleBar']; ?>">
-<h2>Log</h2>
-</div>
+<div id="header" class="w3-hide"></div>
 <?php
-$now = date("Y-m-d");
 $sql = sprintf('SELECT `Index` FROM `%sLog` ORDER BY `Index` DESC LIMIT 1000;',
 $GLOBALS['dbprefix']
 );
@@ -31,11 +27,9 @@ Element.prototype.appendAfter = function (element) {
 
     function getLog() {
 	if (window.XMLHttpRequest) {
-	    // AJAX nutzen mit IE7+, Chrome, Firefox, Safari, Opera
 	    xmlhttp=new XMLHttpRequest();
 	}
 	else {
-	    // AJAX mit IE6, IE5
 	    xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
 	}
 	xmlhttp.onreadystatechange=function() {
@@ -61,5 +55,6 @@ var interval = setInterval(getLog, 5000);
 
 </script>
 <?php
+adminListPageEnd();
 include "common/footer.php";
 ?>

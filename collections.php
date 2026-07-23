@@ -1,16 +1,14 @@
 <?php
-session_start();
+require_once __DIR__.'/libs/sessionBootstrap.php';
+archivConfigureSession();
 $_SESSION['page']='collections';
 $_SESSION['adminpage']=false;
 include "common/header.php";
 
+adminListPageBegin('Archiv', 'Mappen');
 ?>
-<div class="w3-container <?php echo $GLOBALS['optionsDB']['colorTitleBar'] ;?>">
-    <h2>Mappen</h2>
-</div>
 <div id="Liste">
 <?php
-$now = date("Y-m-d");
 $sql = sprintf('SELECT `Index` FROM `%sCollection` ORDER BY `Name`;',
 $GLOBALS['dbprefix']
 );
@@ -24,5 +22,6 @@ while($row = mysqli_fetch_array($dbr)) {
 ?>
 </div>
 <?php
+adminListPageEnd();
 include "common/footer.php";
 ?>
