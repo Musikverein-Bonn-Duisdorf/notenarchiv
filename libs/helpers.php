@@ -37,16 +37,95 @@ function requireAdmin() {
     }
 }
 
+function redirectAfterPost($url) {
+    while(ob_get_level() > 0) {
+        ob_end_clean();
+    }
+    header('Location: '.$url);
+    exit;
+}
+
+function archivRequest($key, $default = null) {
+    if(isset($_POST[$key])) {
+        return $_POST[$key];
+    }
+    if(isset($_GET[$key])) {
+        return $_GET[$key];
+    }
+    return $default;
+}
+
+function logMessageHasChanges($message) {
+    $message = (string)$message;
+    if($message === '') {
+        return false;
+    }
+    if(strpos($message, '&rArr;') !== false) {
+        return true;
+    }
+    if(strpos($message, '(vorher:') !== false) {
+        return true;
+    }
+    if(preg_match('/\b(?:Passhash|activeLink)\s+geändert\b/u', $message)) {
+        return true;
+    }
+    if(strpos($message, 'zurückgesetzt') !== false) {
+        return true;
+    }
+    if(strpos($message, 'umbenannt:') !== false) {
+        return true;
+    }
+    return false;
+}
+
+function formatConfigLogValue($value, $type = '') {
+    if($value === null || $value === '') {
+        return '(leer)';
+    }
+    if($type === 'bool') {
+        return ((string)$value === '1' || $value === 1 || $value === true) ? 'ja' : 'nein';
+    }
+    return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
+}
+
+function logConfigChange($parameter, $oldValue, $newValue, $type = '') {
+    if((string)$oldValue === (string)$newValue) {
+        return;
+    }
+    $label = (string)$parameter;
+    if($type === '' && function_exists('getConfigDefaults')) {
+        foreach(getConfigDefaults() as $item) {
+            if($item['Parameter'] === $parameter) {
+                $type = isset($item['Type']) ? (string)$item['Type'] : '';
+                if(!empty($item['Description'])) {
+                    $label = $parameter.' ('.$item['Description'].')';
+                }
+                break;
+            }
+        }
+    }
+    if(!class_exists('Log')) {
+        return;
+    }
+    $logentry = new Log;
+    $logentry->DBupdate(sprintf(
+        'Config <b>%s</b>: %s &rArr; <b>%s</b>',
+        htmlspecialchars($label, ENT_QUOTES, 'UTF-8'),
+        formatConfigLogValue($oldValue, $type),
+        formatConfigLogValue($newValue, $type)
+    ));
+}
+
 /**
- * Require a Melde permission (effective: personal row + group PermissionSpec).
- * User.Admin always passes.
+ * Non-fatal permission check (Melde requirePermission semantics).
+ * User.Admin always passes. Does not deny/exit.
  * @param string $perm e.g. perm_editConfig
+ * @return bool
  */
-function requirePermission($perm) {
-    refreshSessionAdmin();
+function hasPermission($perm) {
     $uid = isset($_SESSION['userid']) ? (int)$_SESSION['userid'] : 0;
     if($uid < 1) {
-        denyAccess('Bitte anmelden.');
+        return false;
     }
     $sql = sprintf(
         "SELECT `Admin` FROM `%sUser` WHERE `Index` = %d LIMIT 1;",
@@ -56,10 +135,24 @@ function requirePermission($perm) {
     $dbr = @mysqli_query($GLOBALS['conn'], $sql);
     $row = ($dbr) ? mysqli_fetch_assoc($dbr) : null;
     if($row && !empty($row['Admin'])) {
+        return true;
+    }
+    return IdentityPermissions::loadForUser($uid)->getPermission($perm);
+}
+
+/**
+ * Require a Melde permission (effective: personal row + group PermissionSpec).
+ * User.Admin always passes.
+ * @param string $perm e.g. perm_editConfig
+ */
+function requirePermission($perm) {
+    refreshSessionAdmin();
+    if(hasPermission($perm)) {
         return;
     }
-    if(IdentityPermissions::loadForUser($uid)->getPermission($perm)) {
-        return;
+    $uid = isset($_SESSION['userid']) ? (int)$_SESSION['userid'] : 0;
+    if($uid < 1) {
+        denyAccess('Bitte anmelden.');
     }
     denyAccess('Keine Berechtigung für diesen Bereich.');
 }

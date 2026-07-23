@@ -5,56 +5,79 @@ $_SESSION['page']='log';
 $_SESSION['adminpage']=true;
 include "common/header.php";
 requirePermission('perm_showLog');
-adminListPageBegin('System', 'Log');
-?>
-<div id="header" class="w3-hide"></div>
-<?php
-$sql = sprintf('SELECT `Index` FROM `%sLog` ORDER BY `Index` DESC LIMIT 1000;',
-$GLOBALS['dbprefix']
-);
-$dbr = mysqli_query($conn, $sql);
-sqlerror();
-while($row = mysqli_fetch_array($dbr)) {
-    $M = new Log;
-    $M->load_by_id($row['Index']);
-    echo $M->printTableLine();
+
+ob_start();
+$chunk = listChunkLog(0, 50);
+$leak = ob_get_clean();
+if($leak !== false && $leak !== '') {
+    $chunk['html'] = $leak.$chunk['html'];
 }
 ?>
-<script>
-Element.prototype.appendAfter = function (element) {
-    element.parentNode.insertBefore(this, element.nextSibling);
-}, false;
-
-    function getLog() {
-	if (window.XMLHttpRequest) {
-	    xmlhttp=new XMLHttpRequest();
-	}
-	else {
-	    xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
-	}
-	xmlhttp.onreadystatechange=function() {
-	    if (xmlhttp.readyState==4 && xmlhttp.status==200 && xmlhttp.responseText) {
-            var parent = document.getElementById("header");
-            var NewElement = document.createElement("div");
-            NewElement.appendAfter(parent.nextSibling);
-            let doc = new DOMParser().parseFromString(xmlhttp.responseText, 'text/html');
-            let div = doc.body.firstChild;
-            NewElement.parentNode.replaceChild(div, NewElement);
-	    }
-	}
-    var parent = document.getElementById("header");
-    var first = parent.nextSibling.nextSibling;
-    var maxIndex = parseInt(first.id);
-    if(maxIndex > 0) {
-        var str = "getLog.php?id="+<?php echo "\"".$GLOBALS['cronID']."\""; ?>+"&maxIndex="+maxIndex;
-        xmlhttp.open("GET", str, true);
-        xmlhttp.send();
-    }
-    }
-var interval = setInterval(getLog, 5000);
-
-</script>
 <?php
-adminListPageEnd();
+adminListPageBegin('System', 'Log');
+adminListSearchField('Log durchsuchen…', array('onkeyup' => 'filterLog()'));
+?>
+<div id="Liste" style="clear:both;">
+<?php echo $chunk['html']; ?>
+<?php echo listChunkRenderSentinel('log', $chunk['nextCursor'], $chunk['hasMore'], 'filterLog'); ?>
+</div>
+<?php adminListPageEnd(); ?>
+<script>
+function getLogMaxIndex() {
+    var parent = document.getElementById("Liste");
+    if(!parent) return 0;
+    var rows = parent.querySelectorAll(":scope > div[id]:not(#listSentinel)");
+    if(!rows.length) return 0;
+    var max = 0;
+    for(var i = 0; i < rows.length; i++) {
+        var n = parseInt(rows[i].id, 10);
+        if(n > max) max = n;
+    }
+    return max;
+}
+
+function getLog() {
+    var maxIndex = getLogMaxIndex();
+    if(!(maxIndex > 0)) return;
+
+    var xmlhttp;
+    if (window.XMLHttpRequest) {
+	xmlhttp=new XMLHttpRequest();
+    }
+    else {
+	xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+    }
+    xmlhttp.onreadystatechange=function() {
+	if (xmlhttp.readyState==4 && xmlhttp.status==200 && xmlhttp.responseText) {
+            var parent = document.getElementById("Liste");
+            if(!parent) return;
+            var doc = new DOMParser().parseFromString(xmlhttp.responseText, 'text/html');
+            var div = doc.body.firstElementChild;
+            if(!div || !div.id) return;
+            if(document.getElementById(div.id)) return;
+            var first = parent.querySelector(":scope > div[id]:not(#listSentinel)");
+            if(first) {
+                parent.insertBefore(div, first);
+            }
+            else {
+                var sentinel = document.getElementById("listSentinel");
+                if(sentinel) parent.insertBefore(div, sentinel);
+                else parent.appendChild(div);
+            }
+	}
+    }
+    var body = "maxIndex="+encodeURIComponent(maxIndex);
+    xmlhttp.open("POST", "getLog.php", true);
+    xmlhttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+    xmlhttp.send(body);
+}
+var interval = setInterval(getLog, 1000);
+</script>
+
+<script src="<?php echo assetUrl('js/listRowSearch.js'); ?>"></script>
+<script src="<?php echo assetUrl('js/filterLog.js'); ?>"></script>
+<script src="<?php echo assetUrl('js/infiniteScroll.js'); ?>"></script>
+
+<?php
 include "common/footer.php";
 ?>

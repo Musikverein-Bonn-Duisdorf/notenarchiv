@@ -17,11 +17,21 @@ if($uidNav > 0) {
 $showAdminNav = $isAdminNav || $canEditConfig || $canShowLog;
 $meldeUrl = isset($optionsDB['urlMeldeliste']) ? trim((string)$optionsDB['urlMeldeliste']) : '';
 $masterPage = isset($optionsDB['MasterPage']) ? trim((string)$optionsDB['MasterPage']) : '';
-$homeUrl = isset($GLOBALS['optionsDB']['WebSiteURL']) ? (string)$GLOBALS['optionsDB']['WebSiteURL'] : 'index.php';
+$homeUrl = isset($GLOBALS['optionsDB']['WebSiteURL']) && trim((string)$GLOBALS['optionsDB']['WebSiteURL']) !== ''
+    ? (string)$GLOBALS['optionsDB']['WebSiteURL']
+    : 'index.php';
+$siteName = isset($optionsDB['WebSiteName']) ? trim((string)$optionsDB['WebSiteName']) : '';
+$siteNameShort = isset($optionsDB['WebSiteNameShort']) ? trim((string)$optionsDB['WebSiteNameShort']) : '';
+if($siteName === '') {
+    $siteName = 'Notenarchiv';
+}
+if($siteNameShort === '') {
+    $siteNameShort = $siteName;
+}
 ?>
 <div class="app-titlebar <?php echo htmlspecialchars((string)$optionsDB['colorTitle'], ENT_QUOTES, 'UTF-8'); ?>">
-  <h1 class="app-titlebar-name w3-hide-small"><?php echo htmlspecialchars((string)$optionsDB['WebSiteName'], ENT_QUOTES, 'UTF-8'); ?></h1>
-  <h1 class="app-titlebar-name w3-hide-large w3-hide-medium"><?php echo htmlspecialchars((string)$optionsDB['WebSiteNameShort'], ENT_QUOTES, 'UTF-8'); ?></h1>
+  <h1 class="app-titlebar-name w3-hide-small"><?php echo htmlspecialchars($siteName, ENT_QUOTES, 'UTF-8'); ?></h1>
+  <h1 class="app-titlebar-name w3-hide-large w3-hide-medium"><?php echo htmlspecialchars($siteNameShort, ENT_QUOTES, 'UTF-8'); ?></h1>
   <?php if($masterPage !== '') { ?>
   <a class="app-titlebar-logo" href="<?php echo htmlspecialchars($masterPage, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener noreferrer" title="Vereinshomepage">
     <img src="imgs/Logo.png" alt="Vereinshomepage">
@@ -31,9 +41,33 @@ $homeUrl = isset($GLOBALS['optionsDB']['WebSiteURL']) ? (string)$GLOBALS['option
   <?php } ?>
   <p class="app-titlebar-user"><?php
       echo htmlspecialchars((string)$_SESSION['username'], ENT_QUOTES, 'UTF-8');
-      if($showAdminNav) echo ' (Admin)';
+      if($isAdminNav) echo ' (Admin)';
   ?></p>
 </div>
+<?php if(getBranchName() != 'master' || !empty($optionsDB['showBranchBannerAlways'])) { ?>
+<div class="w3-yellow w3-padding app-banner"><i class="fas fa-code-branch"></i>
+<?php echo 'branch: <b>'.htmlspecialchars(getBranchName(), ENT_QUOTES, 'UTF-8').'</b>'; ?>
+</div>
+<?php } ?>
+<?php
+if(hasPermission('perm_editConfig')) {
+    try {
+        $schemaMgr = new SchemaManager();
+        if($schemaMgr->isSchemaOutdated()) {
+            $inst = (int)$schemaMgr->getInstalledSchemaVersion();
+            $exp = (int)$schemaMgr->getExpectedSchemaVersion();
+            echo '<div class="w3-orange w3-padding app-banner"><i class="fas fa-database"></i> '
+                .'Neue Datenbank-Version verfügbar (installiert: <b>'.$inst.'</b>, Soll: <b>'.$exp.'</b>). '
+                .'Bitte im <a href="updater.php"><b>Updater</b></a> „Datenbank reparieren“ ausführen '
+                .'oder „Update durchführen“ (aktualisiert die DB bei Bedarf mit).'
+                .'</div>';
+        }
+    }
+    catch(Throwable $e) {
+        // Schema-Check darf die Navigation nicht abbrechen
+    }
+}
+?>
 <div class="app-shell">
 <nav class="app-nav <?php echo $navColor; ?>" aria-label="Hauptnavigation">
   <div class="app-nav-primary">
@@ -82,13 +116,13 @@ $homeUrl = isset($GLOBALS['optionsDB']['WebSiteURL']) ? (string)$GLOBALS['option
         <div class="admin-nav app-nav-admin">
           <div class="app-nav-admin-title"><i class="fas fa-wrench" aria-hidden="true"></i><span class="nav-label">Admin</span></div>
           <div class="w3-bar-block <?php echo $navAdminColor; ?>">
-            <div class="w3-dropdown-hover w3-mobile admin-nav-group<?php echo adminNavGroupActiveClass(array('newcomposition', 'config', 'log', 'update')); ?>">
+            <div class="w3-dropdown-hover w3-mobile admin-nav-group<?php echo adminNavGroupActiveClass(array('newcomposition', 'config', 'log', 'update', 'updater')); ?>">
               <button type="button" class="w3-button w3-mobile w3-block w3-left-align <?php echo htmlspecialchars(navGroupClass('system'), ENT_QUOTES, 'UTF-8'); ?>">Verwaltung <i class="fas fa-caret-right admin-nav-caret"></i></button>
               <div class="w3-dropdown-content w3-bar-block w3-card-4 <?php echo $navAdminColor; ?> w3-mobile">
                 <a title="Stück anlegen" href="new-composition.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('newcomposition'); ?>"><i class="fas fa-plus-circle"></i> Stück anlegen</a>
 <?php if($canEditConfig) { ?>
                 <a title="Konfiguration" href="config-menu.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('config'); ?>"><i class="fas fa-cogs"></i> Konfiguration</a>
-                <a title="Update" href="update.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('update'); ?>"><i class="fas fa-code-branch"></i> Update</a>
+                <a title="Updater" href="updater.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('updater'); ?>"><i class="fas fa-code-branch"></i> Updater</a>
 <?php } ?>
 <?php if($canShowLog) { ?>
                 <a title="Log" href="log.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('log'); ?>"><i class="fas fa-poll"></i> Log</a>

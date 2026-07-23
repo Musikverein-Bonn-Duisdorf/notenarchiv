@@ -34,7 +34,7 @@ class Log
 		break;
             default:
 		break;
-        }	
+        }
     }
     public function fatal($Message) {
         $this->generate(0, $Message);
@@ -52,6 +52,9 @@ class Log
         $this->generate(4, $Message);
     }
     public function DBupdate($Message) {
+        if(!logMessageHasChanges($Message)) {
+            return;
+        }
         $this->generate(5, $Message);
     }
     public function email($Message) {
@@ -64,22 +67,22 @@ class Log
     public function generate($Type, $Message) {
        $this->Type = $Type;
        $this->Message = $Message;
-       $this->User = $_SESSION['userid'];
+       $this->User = isset($_SESSION['userid']) ? (int)$_SESSION['userid'] : 0;
        $this->save();
        $this->Index = NULL;
     }
     public function save() {
         if(!$this->is_valid()) return false;
         if($this->Index > 0) {
-            $this->update();	    
+            $this->update();
         }
         else {
             $this->insert();
         }
     }
     public function is_valid() {
-        if(!$this->Type) return false;
-        if(!$this->Message) return false;
+        if($this->Type === null || $this->Type === '') return false;
+        if($this->Message === null || $this->Message === '') return false;
         return true;
     }
     public function getLast() {
@@ -91,7 +94,7 @@ class Log
         $row = mysqli_fetch_array($dbr);
         if(is_array($row)) {
             $this->fill_from_array($row);
-        }        
+        }
     }
     protected function insert() {
         $sql = sprintf('INSERT INTO `%sLog` (`User`, `Type`, `Message`) VALUES ("%d", "%d", "%s");',
@@ -102,7 +105,10 @@ class Log
         );
         $last = new Log;
         $last->getLast();
-        if($last->Message == mysqli_real_escape_string($GLOBALS['conn'], $this->Message) && $this->User == $last->User) return true;
+        if($last->Message == mysqli_real_escape_string($GLOBALS['conn'], $this->Message) && $this->User == $last->User) {
+            $last->now();
+            return true;
+        }
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
         sqlerror();
         if(!$dbr) return false;
@@ -134,6 +140,17 @@ class Log
         $this->_data['Index'] = null;
         return true;
     }
+
+    protected function now() {
+        $sql = sprintf('UPDATE `%sLog` SET `Timestamp` = NOW() WHERE `Index` = "%d";',
+        $GLOBALS['dbprefix'],
+        $this->Index
+        );
+        $dbr = mysqli_query($GLOBALS['conn'], $sql);
+        sqlerror();
+        if(!$dbr) return false;
+        return true;
+    }
     public function fill_from_array($row) {
         foreach($row as $key => $val) {
             $this->_data[$key] = $val;
@@ -157,55 +174,74 @@ class Log
         $User->load_by_id($this->User);
         switch($this->Type) {
         case 7:
-            $color = $GLOBALS['optionsDB']['colorLogInfo'];
             $type  = "INFO";
+            $chipMod = 'info';
             break;
         case 6:
-            $color = $GLOBALS['optionsDB']['colorLogEmail'];
             $type  = "EMAIL";
+            $chipMod = 'email';
             break;
         case 5:
-            $color = $GLOBALS['optionsDB']['colorLogDBUpdate'];
             $type  = "DB UPDATE";
+            $chipMod = 'db-update';
             break;
         case 4:
-            $color = $GLOBALS['optionsDB']['colorLogDBInsert'];
             $type  = "DB INSERT";
+            $chipMod = 'db-insert';
             break;
         case 3:
-            $color = $GLOBALS['optionsDB']['colorLogDBDelete'];
             $type  = "DB DELETE";
+            $chipMod = 'db-delete';
             break;
         case 2:
-            $color = $GLOBALS['optionsDB']['colorLogWarning'];
             $type  = "WARNING";
+            $chipMod = 'warning';
             break;
         case 1:
-            $color = $GLOBALS['optionsDB']['colorLogError'];
             $type  = "ERROR";
+            $chipMod = 'error';
             break;
         case 0:
-            $color = $GLOBALS['optionsDB']['colorLogFatal'];
             $type  = "FATAL";
+            $chipMod = 'fatal';
             break;
         default:
-            $color = $GLOBALS['optionsDB']['colorLogDefault'];
             $type  = "";
+            $chipMod = 'default';
             break;
         }
-	echo "<div id=\"".$this->Index."\" class=\"w3-row ".$color." ".$GLOBALS['optionsDB']['HoverEffect']." w3-padding w3-mobile w3-border-bottom w3-border-black\">\n";
-	echo "  <div class=\"w3-col l1 w3-container\">".$this->Timestamp."</div>\n";
-	echo "  <div class=\"w3-col l1 w3-container\"><b>".$type."</b></div>\n";
-    echo "  <div class=\"w3-col l1 w3-container\">";
-    if($User->Index) {
-        echo $User->getName();
-    }
-    else {
-        echo "<b>SYSTEM</b>";
-    }
-    echo "</div>\n";
-	echo "  <div class=\"w3-col l9 w3-container\"><i>".$this->Message."</i></div>\n";
-	echo "</div>\n";
+        $hover = isset($GLOBALS['optionsDB']['HoverEffect']) ? $GLOBALS['optionsDB']['HoverEffect'] : '';
+        $userLabel = $User->Index ? $User->getName() : 'SYSTEM';
+        $classes = trim('log-row list-row '.$hover);
+        $tsRaw = (string)$this->Timestamp;
+        $datePart = (string)germanDate($tsRaw, false);
+        $timePart = '';
+        if(strlen($tsRaw) >= 19) {
+            $timePart = substr($tsRaw, 11, 8);
+        }
+        elseif(strlen($tsRaw) >= 16) {
+            $timePart = substr($tsRaw, 11, 5);
+        }
+
+        echo '<div id="'.(int)$this->Index.'" class="'.htmlspecialchars($classes, ENT_QUOTES, 'UTF-8').'">';
+        echo '<div class="log-id">';
+        echo '<div class="log-time">';
+        echo '<span class="log-date">'.htmlspecialchars($datePart, ENT_QUOTES, 'UTF-8').'</span>';
+        if($timePart !== '') {
+            echo '<span class="log-clock">'.htmlspecialchars($timePart, ENT_QUOTES, 'UTF-8').'</span>';
+        }
+        echo '</div>';
+        if($type !== '') {
+            echo '<span class="w3-tag log-type-chip log-type-chip--'.htmlspecialchars($chipMod, ENT_QUOTES, 'UTF-8').'">'
+                .htmlspecialchars($type, ENT_QUOTES, 'UTF-8').'</span>';
+        }
+        echo '</div>';
+        echo '<div class="log-rail" aria-hidden="true"></div>';
+        echo '<div class="log-main">';
+        echo '<div class="log-user">'.htmlspecialchars($userLabel, ENT_QUOTES, 'UTF-8').'</div>';
+        echo '<div class="log-message">'.$this->Message.'</div>';
+        echo '</div>';
+        echo '</div>';
     }
 };
 ?>

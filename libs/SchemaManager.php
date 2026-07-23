@@ -37,6 +37,23 @@ class SchemaManager
         return $this->report;
     }
 
+    /**
+     * Statuses that matter in check/repair UI (skip noisy "ok").
+     * @param string $status
+     * @return bool
+     */
+    public static function isNotableStatus($status) {
+        return in_array((string)$status, array(
+            'created',
+            'fixed',
+            'removed',
+            'missing',
+            'mismatch',
+            'error',
+            'obsolete',
+        ), true);
+    }
+
     public function hasErrors() {
         foreach($this->report as $entry) {
             if($entry['status'] === 'error' || $entry['status'] === 'missing' || $entry['status'] === 'mismatch') {
