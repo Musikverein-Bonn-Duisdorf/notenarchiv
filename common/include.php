@@ -1,12 +1,18 @@
 <?php
 
 include "config.php";
+include "config/ConfigDefaults.php";
+include "config/SchemaVersion.php";
 include "libs/helpers.php";
+include "libs/uiShell.php";
+include "libs/colorschemes.php";
 $optionsDB = loadconfig();
 global $optionsDB;
 include "version.php";
+include "libs/git.php";
 include "libs/user.php";
 include "libs/log.php";
+include "libs/listChunk.php";
 include "libs/div.php";
 include "libs/Composition.php";
 include "libs/Part.php";
@@ -22,5 +28,4 @@ include "libs/SQLtable.php";
 include "libs/SchemaManager.php";
 include "libs/ssoTicket.php";
 include "libs/identityPermissions.php";
-include "libs/uiShell.php";
 ?>

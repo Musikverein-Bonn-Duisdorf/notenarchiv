@@ -35,8 +35,8 @@ Sibling-App: **eigene** Config- und Update-Fläche; **kein** Melde-Admin-Host.
 | Thema | Regel |
 |-------|--------|
 | Config | `config-menu.php` schreibt nur `{dbprefix}config` (`archiv_config`); UX-Muster wie Melde ok, keine Melde-Config |
-| Schema / Update | `update.php` + `SchemaManager` nur für `archiv_*` |
-| Backup | **Keine** Backup-UI im Archiv — kein Port von Melde-`backup.php` / `updater.php`, kein Include/Iframe |
+| Schema / Update | Eigene `updater.php` (git check/pull + Schema prüfen/reparieren via `SchemaManager` nur für `archiv_*`); Legacy-`update.php` leitet um |
+| Backup | **Keine** Backup-UI im Archiv — kein Port von Melde-`backup.php`, kein Include/Iframe |
 | Backup praktisch | Hosting/mysqldump der gemeinsamen DB (+ optional Dateien unter `data/`) |
 
 Siehe Melde Ownership-Matrix Abschnitte A/B (MELD-157).
@@ -52,3 +52,4 @@ Siehe Melde Ownership-Matrix Abschnitte A/B (MELD-157).
 - Assets: `styles/custom.css`, `styles/w3-color-mvd.css`, lokale Font Awesome 6, `js/app-nav.js` / `toast.js` / `modal.js`.
 - Listen-Chrome: `adminListPageBegin` / `adminListSearchField` / `adminListPageEnd` in `libs/uiShell.php`.
 - Modals: `#ajaxModalHost` + `deferPageModalHtml()` außerhalb von `.app-main`.
+- Farben: Melde-Parität über `config/ConfigDefaults.php` (`color*`, Hex), `libs/colorschemes.php`, Hex-Picker in `config-menu.php`.

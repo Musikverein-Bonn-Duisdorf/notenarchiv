@@ -10,6 +10,7 @@
       <meta name="viewport" content="width=device-width, initial-scale=1">
       <?php
           include_once 'include.php';
+          // Cache-Bust wie in footer.php: Release-Hash + filemtime erzwingen Reload nach Update
           $assetV = isset($GLOBALS['version']['Hash']) ? $GLOBALS['version']['Hash'] : '0';
           $cssUrl = function ($rel) use ($assetV) {
               $mtime = @filemtime(__DIR__ . '/../' . $rel);
@@ -25,9 +26,11 @@
       <link rel="stylesheet" href="<?php echo $cssUrl('styles/fontawesome-free-6.4.2-web/css/solid.css'); ?>">
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
       <?php echo renderConfigColorCss(); ?>
+      <?php echo renderPermissionGroupColorCss(); ?>
       <link rel="icon" href="<?php echo htmlspecialchars((string)$GLOBALS['optionsDB']['favicon'], ENT_QUOTES, 'UTF-8'); ?>" type="image/x-icon">
       <?php
         mysqli_select_db($GLOBALS['conn'], $sql['database']) or die(mysqli_error($conn));
+        // Archiv: Melde-SSO vor Auth-Redirect (ARCHIV-7)
         tryMeldeSsoLoginFromRequest();
         refreshSessionAdmin();
         if(!loggedIn()) {
@@ -43,7 +46,10 @@
               die("<div class=\"w3-panel ".$optionsDB['colorLogWarning']."\"><h2>Passwort &auml;ndern...</h2></div>");
           }
       ?>
-      <title><?php echo htmlspecialchars((string)$optionsDB['WebSiteName'], ENT_QUOTES, 'UTF-8'); ?></title>
+      <title><?php
+        $docTitle = isset($optionsDB['WebSiteName']) ? trim((string)$optionsDB['WebSiteName']) : '';
+        echo htmlspecialchars($docTitle !== '' ? $docTitle : 'Notenarchiv', ENT_QUOTES, 'UTF-8');
+      ?></title>
   </head>
   <body class="<?php echo htmlspecialchars((string)$GLOBALS['optionsDB']['colorBackground'], ENT_QUOTES, 'UTF-8'); ?> app-layout">
 <?php

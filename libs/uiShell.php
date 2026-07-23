@@ -18,6 +18,64 @@ function normalizeHexColor($value) {
     return $value;
 }
 
+/** Map legacy w3 / highway / mvd color classes to hex for &lt;input type="color"&gt;. */
+function w3ColorToHex($class) {
+    $map = array(
+        'w3-red' => '#F44336',
+        'w3-pink' => '#E91E63',
+        'w3-purple' => '#9C27B0',
+        'w3-deep-purple' => '#673AB7',
+        'w3-indigo' => '#3F51B5',
+        'w3-blue' => '#2196F3',
+        'w3-light-blue' => '#03A9F4',
+        'w3-aqua' => '#00BCD4',
+        'w3-cyan' => '#00BCD4',
+        'w3-teal' => '#009688',
+        'w3-green' => '#4CAF50',
+        'w3-light-green' => '#8BC34A',
+        'w3-lime' => '#CDDC39',
+        'w3-sand' => '#FDF5E6',
+        'w3-khaki' => '#F0E68C',
+        'w3-yellow' => '#FFEB3B',
+        'w3-amber' => '#FFC107',
+        'w3-orange' => '#FF9800',
+        'w3-deep-orange' => '#FF5722',
+        'w3-blue-gray' => '#607D8B',
+        'w3-brown' => '#795548',
+        'w3-light-gray' => '#F1F1F1',
+        'w3-gray' => '#9E9E9E',
+        'w3-dark-gray' => '#616161',
+        'w3-pale-red' => '#FFDDDD',
+        'w3-pale-green' => '#DDFFDD',
+        'w3-pale-yellow' => '#FFFFCC',
+        'w3-pale-blue' => '#DDFFFF',
+        'w3-highway-brown' => '#633517',
+        'w3-highway-red' => '#A6001A',
+        'w3-highway-orange' => '#E06000',
+        'w3-highway-schoolbus' => '#EE9600',
+        'w3-highway-yellow' => '#FFAB00',
+        'w3-highway-green' => '#004D33',
+        'w3-highway-blue' => '#00477E',
+        'w3-mvd-white' => '#FDFFFC',
+        'w3-mvd-black' => '#040006',
+        'w3-mvd-blue' => '#345A95',
+        'w3-mvd-gray' => '#969696',
+        'w3-mvd-darkgray' => '#454545',
+        'w3-mvd-egg' => '#FDF9E7',
+        'w3-mvd-yellow' => '#FFC300',
+        'w3-mvd-lightblue' => '#7F9DC1',
+    );
+    $class = trim((string)$class);
+    return isset($map[$class]) ? $map[$class] : '#808080';
+}
+
+function colorPickerValue($raw) {
+    $raw = trim((string)$raw);
+    if($raw === '') return '#808080';
+    if(isHexColor($raw)) return normalizeHexColor($raw);
+    return w3ColorToHex($raw);
+}
+
 function hexContrastText($hex) {
     $hex = normalizeHexColor($hex);
     if($hex === '') return '#000000';
@@ -56,12 +114,6 @@ function renderConfigColorCss($wrapStyleTag = true) {
         $pageBg = normalizeHexColor($GLOBALS['cfgColorCssRules'][$bgClass]['bg']);
     }
     $css .= ':root{--app-page-bg:'.$pageBg.';}';
-    /* Fallback hero accents (Melde uses permission-group CSS; Archiv has no Groups UI yet). */
-    $accent = '#345A95';
-    $strong = '#7F9DC1';
-    $css .= '.admin-list-shell:has(.admin-list-hero--system){--page-title-accent:'.$accent.';}';
-    $css .= '.profile-shell .profile-hero.admin-list-hero--system,.w3-container.admin-list-hero--system{background:'.$strong.';border-left-color:'.$accent.';--page-title-accent:'.$accent.';}';
-    $css .= '.app-nav .admin-nav-perm--system{background:#E8EEF5 !important;border-color:'.$accent.';color:#222 !important;}';
     if(!empty($GLOBALS['cfgColorCssRules']) && is_array($GLOBALS['cfgColorCssRules'])) {
         foreach($GLOBALS['cfgColorCssRules'] as $class => $colors) {
             $css .= '.'.preg_replace('/[^a-z0-9\-]/i', '', $class)
@@ -70,6 +122,20 @@ function renderConfigColorCss($wrapStyleTag = true) {
     }
     if($css === '') return '';
     return $wrapStyleTag ? '<style type="text/css">'.$css.'</style>' : $css;
+}
+
+/**
+ * Melde-parity hook for group chrome colors.
+ * Archiv has no Groups UI yet — emit system accents only.
+ */
+function renderPermissionGroupColorCss($wrapStyleTag = true) {
+    $accent = '#345A95';
+    $strong = '#7F9DC1';
+    $css = '';
+    $css .= '.admin-list-shell:has(.admin-list-hero--system){--page-title-accent:'.$accent.';}';
+    $css .= '.profile-shell .profile-hero.admin-list-hero--system,.w3-container.admin-list-hero--system{background:'.$strong.';border-left-color:'.$accent.';--page-title-accent:'.$accent.';}';
+    $css .= '.app-nav .admin-nav-perm--system{background:#E8EEF5 !important;border-color:'.$accent.';color:#222 !important;}';
+    return $wrapStyleTag ? '<style type="text/css" id="perm-group-colors">'.$css.'</style>' : $css;
 }
 
 function getColorConfigParameters() {
