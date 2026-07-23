@@ -20,8 +20,8 @@ Do **not** rely on Smart Commits (`#done` etc.) to close tickets — Freigabe an
 
 ## Steps
 
-1. **Implement locally** on a feature branch created from **`origin/dev`** (never from `master`; they may diverge). Workflow: `git fetch origin` then `git checkout -b ARCHIV-n-Kurzbeschreibung origin/dev`. Commit locally when appropriate. Set Jira to **In Development** / **In Arbeit** when starting.
-2. **Stop and wait** for local test. Do **not** push to `origin` yet unless the user explicitly asks.
+1. **Implement locally** on a feature branch created from **`origin/dev`** (never from `master`; they may diverge). Workflow: `git fetch origin` then `git checkout -b ARCHIV-n-Kurzbeschreibung origin/dev`. Commit locally when appropriate. Set Jira to **In Development** / **In Arbeit** when starting. **Write PHPUnit coverage in `../notenarchiv-tests` in the same cycle** (see rule `ticket-tests`).
+2. **Stop and wait** for local test (`cd ../notenarchiv-tests && composer test` green). Do **not** push to `origin` yet unless the user explicitly asks.
 3. After local OK, wait for **Freigabe für den Branch `dev`** („nach `dev`“, „in `dev` mergen“). Then:
    - `./scripts/git-flow.sh pr-dev --title "ARCHIV-n: …" --body "…"` (push + PR into branch `dev`)
    - Optionally comment on the Jira issue with the PR URL (panel usually picks it up anyway).

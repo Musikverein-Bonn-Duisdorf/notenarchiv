@@ -206,7 +206,9 @@ class SchemaManager
         if($identity !== '' && $prefix === $identity) {
             throw new RuntimeException(
                 'SchemaManager: $dbprefix equals $identityPrefix ('.$prefix.') — '
-                .'would overwrite Melde config/schema. Set $dbprefix to archiv_ (or similar).'
+                .'would overwrite Melde config/schema. Same MySQL DB is fine; '
+                .'set $dbprefix to a distinct Archiv prefix (e.g. archiv_ / archiv-dev_) '
+                .'and keep $identityPrefix as Melde\'s prefix (e.g. meldeliste_ / meldeliste-dev_).'
             );
         }
     }

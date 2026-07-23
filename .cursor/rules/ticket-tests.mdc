@@ -1,29 +1,31 @@
 ---
-description: Bei Ticket-Arbeit und Releases passende PHPUnit-Tests in notenarchiv-tests schreiben
+description: Bei jedem Feature-/Bug-Ticket PHPUnit-Tests in notenarchiv-tests mitschreiben
 alwaysApply: true
 ---
 
-# Tests bei Ticket-Arbeit
+# Tests bei Ticket-Arbeit (Melde-Parität)
 
-Bei jedem Feature-/Bug-Ticket **sinnvolle Regressionstests** mitliefern — nicht erst auf Nachfrage.
+Bei **jedem** Feature-/Bug-Ticket mindestens einen **sinnvollen Regressionstest** mitliefern — nicht erst auf Nachfrage. Kein Feature ohne Testfall (Ausnahmen unten).
 
 ## Wo
 
 - Tests liegen im Sibling-Repo **`notenarchiv-tests`** (`../notenarchiv-tests`), nicht im App-Repo.
-- Ausführen: `cd ../notenarchiv-tests && composer test` (Pre-Push-Hook der App ruft das bereits auf, wenn installiert).
-- Basis: `NotenarchivTestCase` (Schema, Session, Hilfsfixture). Muster: `SchemaTest`, `CompositionTest`, `IdentityAndSsoTest`.
+- Ausführen: `cd ../notenarchiv-tests && composer test`
+- Pre-Push: `cd ../notenarchiv-tests && ./install-hooks.sh` (schreibt nur in `notenarchiv/.git/hooks/pre-push`)
+- Basis: `NotenarchivTestCase` (Schema, Session, Hilfsfixture). Muster: `SchemaTest`, `CompositionTest`, `IdentityAndSsoTest`, `ErrorPageTest`.
 
 ## Was testen
 
-- Domain-Logik / Helpers / Auth / Logging / Schema-relevante Verhalten — **ja**.
+- Domain-Logik / Helpers / Auth / Logging / Schema / Config-Aliase — **ja** (pro Feature ≥1 Case).
 - Reine Docs, CSS/Layout, triviale Label-Änderungen — nur wenn leicht regressierbar.
 - JS-UI: PHPUnit nur für serverseitig erzeugte Attribute/HTML; reines JS separat oder manuell.
 
 ## Wann
 
 1. **Während** der Ticket-Implementierung (gleicher Arbeitszyklus, nicht „später“).
-2. Vor Freigabe für `dev`: neue/angepasste Tests grün.
+2. Vor Freigabe für `dev`: neue/angepasste Tests grün (`composer test`).
 3. Bei „Ticket abschließen“ / Nachziehen: fehlende Tests für gerade gelieferte Funktionalität nachziehen.
+4. PR-Body: kurzer Hinweis auf neue/geänderte Testklassen im Test plan.
 
 ## Stil
 
@@ -32,9 +34,3 @@ Bei jedem Feature-/Bug-Ticket **sinnvolle Regressionstests** mitliefern — nich
 - Echte Test-DB, keine Mocks (außer I/O-Grenzen)
 - `assertSame` / `assertStringContainsString`; bei HTML nur relevante Substrings
 - Neue App-Libs ggf. in `tests/bootstrap.php` nachziehen
-
-## Hook
-
-```bash
-cd ../notenarchiv-tests && ./install-hooks.sh
-```
