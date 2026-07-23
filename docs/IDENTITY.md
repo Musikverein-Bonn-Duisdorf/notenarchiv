@@ -26,7 +26,9 @@ $identityPrefix = "meldeliste_";
 ## Login / Admin
 
 - Login, Session: `helpers.php` liest `{identityPrefix}User`.
-- **Admin** = `User.Admin` **oder** irgendein Melde-`perm_*` (`IdentityPermissions`, ARCHIV-6).
+- **Session-Admin** (`$_SESSION['admin']`) = `User.Admin` **oder** irgendein Melde-`perm_*` (personal + Gruppen-`PermissionSpec`, `IdentityPermissions`).
+- **Feine Gates:** `requirePermission('perm_editConfig')` (Config/Update), `requirePermission('perm_showLog')` (Log). `User.Admin` bypass.
+- Gruppen: vereinfachte MemberSpec-Auswertung (`users[]`, Rollen `users`/`members`/`musicians`/`nonmembers`) — kein vollständiges Melde-`AudienceSpec`.
 - Legacy `{prefix}Users` wird nicht mehr beschrieben.
 
 ## SSO (ARCHIV-7)

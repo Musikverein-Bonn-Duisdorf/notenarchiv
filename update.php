@@ -4,7 +4,7 @@ archivConfigureSession();
 $_SESSION['page']='update';
 $_SESSION['adminpage']=true;
 include "common/header.php";
-requireAdmin();
+requirePermission('perm_editConfig');
 
 require_once __DIR__.'/libs/SQLtable.php';
 require_once __DIR__.'/config/ConfigDefaults.php';
