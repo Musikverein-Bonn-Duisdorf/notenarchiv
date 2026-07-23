@@ -6,8 +6,10 @@ $sql = array(
     'password' => "password",
 );
 
-$dbprefix = "archiv_";
-// Melde identity tables (User, Permissions, Instrument, …) — MUST differ from $dbprefix
+$dbprefix = "archiv_";           // Archiv-Tabellen: archiv_Composition, archiv_config, …
+// Melde identity (User, Permissions, SSO, …) — MUST differ from $dbprefix.
+// Same database as Melde is correct; only the table-name prefix differs.
+// Dev example: $dbprefix = "archiv-dev_"; $identityPrefix = "meldeliste-dev_";
 $identityPrefix = "meldeliste_";
 
 $mailconfig = array(
