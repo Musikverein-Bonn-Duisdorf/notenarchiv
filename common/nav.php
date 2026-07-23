@@ -2,6 +2,19 @@
 $navColor = htmlspecialchars((string)$optionsDB['colorNav'], ENT_QUOTES, 'UTF-8');
 $navAdminColor = htmlspecialchars((string)$optionsDB['colorNavAdmin'], ENT_QUOTES, 'UTF-8');
 $isAdminNav = !empty($_SESSION['admin']);
+$uidNav = isset($_SESSION['userid']) ? (int)$_SESSION['userid'] : 0;
+$canEditConfig = false;
+$canShowLog = false;
+if($uidNav > 0) {
+    $sqlAd = sprintf("SELECT `Admin` FROM `%sUser` WHERE `Index` = %d LIMIT 1;", identityPrefix(), $uidNav);
+    $dbrAd = @mysqli_query($GLOBALS['conn'], $sqlAd);
+    $rowAd = ($dbrAd) ? mysqli_fetch_assoc($dbrAd) : null;
+    $isUserAdmin = $rowAd && !empty($rowAd['Admin']);
+    $permsNav = IdentityPermissions::loadForUser($uidNav);
+    $canEditConfig = $isUserAdmin || $permsNav->getPermission('perm_editConfig');
+    $canShowLog = $isUserAdmin || $permsNav->getPermission('perm_showLog');
+}
+$showAdminNav = $isAdminNav || $canEditConfig || $canShowLog;
 $meldeUrl = isset($optionsDB['urlMeldeliste']) ? trim((string)$optionsDB['urlMeldeliste']) : '';
 $masterPage = isset($optionsDB['MasterPage']) ? trim((string)$optionsDB['MasterPage']) : '';
 $homeUrl = isset($GLOBALS['optionsDB']['WebSiteURL']) ? (string)$GLOBALS['optionsDB']['WebSiteURL'] : 'index.php';
@@ -18,7 +31,7 @@ $homeUrl = isset($GLOBALS['optionsDB']['WebSiteURL']) ? (string)$GLOBALS['option
   <?php } ?>
   <p class="app-titlebar-user"><?php
       echo htmlspecialchars((string)$_SESSION['username'], ENT_QUOTES, 'UTF-8');
-      if($isAdminNav) echo ' (Admin)';
+      if($showAdminNav) echo ' (Admin)';
   ?></p>
 </div>
 <div class="app-shell">
@@ -65,7 +78,7 @@ $homeUrl = isset($GLOBALS['optionsDB']['WebSiteURL']) ? (string)$GLOBALS['option
         <a class="app-nav-item app-nav-more-only-mobile <?php getPage('help', 'system'); ?>" href="help.php" title="Hilfe">
           <i class="fas fa-circle-question" aria-hidden="true"></i><span class="nav-label">Hilfe</span>
         </a>
-<?php if($isAdminNav) { ?>
+<?php if($showAdminNav) { ?>
         <div class="admin-nav app-nav-admin">
           <div class="app-nav-admin-title"><i class="fas fa-wrench" aria-hidden="true"></i><span class="nav-label">Admin</span></div>
           <div class="w3-bar-block <?php echo $navAdminColor; ?>">
@@ -73,9 +86,13 @@ $homeUrl = isset($GLOBALS['optionsDB']['WebSiteURL']) ? (string)$GLOBALS['option
               <button type="button" class="w3-button w3-mobile w3-block w3-left-align <?php echo htmlspecialchars(navGroupClass('system'), ENT_QUOTES, 'UTF-8'); ?>">Verwaltung <i class="fas fa-caret-right admin-nav-caret"></i></button>
               <div class="w3-dropdown-content w3-bar-block w3-card-4 <?php echo $navAdminColor; ?> w3-mobile">
                 <a title="Stück anlegen" href="new-composition.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('newcomposition'); ?>"><i class="fas fa-plus-circle"></i> Stück anlegen</a>
+<?php if($canEditConfig) { ?>
                 <a title="Konfiguration" href="config-menu.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('config'); ?>"><i class="fas fa-cogs"></i> Konfiguration</a>
-                <a title="Log" href="log.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('log'); ?>"><i class="fas fa-poll"></i> Log</a>
                 <a title="Update" href="update.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('update'); ?>"><i class="fas fa-code-branch"></i> Update</a>
+<?php } ?>
+<?php if($canShowLog) { ?>
+                <a title="Log" href="log.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('log'); ?>"><i class="fas fa-poll"></i> Log</a>
+<?php } ?>
               </div>
             </div>
           </div>

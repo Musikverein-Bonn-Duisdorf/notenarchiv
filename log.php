@@ -4,7 +4,7 @@ archivConfigureSession();
 $_SESSION['page']='log';
 $_SESSION['adminpage']=true;
 include "common/header.php";
-requireAdmin();
+requirePermission('perm_showLog');
 adminListPageBegin('System', 'Log');
 ?>
 <div id="header" class="w3-hide"></div>

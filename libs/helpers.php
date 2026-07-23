@@ -32,7 +32,56 @@ function loadconfig() {
 }
 function requireAdmin() {
     refreshSessionAdmin();
-    if(empty($_SESSION['admin'])) die("Admin permissions required.");
+    if(empty($_SESSION['admin'])) {
+        denyAccess('Admin-Berechtigung erforderlich.');
+    }
+}
+
+/**
+ * Require a Melde permission (effective: personal row + group PermissionSpec).
+ * User.Admin always passes.
+ * @param string $perm e.g. perm_editConfig
+ */
+function requirePermission($perm) {
+    refreshSessionAdmin();
+    $uid = isset($_SESSION['userid']) ? (int)$_SESSION['userid'] : 0;
+    if($uid < 1) {
+        denyAccess('Bitte anmelden.');
+    }
+    $sql = sprintf(
+        "SELECT `Admin` FROM `%sUser` WHERE `Index` = %d LIMIT 1;",
+        identityPrefix(),
+        $uid
+    );
+    $dbr = @mysqli_query($GLOBALS['conn'], $sql);
+    $row = ($dbr) ? mysqli_fetch_assoc($dbr) : null;
+    if($row && !empty($row['Admin'])) {
+        return;
+    }
+    if(IdentityPermissions::loadForUser($uid)->getPermission($perm)) {
+        return;
+    }
+    denyAccess('Keine Berechtigung für diesen Bereich.');
+}
+
+/**
+ * @param string $message
+ */
+function denyAccess($message = 'Keine Berechtigung für diesen Bereich.') {
+    if(!headers_sent()) {
+        http_response_code(403);
+    }
+    $color = isset($GLOBALS['optionsDB']['colorLogWarning'])
+        ? $GLOBALS['optionsDB']['colorLogWarning']
+        : 'w3-orange';
+    echo '<div class="w3-panel '.$color.' w3-padding w3-margin">'
+        .'<h3>Zugriff verweigert</h3>'
+        .'<p>'.htmlspecialchars((string)$message, ENT_QUOTES, 'UTF-8').'</p>'
+        .'</div>';
+    if(file_exists(__DIR__.'/../common/footer.php')) {
+        include __DIR__.'/../common/footer.php';
+    }
+    exit;
 }
 
 /**

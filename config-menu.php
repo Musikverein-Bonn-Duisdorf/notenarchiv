@@ -4,7 +4,7 @@ archivConfigureSession();
 $_SESSION['page']='config';
 $_SESSION['adminpage']=true;
 include "common/header.php";
-requireAdmin();
+requirePermission('perm_editConfig');
 $fill = false;
 if(isset($_POST['save'])) {
     $sql = sprintf('SELECT * FROM `%sconfig`;',
