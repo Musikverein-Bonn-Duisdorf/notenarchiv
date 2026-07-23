@@ -35,8 +35,9 @@ Sibling-App: **eigene** Config- und Update-Fläche; **kein** Melde-Admin-Host.
 | Thema | Regel |
 |-------|--------|
 | Config | `config-menu.php` schreibt nur `{dbprefix}config` (`archiv_config`). Melde-kollidierende Keys immer als `Archiv*` speichern (`ArchivColorNav`, `ArchivWebSiteName`, …); `loadconfig()` / `archivResolveConfigParam()` aliasieren logische Namen (`colorNav`, `WebSiteURL`) für UI-Code. Melde behält bare Keys in `meldeliste_config` — kein `melde_*`-Config-Prefix nötig. |
-| Schema / Update | Eigene `updater.php` + `SchemaManager` nur für `archiv_*`; Version in `ArchivSchemaVersion` (nicht Melde-`SchemaVersion`) |
+| Schema / Update | Eigene `updater.php` + `SchemaManager` nur für `archiv_*`; Version in `ArchivSchemaVersion` (nicht Melde-`SchemaVersion`). `pruneObsoleteSchema` droppt nur `{dbprefix}*`-Tabellen/Spalten/Config — nie `meldeliste_*` / `mit_*`. |
 | Prefix-Schutz | `SchemaManager` / Config-Writes verweigern wenn `$dbprefix === $identityPrefix` |
+| Config-Slim | Keine Melde-RSVP-Farben (`BtnYes`/`Maybe`/`No`) und keine ungenutzten Log-Chip-Farben in `{dbprefix}config` — Log-UI nutzt CSS-Chips |
 | Backup | **Keine** Backup-UI im Archiv — kein Port von Melde-`backup.php`, kein Include/Iframe |
 | Backup praktisch | Hosting/mysqldump der gemeinsamen DB (+ optional Dateien unter `data/`) |
 

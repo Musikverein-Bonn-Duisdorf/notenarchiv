@@ -88,6 +88,7 @@ class SchemaManager
         $this->processSchema(true, false);
         // Legacy vor Defaults: vorhandene WebSite*-Werte nach Archiv* übernehmen
         $this->migrateLegacySharedConfigKeys(true);
+        $this->pruneObsoleteSchema(true);
         $this->checkConfigDefaults(true);
         $this->finalizeSchemaVersion();
         return $this->report;
@@ -98,6 +99,7 @@ class SchemaManager
         $this->report = array();
         $this->processSchema(true, true);
         $this->migrateLegacySharedConfigKeys(true);
+        $this->pruneObsoleteSchema(true);
         $this->checkConfigDefaults(true);
         $this->finalizeSchemaVersion();
         return $this->report;
@@ -108,8 +110,141 @@ class SchemaManager
         $this->report = array();
         $this->processSchema(false, false);
         $this->migrateLegacySharedConfigKeys(false);
+        $this->pruneObsoleteSchema(false);
         $this->checkConfigDefaults(false);
         return $this->report;
+    }
+
+    /**
+     * Drop obsolete columns/tables/config under $dbprefix only (never meldeliste_* / mit_*).
+     * Logical table names resolve via SQLtable → {$dbprefix}Name.
+     *
+     * @param bool $apply
+     */
+    private function pruneObsoleteSchema($apply) {
+        foreach($this->schema as $tableName => $columns) {
+            $SQL = new SQLtable($tableName);
+            if(!$SQL->exists()) {
+                continue;
+            }
+            $defined = array_keys($columns);
+            foreach($SQL->listColumns() as $columnName) {
+                if(in_array($columnName, $defined, true)) {
+                    continue;
+                }
+                $target = $tableName.'.'.$columnName;
+                if(!$apply) {
+                    $this->addReport('column', $target, 'obsolete', 'Spalte nicht mehr in DBconfig');
+                    continue;
+                }
+                if($SQL->dropColumn($columnName)) {
+                    $this->addReport('column', $target, 'removed', 'Veraltete Spalte entfernt');
+                }
+                else {
+                    $this->addReport(
+                        'column',
+                        $target,
+                        'error',
+                        'Veraltete Spalte konnte nicht entfernt werden',
+                        $SQL->getLastError()
+                    );
+                }
+            }
+        }
+
+        // Only logical names; SQLtable prefixes with $dbprefix (never identity/mit_).
+        foreach(array('PrintJob') as $obsoleteTable) {
+            $SQL = new SQLtable($obsoleteTable);
+            if(!$SQL->exists()) {
+                continue;
+            }
+            if(!$apply) {
+                $this->addReport('table', $obsoleteTable, 'obsolete', 'Tabelle veraltet (nur '.$GLOBALS['dbprefix'].')');
+                continue;
+            }
+            if($SQL->dropTable()) {
+                $this->addReport('table', $obsoleteTable, 'removed', 'Veraltete Tabelle entfernt');
+            }
+            else {
+                $this->addReport(
+                    'table',
+                    $obsoleteTable,
+                    'error',
+                    'Veraltete Tabelle konnte nicht entfernt werden',
+                    $SQL->getLastError()
+                );
+            }
+        }
+
+        $configTable = new SQLtable('config');
+        if(!$configTable->exists()) {
+            return;
+        }
+        foreach($this->obsoleteConfigParams() as $param) {
+            $sql = sprintf(
+                "SELECT `Parameter` FROM `%sconfig` WHERE `Parameter` = '%s' LIMIT 1;",
+                $GLOBALS['dbprefix'],
+                mysqli_real_escape_string($GLOBALS['conn'], $param)
+            );
+            $dbr = mysqli_query($GLOBALS['conn'], $sql);
+            $row = $dbr ? mysqli_fetch_array($dbr) : null;
+            $exists = $row && isset($row['Parameter']) && $row['Parameter'] === $param;
+            if(!$exists) {
+                continue;
+            }
+            if(!$apply) {
+                $this->addReport('config', $param, 'obsolete', 'Config-Parameter veraltet');
+                continue;
+            }
+            $delete = sprintf(
+                "DELETE FROM `%sconfig` WHERE `Parameter` = '%s' LIMIT 1;",
+                $GLOBALS['dbprefix'],
+                mysqli_real_escape_string($GLOBALS['conn'], $param)
+            );
+            if(mysqli_query($GLOBALS['conn'], $delete)) {
+                $this->addReport('config', $param, 'removed', 'Veralteter Config-Parameter entfernt');
+            }
+            else {
+                $this->addReport(
+                    'config',
+                    $param,
+                    'error',
+                    'Veralteter Config-Parameter konnte nicht entfernt werden',
+                    mysqli_errno($GLOBALS['conn']).': '.mysqli_error($GLOBALS['conn'])
+                );
+            }
+        }
+    }
+
+    /**
+     * Melde-RSVP / unused log-chip colors — no longer in Archiv ConfigDefaults.
+     * Storage (Archiv*) and bare logical names (if still present).
+     *
+     * @return string[]
+     */
+    private function obsoleteConfigParams() {
+        return array(
+            'ArchivColorBtnYes',
+            'ArchivColorBtnNo',
+            'ArchivColorBtnMaybe',
+            'ArchivColorDisabled',
+            'ArchivColorLogDefault',
+            'ArchivColorLogDBDelete',
+            'ArchivColorLogDBInsert',
+            'ArchivColorLogDBUpdate',
+            'ArchivColorLogEmail',
+            'ArchivColorLogInfo',
+            'colorBtnYes',
+            'colorBtnNo',
+            'colorBtnMaybe',
+            'colorDisabled',
+            'colorLogDefault',
+            'colorLogDBDelete',
+            'colorLogDBInsert',
+            'colorLogDBUpdate',
+            'colorLogEmail',
+            'colorLogInfo',
+        );
     }
 
     /**

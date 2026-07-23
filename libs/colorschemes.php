@@ -3,6 +3,9 @@
  * Five editable brand color schemes (Melde-parity for Notenarchiv).
  * Live color* config params mirror the active scheme.
  *
+ * Only Archiv UI colors (see getConfigDefaults). No Melde RSVP / appointment /
+ * member-status / unused log-chip keys.
+ *
  * Markenkit:
  *   #FDFFFC Weiß | #040006 Schwarz | #345A95 Blau | #969696 Grau
  *   #454545 Dunkelgrau | #FDF9E7 Creme | #FFC300 Gold | #7F9DC1 Hellblau
@@ -27,13 +30,12 @@ function getBrandPalette() {
 }
 
 /**
- * Complete color map for one scheme — every color* config key must be present.
+ * Complete color map for one scheme — every Archiv color* config key must be present.
  * Only brand-kit hex (or empty) allowed.
  */
 function buildBrandSchemeColors($chrome) {
     $p = getBrandPalette();
     $c = array_merge(array(
-        // Surfaces / chrome
         'colorBackground' => $p['egg'],
         'colorInputBackground' => $p['egg'],
         'colorTitle' => $p['blue'],
@@ -42,32 +44,12 @@ function buildBrandSchemeColors($chrome) {
         'colorNavAdmin' => $p['darkGray'],
         'colorBtnSubmit' => $p['blue'],
         'colorBtnEdit' => $p['lightBlue'],
-        'colorBtnMaybe' => $p['lightBlue'],
         'colorWarning' => $p['gold'],
-        'colorDisabled' => $p['gray'],
-        // Status (Vereins-Muster: Blau = positiv, Dunkelgrau = negativ, Gold = unsicher)
         'colorSuccess' => $p['blue'],
-        'colorBtnYes' => $p['blue'],
-        'colorBtnNo' => $p['darkGray'],
         'colorBtnDelete' => $p['darkGray'],
-        'colorAppmntYes' => $p['blue'],
-        'colorAppmntNo' => $p['darkGray'],
-        'colorAppmntMaybe' => $p['gold'],
-        // People / events
-        'colorUserMember' => $p['lightBlue'],
-        'colorUserNoMember' => '',
-        'colorAppmntConcert' => $p['lightBlue'],
-        'colorAppmntNoConcert' => '',
-        // Log rows
-        'colorLogDefault' => $p['gray'],
         'colorLogFatal' => $p['black'],
         'colorLogError' => $p['darkGray'],
         'colorLogWarning' => $p['gold'],
-        'colorLogDBDelete' => $p['darkGray'],
-        'colorLogDBInsert' => $p['gold'],
-        'colorLogDBUpdate' => $p['egg'],
-        'colorLogEmail' => $p['gold'],
-        'colorLogInfo' => $p['lightBlue'],
     ), $chrome);
 
     return $c;
@@ -76,44 +58,25 @@ function buildBrandSchemeColors($chrome) {
 function getDefaultColorSchemes() {
     $p = getBrandPalette();
     return array(
-        // Live-Produktion (IONOS): w3-mvd-* / Status-Farben als Hex
         'classic' => array(
             'name' => 'Klassisch',
             'colors' => array(
-                'colorBackground' => '#FDFFFC',       // w3-mvd-white
-                'colorTitle' => '#FDF9E7',             // w3-mvd-egg
-                'colorTitleBar' => '#345A95',          // w3-mvd-blue
-                'colorWarning' => '#FDF9E7',           // w3-mvd-egg
-                'colorBtnDelete' => '#F44336',         // w3-red
-                'colorInputBackground' => '#F1F1F1',   // w3-light-gray
-                'colorBtnSubmit' => '#9C27B0',         // w3-purple
-                'colorUserNoMember' => '#FDF9E7',      // w3-mvd-egg
-                'colorUserMember' => '#345A95',        // w3-mvd-blue
-                'colorLogDefault' => '#FDFFFC',        // w3-mvd-white
-                'colorLogFatal' => '#F44336',          // w3-red
-                'colorLogError' => '#FFC300',          // w3-mvd-yellow
-                'colorLogWarning' => '#FFC300',        // w3-mvd-yellow
-                'colorLogDBDelete' => '#FDFFFC',       // w3-mvd-white
-                'colorLogDBInsert' => '#FDFFFC',       // w3-mvd-white
-                'colorLogDBUpdate' => '#FDFFFC',       // w3-mvd-white
-                'colorLogEmail' => '#FDFFFC',          // w3-mvd-white
-                'colorLogInfo' => '#FDFFFC',           // w3-mvd-white
-                'colorAppmntConcert' => '#FDF9E7',     // w3-mvd-egg
-                'colorAppmntNoConcert' => '#FDFFFC',   // w3-mvd-white
-                'colorAppmntYes' => '#004D33',         // w3-highway-green
-                'colorAppmntNo' => '#A6001A',          // w3-highway-red
-                'colorAppmntMaybe' => '#00477E',       // w3-highway-blue
-                'colorBtnYes' => '#4CAF50',            // w3-green
-                'colorBtnNo' => '#F44336',             // w3-red
-                'colorBtnMaybe' => '#2196F3',          // w3-blue
-                'colorDisabled' => '#9E9E9E',          // w3-gray
-                'colorBtnEdit' => '#009688',           // w3-teal
-                'colorSuccess' => '#4CAF50',           // w3-green
-                'colorNav' => '#969696',               // w3-mvd-gray
-                'colorNavAdmin' => '#607D8B',          // w3-blue-gray
+                'colorBackground' => '#FDFFFC',
+                'colorTitle' => '#FDF9E7',
+                'colorTitleBar' => '#345A95',
+                'colorWarning' => '#FDF9E7',
+                'colorBtnDelete' => '#F44336',
+                'colorInputBackground' => '#F1F1F1',
+                'colorBtnSubmit' => '#9C27B0',
+                'colorLogFatal' => '#F44336',
+                'colorLogError' => '#FFC300',
+                'colorLogWarning' => '#FFC300',
+                'colorBtnEdit' => '#009688',
+                'colorSuccess' => '#4CAF50',
+                'colorNav' => '#969696',
+                'colorNavAdmin' => '#607D8B',
             ),
         ),
-        // Hell: Weiß-Grund, Blau + Hellblau
         'light' => array(
             'name' => 'Hell',
             'colors' => buildBrandSchemeColors(array(
@@ -125,21 +88,10 @@ function getDefaultColorSchemes() {
                 'colorNavAdmin' => $p['gray'],
                 'colorBtnSubmit' => $p['blue'],
                 'colorBtnEdit' => $p['lightBlue'],
-                'colorBtnMaybe' => $p['lightBlue'],
                 'colorWarning' => $p['gold'],
-                'colorUserMember' => $p['blue'],
-                'colorAppmntConcert' => $p['blue'],
-                'colorAppmntMaybe' => $p['lightBlue'],
-                'colorLogDefault' => $p['gray'],
                 'colorLogWarning' => $p['lightBlue'],
-                'colorLogDBDelete' => $p['gray'],
-                'colorLogDBInsert' => $p['gold'],
-                'colorLogDBUpdate' => $p['white'],
-                'colorLogEmail' => $p['gold'],
-                'colorLogInfo' => $p['lightBlue'],
             )),
         ),
-        // Dunkel: Schwarz/Dunkelgrau, Blau + Gold-Akzente
         'dark' => array(
             'name' => 'Dunkel',
             'colors' => buildBrandSchemeColors(array(
@@ -151,30 +103,14 @@ function getDefaultColorSchemes() {
                 'colorNavAdmin' => $p['darkGray'],
                 'colorBtnSubmit' => $p['lightBlue'],
                 'colorBtnEdit' => $p['gold'],
-                'colorBtnMaybe' => $p['lightBlue'],
                 'colorWarning' => $p['gold'],
-                'colorDisabled' => $p['gray'],
                 'colorSuccess' => $p['lightBlue'],
-                'colorBtnYes' => $p['lightBlue'],
-                'colorBtnNo' => $p['gray'],
                 'colorBtnDelete' => $p['gray'],
-                'colorAppmntYes' => $p['lightBlue'],
-                'colorAppmntNo' => $p['gray'],
-                'colorAppmntMaybe' => $p['gold'],
-                'colorUserMember' => $p['lightBlue'],
-                'colorAppmntConcert' => $p['blue'],
-                'colorLogDefault' => $p['darkGray'],
                 'colorLogFatal' => $p['gold'],
                 'colorLogError' => $p['gray'],
                 'colorLogWarning' => $p['gold'],
-                'colorLogDBDelete' => $p['gray'],
-                'colorLogDBInsert' => $p['gold'],
-                'colorLogDBUpdate' => $p['darkGray'],
-                'colorLogEmail' => $p['gold'],
-                'colorLogInfo' => $p['lightBlue'],
             )),
         ),
-        // Gold: Creme-Grund, Gold-Titel/CTA, Blau als Sekundär
         'gold' => array(
             'name' => 'Gold',
             'colors' => buildBrandSchemeColors(array(
@@ -186,24 +122,11 @@ function getDefaultColorSchemes() {
                 'colorNavAdmin' => $p['darkGray'],
                 'colorBtnSubmit' => $p['gold'],
                 'colorBtnEdit' => $p['blue'],
-                'colorBtnMaybe' => $p['lightBlue'],
                 'colorWarning' => $p['gold'],
                 'colorSuccess' => $p['blue'],
-                'colorBtnYes' => $p['blue'],
-                'colorAppmntYes' => $p['blue'],
-                'colorAppmntMaybe' => $p['gold'],
-                'colorUserMember' => $p['blue'],
-                'colorAppmntConcert' => $p['gold'],
-                'colorLogDefault' => $p['gray'],
                 'colorLogWarning' => $p['gold'],
-                'colorLogDBDelete' => $p['darkGray'],
-                'colorLogDBInsert' => $p['gold'],
-                'colorLogDBUpdate' => $p['egg'],
-                'colorLogEmail' => $p['gold'],
-                'colorLogInfo' => $p['blue'],
             )),
         ),
-        // Soft-Blau: Hellblau dominiert Chrome, Blau für CTAs
         'soft' => array(
             'name' => 'Soft-Blau',
             'colors' => buildBrandSchemeColors(array(
@@ -215,21 +138,9 @@ function getDefaultColorSchemes() {
                 'colorNavAdmin' => $p['gray'],
                 'colorBtnSubmit' => $p['blue'],
                 'colorBtnEdit' => $p['blue'],
-                'colorBtnMaybe' => $p['lightBlue'],
                 'colorWarning' => $p['gold'],
                 'colorSuccess' => $p['blue'],
-                'colorBtnYes' => $p['blue'],
-                'colorAppmntYes' => $p['blue'],
-                'colorAppmntMaybe' => $p['lightBlue'],
-                'colorUserMember' => $p['lightBlue'],
-                'colorAppmntConcert' => $p['lightBlue'],
-                'colorLogDefault' => $p['gray'],
                 'colorLogWarning' => $p['lightBlue'],
-                'colorLogDBDelete' => $p['blue'],
-                'colorLogDBInsert' => $p['gold'],
-                'colorLogDBUpdate' => $p['egg'],
-                'colorLogEmail' => $p['gold'],
-                'colorLogInfo' => $p['lightBlue'],
             )),
         ),
     );
