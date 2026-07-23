@@ -30,6 +30,13 @@ Do **not** rely on Smart Commits (`#done` etc.) to close tickets — Freigabe an
 4. After testing on `dev` is OK, wait for **Freigabe für den Branch `master`** („nach `master`“, „releasen“). Then `./scripts/git-flow.sh release-master` (merge `dev`→`master`, `makeVersion`, push, sync release files back to `dev`).
 5. **Delete the feature branch on GitHub** once it is in `master`. Never delete `master` or `dev`.
 6. Set Jira to **Fertig** only after the master release (or when the user says done without release). Add a short release comment (version/`makeVersion` id) as usual. Do **not** leave the ticket in **In Development** once it is on `dev` — that is **Review**.
+7. **User-facing features:** update `views/help/guide.php` in the same ticket when workflows/nav/rights change.
+
+## Changelog (Melde-Parität)
+
+- Commits/PR-Titel mit `ARCHIV-<n>: …` landen beim Release automatisch in `CHANGELOG.md` (`./scripts/generateChangelog.py`, aufgerufen von `./makeVersion.sh`).
+- Keine handgeschriebenen Changelog-Absätze nötig — aussagekräftige Ticket-Subjects reichen.
+- `makeVersion` erzeugt den Release-Eintrag und committed `CHANGELOG.md` mit; Hilfe zeigt die Tabelle inkl. „nicht released“-Zeile auf `dev`.
 
 ## PRs eigenständig abarbeiten
 
