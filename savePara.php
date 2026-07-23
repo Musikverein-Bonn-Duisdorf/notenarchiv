@@ -34,8 +34,11 @@ case "change":
     }
     $para = (string)archivRequest('para');
     $value = (string)archivRequest('value');
+    if(function_exists('archivResolveConfigParam')) {
+        $para = archivResolveConfigParam($para);
+    }
 
-    if($para === 'colorSchemeActive') {
+    if($para === archivResolveConfigParam('colorSchemeActive')) {
         ensureColorSchemesStored();
         $oldScheme = getActiveColorSchemeId();
         if(!applyColorScheme($value)) {
@@ -83,7 +86,10 @@ case "change":
     if($value === (string)$row['Value']) {
         if($row['Type'] === 'color') {
             ensureColorSchemesStored();
-            updateActiveSchemeColor($para, $value);
+            $schemeParam = function_exists('archivLogicalConfigParam')
+                ? archivLogicalConfigParam($para)
+                : $para;
+            updateActiveSchemeColor($schemeParam, $value);
         }
         echo 'ok';
         break;
@@ -102,7 +108,10 @@ case "change":
     }
     if($row['Type'] === 'color') {
         ensureColorSchemesStored();
-        updateActiveSchemeColor($para, $value);
+        $schemeParam = function_exists('archivLogicalConfigParam')
+            ? archivLogicalConfigParam($para)
+            : $para;
+        updateActiveSchemeColor($schemeParam, $value);
     }
     echo 'ok';
     break;

@@ -145,7 +145,15 @@ function getColorConfigParameters() {
     if(function_exists('getConfigDefaults')) {
         foreach(getConfigDefaults() as $item) {
             if(isset($item['Type']) && $item['Type'] === 'color' && isset($item['Parameter'])) {
-                $params[$item['Parameter']] = true;
+                $storage = (string)$item['Parameter'];
+                $params[$storage] = true;
+                if(function_exists('archivConfigAliases')) {
+                    foreach(archivConfigAliases() as $logical => $archivKey) {
+                        if($archivKey === $storage) {
+                            $params[$logical] = true;
+                        }
+                    }
+                }
             }
         }
     }

@@ -34,8 +34,9 @@ Sibling-App: **eigene** Config- und Update-Fläche; **kein** Melde-Admin-Host.
 
 | Thema | Regel |
 |-------|--------|
-| Config | `config-menu.php` schreibt nur `{dbprefix}config` (`archiv_config`); UX-Muster wie Melde ok, keine Melde-Config |
-| Schema / Update | Eigene `updater.php` (git check/pull + Schema prüfen/reparieren via `SchemaManager` nur für `archiv_*`); Legacy-`update.php` leitet um |
+| Config | `config-menu.php` schreibt nur `{dbprefix}config` (`archiv_config`). Melde-kollidierende Keys immer als `Archiv*` speichern (`ArchivColorNav`, `ArchivWebSiteName`, …); `loadconfig()` / `archivResolveConfigParam()` aliasieren logische Namen (`colorNav`, `WebSiteURL`) für UI-Code. Melde behält bare Keys in `meldeliste_config` — kein `melde_*`-Config-Prefix nötig. |
+| Schema / Update | Eigene `updater.php` + `SchemaManager` nur für `archiv_*`; Version in `ArchivSchemaVersion` (nicht Melde-`SchemaVersion`) |
+| Prefix-Schutz | `SchemaManager` / Config-Writes verweigern wenn `$dbprefix === $identityPrefix` |
 | Backup | **Keine** Backup-UI im Archiv — kein Port von Melde-`backup.php`, kein Include/Iframe |
 | Backup praktisch | Hosting/mysqldump der gemeinsamen DB (+ optional Dateien unter `data/`) |
 

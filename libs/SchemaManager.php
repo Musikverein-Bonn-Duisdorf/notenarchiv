@@ -82,34 +82,145 @@ class SchemaManager
         );
     }
 
-    public function check() {
-        $this->report = array();
-        $this->processSchema(false, false);
-        $this->checkConfigDefaults(false);
-        return $this->report;
-    }
-
     public function create() {
+        $this->assertWritableConfigPrefix();
         $this->report = array();
         $this->processSchema(true, false);
+        // Legacy vor Defaults: vorhandene WebSite*-Werte nach Archiv* übernehmen
+        $this->migrateLegacySharedConfigKeys(true);
         $this->checkConfigDefaults(true);
         $this->finalizeSchemaVersion();
         return $this->report;
     }
 
     public function repair() {
+        $this->assertWritableConfigPrefix();
         $this->report = array();
         $this->processSchema(true, true);
+        $this->migrateLegacySharedConfigKeys(true);
         $this->checkConfigDefaults(true);
         $this->finalizeSchemaVersion();
         return $this->report;
     }
 
+    public function check() {
+        $this->assertWritableConfigPrefix();
+        $this->report = array();
+        $this->processSchema(false, false);
+        $this->migrateLegacySharedConfigKeys(false);
+        $this->checkConfigDefaults(false);
+        return $this->report;
+    }
+
+    /**
+     * Move Melde-colliding bare keys to Archiv* in own config table.
+     * @param bool $apply
+     */
+    private function migrateLegacySharedConfigKeys($apply) {
+        if(!function_exists('archivConfigAliases')) {
+            return;
+        }
+        $aliases = archivConfigAliases();
+        $configTable = new SQLtable('config');
+        if(!$configTable->exists()) {
+            return;
+        }
+        foreach($aliases as $legacy => $archivKey) {
+            // SchemaVersion is handled by finalizeSchemaVersion / ArchivSchemaVersion
+            if($legacy === 'SchemaVersion') {
+                continue;
+            }
+            $sqlArchiv = sprintf(
+                "SELECT `Value`, `Type`, `Description` FROM `%sconfig` WHERE `Parameter` = '%s' LIMIT 1;",
+                $GLOBALS['dbprefix'],
+                mysqli_real_escape_string($GLOBALS['conn'], $archivKey)
+            );
+            $dbrA = mysqli_query($GLOBALS['conn'], $sqlArchiv);
+            $rowA = $dbrA ? mysqli_fetch_assoc($dbrA) : null;
+
+            $sqlLegacy = sprintf(
+                "SELECT `Value`, `Type`, `Description` FROM `%sconfig` WHERE `Parameter` = '%s' LIMIT 1;",
+                $GLOBALS['dbprefix'],
+                mysqli_real_escape_string($GLOBALS['conn'], $legacy)
+            );
+            $dbrL = mysqli_query($GLOBALS['conn'], $sqlLegacy);
+            $rowL = $dbrL ? mysqli_fetch_assoc($dbrL) : null;
+
+            if(!$rowL) {
+                continue;
+            }
+
+            if(!$apply) {
+                $this->addReport(
+                    'config',
+                    $legacy,
+                    'obsolete',
+                    'Legacy-Key — migrieren nach '.$archivKey
+                );
+                continue;
+            }
+
+            if(!$rowA) {
+                $insert = sprintf(
+                    "INSERT INTO `%sconfig` (`Parameter`, `Value`, `Type`, `Description`) VALUES ('%s', '%s', '%s', '%s');",
+                    $GLOBALS['dbprefix'],
+                    mysqli_real_escape_string($GLOBALS['conn'], $archivKey),
+                    mysqli_real_escape_string($GLOBALS['conn'], (string)$rowL['Value']),
+                    mysqli_real_escape_string($GLOBALS['conn'], isset($rowL['Type']) ? (string)$rowL['Type'] : 'string'),
+                    mysqli_real_escape_string(
+                        $GLOBALS['conn'],
+                        isset($rowL['Description']) ? (string)$rowL['Description'] : $archivKey
+                    )
+                );
+                if(mysqli_query($GLOBALS['conn'], $insert)) {
+                    $this->addReport('config', $archivKey, 'created', 'Migriert von '.$legacy);
+                }
+                else {
+                    $this->addReport('config', $archivKey, 'error', 'Migration von '.$legacy.' fehlgeschlagen');
+                    continue;
+                }
+            }
+
+            $del = sprintf(
+                "DELETE FROM `%sconfig` WHERE `Parameter` = '%s';",
+                $GLOBALS['dbprefix'],
+                mysqli_real_escape_string($GLOBALS['conn'], $legacy)
+            );
+            if(mysqli_query($GLOBALS['conn'], $del)) {
+                $this->addReport('config', $legacy, 'removed', 'Legacy-Key entfernt (jetzt '.$archivKey.')');
+            }
+        }
+    }
+
+    /**
+     * Refuse to touch Melde (identity) config/tables via a mis-set dbprefix.
+     */
+    private function assertWritableConfigPrefix() {
+        $prefix = isset($GLOBALS['dbprefix']) ? (string)$GLOBALS['dbprefix'] : '';
+        $identity = function_exists('identityPrefix')
+            ? (string)identityPrefix()
+            : (isset($GLOBALS['identityPrefix']) ? (string)$GLOBALS['identityPrefix'] : '');
+        if($prefix === '') {
+            throw new RuntimeException('SchemaManager: $dbprefix is empty — refusing schema ops.');
+        }
+        if($identity !== '' && $prefix === $identity) {
+            throw new RuntimeException(
+                'SchemaManager: $dbprefix equals $identityPrefix ('.$prefix.') — '
+                .'would overwrite Melde config/schema. Set $dbprefix to archiv_ (or similar).'
+            );
+        }
+    }
+
+    /** Config key for Archiv schema version (never Melde's SchemaVersion). */
+    public static function schemaVersionParam() {
+        return 'ArchivSchemaVersion';
+    }
+
     public function getExpectedSchemaVersion($forceReload = false) {
-        if(!function_exists('getExpectedSchemaVersion')) {
+        if(!function_exists('archivGetExpectedSchemaVersion')) {
             require_once dirname(__DIR__).'/config/SchemaVersion.php';
         }
-        return (int)call_user_func('getExpectedSchemaVersion', $forceReload);
+        return (int)archivGetExpectedSchemaVersion($forceReload);
     }
 
     public function getInstalledSchemaVersion() {
@@ -117,16 +228,28 @@ class SchemaManager
         if(!$configTable->exists()) {
             return 0;
         }
+        $param = self::schemaVersionParam();
         $sql = sprintf(
-            "SELECT `Value` FROM `%sconfig` WHERE `Parameter` = 'SchemaVersion' LIMIT 1;",
-            $GLOBALS['dbprefix']
+            "SELECT `Value` FROM `%sconfig` WHERE `Parameter` = '%s' LIMIT 1;",
+            $GLOBALS['dbprefix'],
+            mysqli_real_escape_string($GLOBALS['conn'], $param)
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
         $row = $dbr ? mysqli_fetch_array($dbr) : null;
-        if(!$row || !isset($row['Value'])) {
-            return 0;
+        if($row && isset($row['Value'])) {
+            return (int)$row['Value'];
         }
-        return (int)$row['Value'];
+        // Legacy fallback within own prefix only (pre-ARCHIVSchemaVersion key)
+        $sqlLegacy = sprintf(
+            "SELECT `Value` FROM `%sconfig` WHERE `Parameter` = 'SchemaVersion' LIMIT 1;",
+            $GLOBALS['dbprefix']
+        );
+        $dbrLegacy = mysqli_query($GLOBALS['conn'], $sqlLegacy);
+        $rowLegacy = $dbrLegacy ? mysqli_fetch_array($dbrLegacy) : null;
+        if($rowLegacy && isset($rowLegacy['Value'])) {
+            return (int)$rowLegacy['Value'];
+        }
+        return 0;
     }
 
     public function isSchemaOutdated($forceReload = false) {
@@ -134,13 +257,14 @@ class SchemaManager
     }
 
     public function setInstalledSchemaVersion($version) {
+        $this->assertWritableConfigPrefix();
         $version = (int)$version;
         $configTable = new SQLtable('config');
         if(!$configTable->exists()) {
-            $this->addReport('data', 'SchemaVersion', 'error', 'config-Tabelle fehlt — Version nicht gesetzt');
+            $this->addReport('data', self::schemaVersionParam(), 'error', 'config-Tabelle fehlt — Version nicht gesetzt');
             return false;
         }
-        $param = 'SchemaVersion';
+        $param = self::schemaVersionParam();
         $sql = sprintf(
             "SELECT `Parameter` FROM `%sconfig` WHERE `Parameter` = '%s' LIMIT 1;",
             $GLOBALS['dbprefix'],
@@ -165,22 +289,33 @@ class SchemaManager
                 $GLOBALS['dbprefix'],
                 mysqli_real_escape_string($GLOBALS['conn'], $param),
                 $version,
-                mysqli_real_escape_string($GLOBALS['conn'], 'Installierte DB-Schema-Version (Soll: config/SchemaVersion.php)')
+                mysqli_real_escape_string(
+                    $GLOBALS['conn'],
+                    'Installierte Archiv-Schema-Version (Soll: config/schema_version_number.php); nicht Melde SchemaVersion'
+                )
             );
             $ok = mysqli_query($GLOBALS['conn'], $insert);
         }
 
         if($ok) {
+            // Drop legacy key in own config table so Melde's Parameter name is never mirrored here.
+            $del = sprintf(
+                "DELETE FROM `%sconfig` WHERE `Parameter` = 'SchemaVersion';",
+                $GLOBALS['dbprefix']
+            );
+            @mysqli_query($GLOBALS['conn'], $del);
+
             if(isset($GLOBALS['optionsDB']) && is_array($GLOBALS['optionsDB'])) {
-                $GLOBALS['optionsDB']['SchemaVersion'] = (string)$version;
+                $GLOBALS['optionsDB'][$param] = (string)$version;
+                unset($GLOBALS['optionsDB']['SchemaVersion']);
             }
             return true;
         }
         $this->addReport(
             'data',
-            'SchemaVersion',
+            $param,
             'error',
-            'SchemaVersion konnte nicht gespeichert werden',
+            $param.' konnte nicht gespeichert werden',
             mysqli_errno($GLOBALS['conn']).': '.mysqli_error($GLOBALS['conn'])
         );
         return false;
@@ -189,23 +324,26 @@ class SchemaManager
     private function finalizeSchemaVersion() {
         $expected = $this->getExpectedSchemaVersion();
         $installed = $this->getInstalledSchemaVersion();
+        $param = self::schemaVersionParam();
         if($this->hasErrors()) {
             $this->addReport(
                 'data',
-                'SchemaVersion',
+                $param,
                 'mismatch',
                 sprintf('Version nicht gesetzt (Fehler vorhanden). Installiert: %d, Soll: %d', $installed, $expected)
             );
             return;
         }
         if($installed === $expected) {
-            $this->addReport('data', 'SchemaVersion', 'ok', 'Schema-Version '.$expected);
+            // Still migrate legacy SchemaVersion → ArchivSchemaVersion if needed
+            $this->setInstalledSchemaVersion($expected);
+            $this->addReport('data', $param, 'ok', 'Schema-Version '.$expected);
             return;
         }
         if($this->setInstalledSchemaVersion($expected)) {
             $this->addReport(
                 'data',
-                'SchemaVersion',
+                $param,
                 'fixed',
                 sprintf('Schema-Version %d → %d', $installed, $expected)
             );

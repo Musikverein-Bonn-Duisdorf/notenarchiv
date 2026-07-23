@@ -7,6 +7,7 @@ $sql = array(
 );
 
 $dbprefix = "archiv_";
+// Melde identity tables (User, Permissions, Instrument, …) — MUST differ from $dbprefix
 $identityPrefix = "meldeliste_";
 
 $mailconfig = array(

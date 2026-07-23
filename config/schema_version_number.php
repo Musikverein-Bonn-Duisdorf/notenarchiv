@@ -1,7 +1,7 @@
 <?php
 /**
- * Expected DB schema version number (ARCHIV-4).
+ * Expected DB schema version number (ARCHIV).
  * Bump when DBconfig.json, SchemaManager, or ConfigDefaults.php change.
  */
-return 4;
+return 7;
 ?>

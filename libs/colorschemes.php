@@ -241,6 +241,9 @@ function getClassicBrandColorDefaults() {
 }
 
 function getConfigParamRawValue($parameter) {
+    if(function_exists('archivResolveConfigParam')) {
+        $parameter = archivResolveConfigParam($parameter);
+    }
     $sql = sprintf(
         'SELECT `Value` FROM `%sconfig` WHERE `Parameter` = "%s" LIMIT 1;',
         $GLOBALS['dbprefix'],
@@ -255,7 +258,15 @@ function getConfigParamRawValue($parameter) {
 function setConfigParamRawValue($parameter, $value, $opts = array()) {
     $silent = !empty($opts['silent']);
     $conn = $GLOBALS['conn'];
-    $prefix = $GLOBALS['dbprefix'];
+    $prefix = isset($GLOBALS['dbprefix']) ? (string)$GLOBALS['dbprefix'] : '';
+    $identity = function_exists('identityPrefix') ? (string)identityPrefix() : '';
+    if($prefix === '' || ($identity !== '' && $prefix === $identity)) {
+        return false;
+    }
+    // Never write Melde-shared bare keys; map to Archiv* storage names.
+    if(function_exists('archivResolveConfigParam')) {
+        $parameter = archivResolveConfigParam($parameter);
+    }
     $escapedParam = mysqli_real_escape_string($conn, $parameter);
     $escapedValue = mysqli_real_escape_string($conn, (string)$value);
 

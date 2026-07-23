@@ -13,7 +13,7 @@ if(isset($_POST['save'])) {
     $dbr = mysqli_query($conn, $sql);
     sqlerror();
     while($row = mysqli_fetch_array($dbr)) {
-        if($row['Type'] === 'internal' || $row['Parameter'] === 'colorSchemeActive' || $row['Parameter'] === 'colorSchemes') {
+        if($row['Type'] === 'internal' || (function_exists('archivIsHiddenConfigParam') && archivIsHiddenConfigParam($row['Parameter']))) {
             continue;
         }
         switch($row['Type']) {
@@ -178,7 +178,7 @@ $activeSchemeName = isset($colorSchemes[$activeSchemeId]['name'])
 $dbr = mysqli_query($conn, $sql);
 sqlerror();
 while($row = mysqli_fetch_array($dbr)) {
-    if($row['Type'] === 'internal' || $row['Parameter'] === 'colorSchemeActive' || $row['Parameter'] === 'colorSchemes') {
+    if($row['Type'] === 'internal' || (function_exists('archivIsHiddenConfigParam') && archivIsHiddenConfigParam($row['Parameter']))) {
         continue;
     }
     echo "<div class=\"w3-container w3-padding w3-border-bottom w3-boder-black ".$GLOBALS['optionsDB']['HoverEffect']."\">\n";
