@@ -143,6 +143,25 @@ function archivRequest($key, $default = null) {
     return $default;
 }
 
+function csrf_token() {
+    if(empty($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+    return $_SESSION['csrf_token'];
+}
+
+function csrf_verify($token) {
+    if(!isset($_SESSION['csrf_token']) || !is_string($token)) {
+        return false;
+    }
+    return hash_equals($_SESSION['csrf_token'], $token);
+}
+
+function csrf_field() {
+    return '<input type="hidden" name="csrf_token" value="'
+        .htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8').'">';
+}
+
 function logMessageHasChanges($message) {
     $message = (string)$message;
     if($message === '') {
@@ -556,49 +575,73 @@ function mkAdmin() {
 
 function validateLink($hash) {
     $_SESSION['userid'] = 0;
-    $sql = sprintf("SELECT * FROM `%sUser` WHERE `activeLink` = '%s';",
-		   identityPrefix(),
-		   $hash
+    $hash = trim((string)$hash);
+    if($hash === '' || !preg_match('/^[a-zA-Z0-9]+$/', $hash)) {
+        $logentry = new Log;
+        $logentry->error('Login not successful. Invalid hash for login via link.');
+        return false;
+    }
+    $sql = sprintf(
+        "SELECT * FROM `%sUser` WHERE `activeLink` = '%s' AND (`Deleted` IS NULL OR `Deleted` != 1) LIMIT 1;",
+        identityPrefix(),
+        mysqli_real_escape_string($GLOBALS['conn'], $hash)
     );
     $dbr = mysqli_query($GLOBALS['conn'], $sql);
     sqlerror();
-    while($row = mysqli_fetch_array($dbr)) {
+    $row = $dbr ? mysqli_fetch_assoc($dbr) : null;
+    if($row) {
         $_SESSION['userid'] = $row['Index'];
         $_SESSION['Vorname'] = $row['Vorname'];
         $_SESSION['Nachname'] = $row['Nachname'];
-        $_SESSION['username'] = $row['Vorname']." ".$row['Nachname'];
+        $_SESSION['username'] = $row['Vorname'].' '.$row['Nachname'];
         $_SESSION['admin'] = computeAdminForUser((int)$row['Index'], (bool)$row['Admin']);
         $_SESSION['singleUsePW'] = (bool)$row['singleUsePW'];
         $logentry = new Log;
-        $logentry->info("Login via Link.");
+        $logentry->info('Login via Link.');
         recordLogin();
         return true;
-        break;
     }
+    $logentry = new Log;
+    $logentry->error(
+        'Login not successful. Invalid hash for login via link <b>'.htmlspecialchars($hash, ENT_QUOTES, 'UTF-8').'</b>.'
+    );
     return false;
 }
+
 function validateUser($login, $password) {
     $_SESSION['userid'] = 0;
-    $sql = sprintf("SELECT * FROM `%sUser` WHERE `login` = '%s';",
-		   identityPrefix(),
-		   $login
+    $login = trim((string)$login);
+    if($login === '' || $password === null || $password === '') {
+        $logentry = new Log;
+        $logentry->error('Login not successful. Leerer Benutzername oder Passwort.');
+        return false;
+    }
+    $sql = sprintf(
+        "SELECT * FROM `%sUser` WHERE `login` = '%s' AND (`Deleted` IS NULL OR `Deleted` != 1);",
+        identityPrefix(),
+        mysqli_real_escape_string($GLOBALS['conn'], $login)
     );
     $dbr = mysqli_query($GLOBALS['conn'], $sql);
     sqlerror();
-    while($row = mysqli_fetch_array($dbr)) {
-        if(password_verify($password, $row['Passhash'])) {
+    while($row = mysqli_fetch_assoc($dbr)) {
+        $hash = (string)$row['Passhash'];
+        if($hash !== '' && password_verify($password, $hash)) {
             $_SESSION['userid'] = $row['Index'];
             $_SESSION['Vorname'] = $row['Vorname'];
             $_SESSION['Nachname'] = $row['Nachname'];
-            $_SESSION['username'] = $row['Vorname']." ".$row['Nachname'];
+            $_SESSION['username'] = $row['Vorname'].' '.$row['Nachname'];
             $_SESSION['admin'] = computeAdminForUser((int)$row['Index'], (bool)$row['Admin']);
             $_SESSION['singleUsePW'] = (bool)$row['singleUsePW'];
             $logentry = new Log;
-            $logentry->info("Login via Password.");
+            $logentry->info('Login via Password.');
             recordLogin();
             return true;
         }
     }
+    $logentry = new Log;
+    $logentry->error(
+        'Login not successful. Invalid password for username <b>'.htmlspecialchars($login, ENT_QUOTES, 'UTF-8').'</b>.'
+    );
     return false;
 }
 

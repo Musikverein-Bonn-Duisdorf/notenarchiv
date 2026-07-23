@@ -36,16 +36,17 @@ ensure_clean_or_warn() {
   fi
 }
 
-cmd_sync_dev() {
-  ensure_clean_or_warn
-  git fetch "$REMOTE" "$BRANCH_DEV"
-  git merge "${REMOTE}/${BRANCH_DEV}" -m "merge ${REMOTE}/${BRANCH_DEV}"
-  echo "git-flow: synced $(current_branch) with ${REMOTE}/${BRANCH_DEV}"
+cmd_fetch_dev() {
+  # Force-update remote-tracking ref (some clones only fetch master by default).
+  git fetch "$REMOTE" "+refs/heads/${BRANCH_DEV}:refs/remotes/${REMOTE}/${BRANCH_DEV}"
+  git log -1 --oneline "${REMOTE}/${BRANCH_DEV}"
 }
 
-cmd_fetch_dev() {
-  git fetch "$REMOTE" "$BRANCH_DEV"
-  git log -1 --oneline "${REMOTE}/${BRANCH_DEV}"
+cmd_sync_dev() {
+  ensure_clean_or_warn
+  git fetch "$REMOTE" "+refs/heads/${BRANCH_DEV}:refs/remotes/${REMOTE}/${BRANCH_DEV}"
+  git merge "${REMOTE}/${BRANCH_DEV}" -m "merge ${REMOTE}/${BRANCH_DEV}"
+  echo "git-flow: synced $(current_branch) with ${REMOTE}/${BRANCH_DEV}"
 }
 
 cmd_push() {

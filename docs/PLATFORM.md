@@ -46,6 +46,9 @@ Siehe Melde Ownership-Matrix Abschnitte A/B (MELD-157).
 
 - `libs/sessionBootstrap.php` → `archivConfigureSession()` (Secure/HttpOnly/SameSite=Lax, analog Melde).
 - SSO-Login wird geloggt (`Login via Melde-SSO ticket.`).
+- Auth: `validateLink` / `validateUser` escapen Inputs und lehnen ungültige Magic-Links ab; `activeLink` via `random_bytes`.
+- CSRF auf `config-menu.php` Speichern (`csrf_token` / `csrf_verify`).
+- Webroot: `.htaccess` (`.git`/`scripts`/config), `data/.htaccess` (kein PHP), branded `errors/`.
 
 ## UI-Shell (Melde-Parität)
 

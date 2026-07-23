@@ -7,6 +7,9 @@ include "common/header.php";
 requirePermission('perm_editConfig');
 $fill = false;
 if(isset($_POST['save'])) {
+    if(!csrf_verify(isset($_POST['csrf_token']) ? $_POST['csrf_token'] : '')) {
+        denyAccess('Ungültiges Sicherheits-Token. Bitte Seite neu laden und erneut speichern.');
+    }
     $sql = sprintf('SELECT * FROM `%sconfig`;',
     $GLOBALS['dbprefix']
     );
@@ -166,6 +169,7 @@ $activeSchemeName = isset($colorSchemes[$activeSchemeId]['name'])
   </div>
 </div>
 <form action="config-menu.php" method="POST">
+<?php echo csrf_field(); ?>
 <div class="w3-container w3-padding w3-border-bottom w3-border-black">
     <div class="w3-col l3"><b>Parameter</b></div>
     <div class="w3-col l5"><b>Beschreibung</b></div>
