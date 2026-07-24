@@ -54,8 +54,20 @@ class Collection
         $this->fillJoins();
         $parts = array();
         $parts[] = sprintf('CollectionItem-ID: %d', (int)$this->Index);
-        logAppendFilled($parts, 'Collection', $this->CollectionName, htmlspecialchars((string)$this->CollectionName, ENT_QUOTES, 'UTF-8'), true);
-        logAppendFilled($parts, 'Composition', $this->Title, htmlspecialchars((string)$this->Title, ENT_QUOTES, 'UTF-8'), true);
+        logAppendFilled(
+            $parts,
+            'Collection',
+            $this->CollectionName,
+            htmlspecialchars(archivPlainText($this->CollectionName), ENT_QUOTES, 'UTF-8'),
+            true
+        );
+        logAppendFilled(
+            $parts,
+            'Composition',
+            $this->Title,
+            htmlspecialchars(archivPlainText($this->Title), ENT_QUOTES, 'UTF-8'),
+            true
+        );
         logAppendFilled($parts, 'Number', $this->CollectionNumber, (string)(int)$this->CollectionNumber, true);
         return implode(', ', $parts);
     }
