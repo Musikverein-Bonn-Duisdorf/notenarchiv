@@ -5186,6 +5186,29 @@ select.profile-control {
   line-height: 1.3;
 }
 
+.collection-section-title--editable {
+  cursor: pointer;
+}
+
+.collection-section-title--editable:hover,
+.collection-section-title--editable:focus {
+  text-decoration: underline;
+}
+
+.collection-item-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.collection-item-row .profile-control,
+.collection-item-row .w3-input,
+.collection-item-row .w3-button {
+  flex: 1 1 6rem;
+  min-width: 0;
+}
+
 .collection-section-list {
   margin: 0;
 }

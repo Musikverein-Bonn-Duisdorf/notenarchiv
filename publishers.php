@@ -54,7 +54,7 @@ if($_SESSION['admin']) {
       </div>
       <div class="profile-field">
         <label class="profile-label">Adresse</label>
-        <input name="Address" type="text" class="w3-input w3-border profile-control <?php echo $GLOBALS['optionsDB']['colorInputBackground']; ?>"/>
+        <textarea name="Address" class="w3-input w3-border profile-control <?php echo $GLOBALS['optionsDB']['colorInputBackground']; ?>" rows="3"></textarea>
       </div>
       <div class="profile-field">
         <button type="submit" name="insert" value="1" class="w3-button <?php echo $GLOBALS['optionsDB']['colorBtnSubmit']; ?>">Speichern</button>
@@ -63,10 +63,8 @@ if($_SESSION['admin']) {
   </form>
 </div>
 <?php
-    deferPageModalHtml(ob_get_clean());
-?>
-<div id="Liste">
-<?php
+    $modals = ob_get_clean();
+    $listHtml = '';
     $sql = sprintf('SELECT `Index` FROM `%sPublisher` ORDER BY `Name`;',
     $GLOBALS['dbprefix']
     );
@@ -75,9 +73,13 @@ if($_SESSION['admin']) {
     while($row = mysqli_fetch_array($dbr)) {
         $M = new Publisher;
         $M->load_by_id($row['Index']);
-        echo $M->printLine();
+        $listHtml .= $M->printLine();
+        $modals .= $M->printEditModal();
     }
+    deferPageModalHtml($modals);
 ?>
+<div id="Liste">
+<?php echo $listHtml; ?>
 </div>
 <?php
     adminListPageEnd();

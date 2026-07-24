@@ -90,100 +90,109 @@ if(isset($_POST['pieceID'])) {
         $part->save();
     }
 }
+if(isset($_GET['id']) && (int)$piece->Index < 1) {
+    $piece->load_by_id((int)$_GET['id']);
+}
 
-adminListPageBegin('Archiv', $piece->Title.($piece->ComposerName ? ' ('.$piece->ComposerName.')' : ''));
+$pieceTitle = archivPlainText($piece->Title);
+$pieceComposer = archivPlainText($piece->ComposerName);
+adminListPageBegin('Archiv', $pieceTitle.($pieceComposer !== '' ? ' ('.$pieceComposer.')' : ''));
+
+ob_start();
 ?>
-<div class="w3-hide"><?php /* legacy titlebar removed */ ?></div>
+<div id="delmodal" class="w3-modal">
+  <div class="w3-modal-content profile-shell modal-shell">
+    <header class="profile-hero">
+      <div class="profile-hero-text">
+        <p class="profile-kicker">Stück</p>
+        <h2 class="profile-title">Löschen</h2>
+      </div>
+      <button type="button" class="modal-close w3-button" onclick="document.getElementById('delmodal').style.display='none'" aria-label="Schließen">&times;</button>
+    </header>
+    <div class="profile-grid">
+      <div class="profile-field">
+        <p class="profile-label"><?php echo archivEscHtml($pieceTitle); ?></p>
+      </div>
+      <div class="profile-field profile-actions">
+        <form action="index.php" method="POST" style="display:inline;">
+          <button type="submit" name="Delete" value="<?php echo (int)$piece->Index; ?>" class="w3-button <?php echo $GLOBALS['optionsDB']['colorBtnDelete']; ?>">Löschen</button>
+        </form>
+        <button type="button" class="w3-button w3-border" onclick="document.getElementById('delmodal').style.display='none'">Abbrechen</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="collmodal" class="w3-modal">
+  <div class="w3-modal-content profile-shell modal-shell">
+    <header class="profile-hero">
+      <div class="profile-hero-text">
+        <p class="profile-kicker">Stück</p>
+        <h2 class="profile-title">Mappen</h2>
+      </div>
+      <button type="button" class="modal-close w3-button" onclick="document.getElementById('collmodal').style.display='none'" aria-label="Schließen">&times;</button>
+    </header>
+    <?php echo $piece->listCollections(); ?>
+  </div>
+</div>
+<?php
+deferPageModalHtml(ob_get_clean());
+?>
 <div class="w3-row">
   <div class="w3-col l5">
     <div class="w3-row w3-card w3-padding w3-margin">
       <div class="w3-col l3">Titel:</div>
-      <div class="w3-col l9"><b><?php echo $piece->Title; ?></b></div>
+      <div class="w3-col l9"><b><?php echo archivEscHtml($pieceTitle); ?></b></div>
     </div>
     <div class="w3-row w3-card w3-padding w3-margin">
       <div class="w3-col l3">Inventarnummer:</div>
-      <div class="w3-col l9"><b><?php echo $piece->RegistrationNumber; ?></b></div>
+      <div class="w3-col l9"><b><?php echo archivEscHtml($piece->RegistrationNumber); ?></b></div>
     </div>
     <div class="w3-row w3-card w3-padding w3-margin">
       <div class="w3-col l3">Komponist:</div>
-      <div class="w3-col l9"><b><?php echo $piece->ComposerName; ?></b></div>
+      <div class="w3-col l9"><b><?php echo archivEscHtml($pieceComposer); ?></b></div>
     </div>
     <div class="w3-row w3-card w3-padding w3-margin">
       <div class="w3-col l3">Arrangeur:</div>
-      <div class="w3-col l9"><b><?php echo $piece->ArrangerName; ?></b></div>
+      <div class="w3-col l9"><b><?php echo archivEscHtml($piece->ArrangerName); ?></b></div>
     </div>
     <div class="w3-padding w3-row">
       <form class="w3-col l2" action="new-composition.php" method="POST">
-	<button class="w3-button <?php echo $GLOBALS['optionsDB']['colorBtnEdit']; ?>" type="submit" value="<?php echo $piece->Index ?>" name="Index">bearbeiten</button>
+	<button class="w3-button <?php echo $GLOBALS['optionsDB']['colorBtnEdit']; ?>" type="submit" value="<?php echo (int)$piece->Index; ?>" name="Index">bearbeiten</button>
       </form>
       <button class="w3-button w3-col l2 w3-margin-right <?php echo $GLOBALS['optionsDB']['colorBtnEdit']; ?>" onclick="document.getElementById('collmodal').style.display='block'">Mappen</button>
-      <button class="w3-button w3-col l2 <?php echo $GLOBALS['optionsDB']['colorBtnDelete']; ?>" onclick="document.getElementById('delmodal').style.display='block'">l&ouml;schen</button>
-    </div>
-  </div>
-
-  <div id="delmodal" class="w3-modal">
-    <div class="w3-modal-content w3-card">
-      <header class="w3-container w3-row <?php echo $GLOBALS['optionsDB']['colorTitleBar']; ?>">
-	<span onclick="document.getElementById('delmodal').style.display='none'" class="w3-button w3-display-topright">&times;</span>
-	<h2>L&ouml;schen best&auml;tigen</h2>
-      </header>
-      <div class="w3-container w3-row w3-center w3-padding w3-margin w3-card <?php echo $GLOBALS['optionsDB']['colorWarning']; ?>">Sind Sie sicher, dass sie <b><?php echo $piece->Title; ?></b> l&ouml;schen wollen?</div>
-      <div class="w3-container w3-mobile">
-	<div class="w3-row">
-	  <div class="w3-col l4 m4 s2 w3-center">&nbsp;</div>
-          <form action="index.php" method="POST">
-	    <button class="w3-btn w3-col l4 m4 s8 w3-center <?php echo $GLOBALS['optionsDB']['colorBtnSubmit']; ?> w3-border w3-margin-bottom w3-mobile" type="submit" name="Delete" value="<?php echo $piece->Index ?>">ja</button>
-          </form>
-	  <div class="w3-col l4 m4 s2 w3-center">&nbsp;</div>
-	</div>
-	<div class="w3-row">
-	  <div class="w3-col l4 m4 s2 w3-center">&nbsp;</div>
-	  <button class="w3-btn w3-col l4 m4 s8 w3-center <?php echo $GLOBALS['optionsDB']['colorBtnSubmit']; ?> w3-border w3-margin-bottom w3-mobile" onclick="document.getElementById('delmodal').style.display='none'">nein</button>
-	  <div class="w3-col l4 m4 s2 w3-center">&nbsp;</div>
-	</div>
-      </div>	  
-    </div>
-  </div>
-
-  <div id="collmodal" class="w3-modal">
-    <div class="w3-modal-content w3-card">
-      <header class="w3-container w3-row <?php echo $GLOBALS['optionsDB']['colorTitleBar']; ?>">
-	<span onclick="document.getElementById('collmodal').style.display='none'" class="w3-button w3-display-topright">&times;</span>
-	<h2>Mappenverwaltung</h2>
-      </header>
-      <?php echo $piece->listCollections(); ?>
+      <button class="w3-button w3-col l2 <?php echo $GLOBALS['optionsDB']['colorBtnDelete']; ?>" onclick="document.getElementById('delmodal').style.display='block'">löschen</button>
     </div>
   </div>
 
   <div class="w3-col l5">
     <div class="w3-row w3-card w3-padding w3-margin">
       <div class="w3-col l3">Erscheinungsjahr:</div>
-      <div class="w3-col l9"><b><?php echo $piece->Year; ?></b></div>
+      <div class="w3-col l9"><b><?php echo archivEscHtml($piece->Year); ?></b></div>
     </div>
     <div class="w3-row w3-card w3-padding w3-margin">
       <div class="w3-col l3">Verlag:</div>
-      <div class="w3-col l9"><b><?php echo $piece->PublisherName; ?></b></div>
+      <div class="w3-col l9"><b><?php echo archivEscHtml($piece->PublisherName); ?></b></div>
     </div>
     <div class="w3-row w3-card w3-padding w3-margin">
       <div class="w3-col l3">Schwierigkeitsgrad:</div>
-      <div class="w3-col l9"><b><?php echo $piece->Grade; ?></b></div>
+      <div class="w3-col l9"><b><?php echo archivEscHtml($piece->Grade); ?></b></div>
     </div>
     <div class="w3-row w3-card w3-padding w3-margin">
       <div class="w3-col l3">Spielzeit:</div>
-      <div class="w3-col l9"><b><?php echo $piece->PerformanceTime; ?></b></div>
+      <div class="w3-col l9"><b><?php echo archivEscHtml($piece->PerformanceTime); ?></b></div>
     </div>
   </div>
   <div class="w3-col l2">
     <img class="w3-row w3-padding" width="100%" src="<?php echo $piece->getCover()."?".uniqid(); ?>">
     <form class="w3-row" action="" method="POST" enctype="multipart/form-data">
       <input class="w3-col l12 w3-padding" type="file" accept=".png,.jpeg,.gif,.jpg" name="coverImage">
-      <input type="hidden" name="Index" value="<?php echo $piece->Index; ?>">
+      <input type="hidden" name="Index" value="<?php echo (int)$piece->Index; ?>">
       <input class="w3-col l6 w3-padding w3-button <?php echo $GLOBALS['optionsDB']['colorBtnSubmit']; ?>" type="submit" value="upload" name="cover">
       <input class="w3-col l6 w3-padding w3-button <?php echo $GLOBALS['optionsDB']['colorBtnSubmit']; ?>" type="submit" value="delete" name="delete">
     </form>
   </div>
 </div>
-<div class="w3-container <?php echo $GLOBALS['optionsDB']['colorTitleBar']; ?>">
+<div class="w3-container">
   <h3>Stimmverteilung</h3>
 </div>
 <div class="w3-row w3-margin">

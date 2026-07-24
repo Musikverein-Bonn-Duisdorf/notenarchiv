@@ -12,7 +12,8 @@ if(isset($_POST['save'])) {
     }
     $piece->fill_from_array($_POST);
     $piece->save();
-    $_POST['pieceID']=$piece->Index;
+    header('Location: composition.php?id='.(int)$piece->Index);
+    exit;
 }
 
 if(isset($_POST['Delete'])) {
@@ -31,7 +32,11 @@ sqlerror();
 $row = mysqli_fetch_array($dbr);
 $nPieces = $row['Count'];
 
-adminListPageBegin('Archiv', 'Stückliste ('.$nPieces.')');
+$addBtn = '';
+if(!empty($_SESSION['admin'])) {
+    $addBtn = '<a class="w3-button '.htmlspecialchars($GLOBALS['optionsDB']['colorBtnSubmit'], ENT_QUOTES, 'UTF-8').'" href="anlegen.php" title="Anlegen"><i class="fas fa-plus"></i></a>';
+}
+adminListPageBegin('Archiv', 'Stückliste ('.$nPieces.')', array('actionsHtml' => $addBtn));
 adminListSearchField('Titel, Komponist, Verlag, Nr.…', array('onkeyup' => 'filterPieces()'));
 ?>
 <script src="<?php echo assetUrl('js/filterPieces.js'); ?>"></script>

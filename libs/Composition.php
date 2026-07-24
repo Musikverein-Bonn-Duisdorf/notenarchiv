@@ -325,131 +325,47 @@ class Composition
     }
 
     public function listCollections() {
-        $sql = sprintf('SELECT `Index`, `CollectionNumber`, `cName` FROM `%sCollectionItem` INNER JOIN (SELECT `Index` AS `iIndex`, `Name` AS `cName` FROM `%sCollection`) `%sCollection` ON `iIndex` = `Collections` WHERE `Composition` = "%d" ORDER BY `cName`;',
-        $GLOBALS['dbprefix'],
-        $GLOBALS['dbprefix'],
-        $GLOBALS['dbprefix'],
-        $this->Index
+        $btn = isset($GLOBALS['optionsDB']['colorBtnSubmit'])
+            ? (string)$GLOBALS['optionsDB']['colorBtnSubmit']
+            : '';
+        $btnDel = isset($GLOBALS['optionsDB']['colorBtnDelete'])
+            ? (string)$GLOBALS['optionsDB']['colorBtnDelete']
+            : 'w3-red';
+        $inputBg = isset($GLOBALS['optionsDB']['colorInputBackground'])
+            ? (string)$GLOBALS['optionsDB']['colorInputBackground']
+            : '';
+
+        $sql = sprintf(
+            'SELECT `Index`, `CollectionNumber`, `cName` FROM `%sCollectionItem` INNER JOIN (SELECT `Index` AS `iIndex`, `Name` AS `cName` FROM `%sCollection`) `%sCollection` ON `iIndex` = `Collections` WHERE `Composition` = "%d" ORDER BY `cName`;',
+            $GLOBALS['dbprefix'],
+            $GLOBALS['dbprefix'],
+            $GLOBALS['dbprefix'],
+            (int)$this->Index
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
         sqlerror();
-        $str = "";
-        $indent=0;
+        $str = '<div class="profile-grid">';
         while($row = mysqli_fetch_array($dbr)) {
-            $line = new div;
-            $line->tag="form";
-            $line->action="";
-            $line->method="POST";
-            $line->indent=$indent;
-            $line->class="w3-row w3-padding";
-            $str=$str.$line->open();
-
-            $indent++;
-            $name = new div;
-            $name->indent=$indent;
-            $name->col(2,6,6);
-            $name->body="<b>".$row['cName']."</b>";
-            $str=$str.$name->print();
-
-            $collnum = new div;
-            $collnum->indent=$indent;
-            $collnum->col(2,6,6);
-            $collnum->class="w3-input";
-            $collnum->tag="input";
-            $collnum->type="number";
-            $collnum->name="CollectionNumber";
-            $collnum->value=$row['CollectionNumber'];
-            $str=$str.$collnum->print();
-            
-            $Index = new div;
-            $Index->indent=$indent;
-            $Index->tag="input";
-            $Index->type="hidden";
-            $Index->name="Index";
-            $Index->value=$row['Index'];
-            $str=$str.$Index->print();
-
-            $Index = new div;
-            $Index->indent=$indent;
-            $Index->tag="input";
-            $Index->type="hidden";
-            $Index->name="Composition";
-            $Index->value=$this->Index;
-            $str=$str.$Index->print();
-
-            $save = new div;
-            $save->indent=$indent;
-            $save->col(2,6,6);
-            $save->class="w3-button";
-            $save->class=$GLOBALS['optionsDB']['colorBtnSubmit'];
-            $save->tag="input";
-            $save->type="submit";
-            $save->name="updateCollection";
-            $save->value="speichern";
-            $str=$str.$save->print();
-
-            $delete = new div;
-            $delete->indent=$indent;
-            $delete->col(2,6,6);
-            $delete->class="w3-button";
-            $delete->class=$GLOBALS['optionsDB']['colorBtnDelete'];
-            $delete->tag="input";
-            $delete->type="submit";
-            $delete->name="deleteCollection";
-            $delete->value="l&ouml;schen";
-            $str=$str.$delete->print();
-
-            $str=$str.$line->close();
+            $str .= '<form class="profile-field collection-item-form" action="" method="POST">';
+            $str .= '<label class="profile-label">'.archivEscHtml($row['cName']).'</label>';
+            $str .= '<div class="collection-item-row">';
+            $str .= '<input type="number" name="CollectionNumber" class="w3-input w3-border profile-control '.archivEscHtml($inputBg).'" value="'.archivEscHtml((string)$row['CollectionNumber']).'">';
+            $str .= '<input type="hidden" name="Index" value="'.(int)$row['Index'].'">';
+            $str .= '<input type="hidden" name="Composition" value="'.(int)$this->Index.'">';
+            $str .= '<button type="submit" name="updateCollection" value="1" class="w3-button '.archivEscHtml($btn).'">Speichern</button>';
+            $str .= '<button type="submit" name="deleteCollection" value="1" class="w3-button '.archivEscHtml($btnDel).'">Löschen</button>';
+            $str .= '</div></form>';
         }
-        $line = new div;
-        $line->tag="form";
-        $line->action="";
-        $line->method="POST";
-        $line->indent=$indent;
-        $line->class="w3-row w3-padding";
-        $str=$str.$line->open();
-
-        $select = new div;
-        $select->indent=$indent;
-        $select->tag="select";
-        $select->name="Collections";
-        $select->class="w3-input";
-        $select->col(4,12,12);
-        $str=$str.$select->open();
-        $str=$str.collectionsOption();
-        $str=$str.$select->close();
-
-        $collnum = new div;
-        $collnum->indent=$indent;
-        $collnum->col(2,6,6);
-        $collnum->class="w3-input";
-        $collnum->tag="input";
-        $collnum->type="number";
-        $collnum->name="CollectionNumber";
-        $collnum->value=0;
-        $str=$str.$collnum->print();
-
-        $Index = new div;
-        $Index->indent=$indent;
-        $Index->tag="input";
-        $Index->type="hidden";
-        $Index->name="Composition";
-        $Index->value=$this->Index;
-        $str=$str.$Index->print();
-
-        $save = new div;
-        $save->indent=$indent;
-        $save->col(2,6,6);
-        $save->class="w3-button";
-        $save->class=$GLOBALS['optionsDB']['colorBtnSubmit'];
-        $save->tag="input";
-        $save->type="submit";
-        $save->name="insertCollection";
-        $save->value="hinzuf&uuml;gen";
-        $str=$str.$save->print();
-
-        $str=$str.$line->close();
-        return $str;        
+        $str .= '<form class="profile-field collection-item-form" action="" method="POST">';
+        $str .= '<label class="profile-label">Hinzufügen</label>';
+        $str .= '<div class="collection-item-row">';
+        $str .= '<select name="Collections" class="w3-input w3-border profile-control '.archivEscHtml($inputBg).'">'.collectionsOption().'</select>';
+        $str .= '<input type="number" name="CollectionNumber" class="w3-input w3-border profile-control '.archivEscHtml($inputBg).'" value="0">';
+        $str .= '<input type="hidden" name="Composition" value="'.(int)$this->Index.'">';
+        $str .= '<button type="submit" name="insertCollection" value="1" class="w3-button '.archivEscHtml($btn).'">Hinzufügen</button>';
+        $str .= '</div></form>';
+        $str .= '</div>';
+        return $str;
     }
 };
 ?>
