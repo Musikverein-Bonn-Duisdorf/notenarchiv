@@ -36,9 +36,12 @@ class Collection
     public function save() {
         if(!$this->is_valid()) return false;
         if($this->Index > 0) {
+            $changes = $this->getChanges();
             $this->update();
-            $logentry = new Log;
-            $logentry->DBupdate($this->getVars());
+            if($changes !== '') {
+                $logentry = new Log;
+                $logentry->DBupdate($changes);
+            }
         }
         else {
             $this->insert();
@@ -48,16 +51,40 @@ class Collection
     }
 
     public function getVars() {
-        
+        $this->fillJoins();
+        $parts = array();
+        $parts[] = sprintf('CollectionItem-ID: %d', (int)$this->Index);
+        logAppendFilled($parts, 'Collection', $this->CollectionName, htmlspecialchars((string)$this->CollectionName, ENT_QUOTES, 'UTF-8'), true);
+        logAppendFilled($parts, 'Composition', $this->Title, htmlspecialchars((string)$this->Title, ENT_QUOTES, 'UTF-8'), true);
+        logAppendFilled($parts, 'Number', $this->CollectionNumber, (string)(int)$this->CollectionNumber, true);
+        return implode(', ', $parts);
+    }
+
+    public function getChanges() {
+        $old = new Collection;
+        $old->load_by_id($this->Index);
+        $parts = array();
+        logAppendChange($parts, 'Collections', $old->Collections, $this->Collections);
+        logAppendChange($parts, 'Composition', $old->Composition, $this->Composition);
+        logAppendChange($parts, 'Number', $old->CollectionNumber, $this->CollectionNumber);
+        if(!$parts) {
+            return '';
+        }
+        return sprintf('CollectionItem-ID: %d, ', (int)$this->Index).implode(', ', $parts);
     }
 
     public function delete() {
+        $vars = $this->getVars();
         $sql = sprintf('DELETE FROM `%sCollectionItem` WHERE `Index` = "%d";',
         $GLOBALS['dbprefix'],
         $this->Index
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
-        sqlerror();        
+        sqlerror();
+        if($dbr && $vars !== '') {
+            $logentry = new Log;
+            $logentry->DBdelete($vars);
+        }
     }
 
     public function fillJoins() {

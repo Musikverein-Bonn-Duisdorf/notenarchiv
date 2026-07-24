@@ -73,8 +73,9 @@ if(isset($_POST['cover'])) {
         echo "Sorry, your file was not uploaded.";
     // if everything is ok, try to upload file
     } else {
-        $piece->deleteCover();
+        $piece->deleteCover(false);
         if (move_uploaded_file($_FILES["coverImage"]["tmp_name"], $target_file)) {
+            $piece->logCoverUpload($target_file);
         } else {
             echo "Sorry, there was an error uploading your file.";
         }

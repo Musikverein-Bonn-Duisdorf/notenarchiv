@@ -28,9 +28,12 @@ class Composer
     public function save() {
         if(!$this->is_valid()) return false;
         if($this->Index > 0) {
+            $changes = $this->getChanges();
             $this->update();
-            $logentry = new Log;
-            $logentry->DBupdate($this->getVars());
+            if($changes !== '') {
+                $logentry = new Log;
+                $logentry->DBupdate($changes);
+            }
         }
         else {
             $this->insert();
@@ -40,20 +43,37 @@ class Composer
     }
 
     public function getVars() {
-        return sprintf("Composer-ID: %d, First Name: %s, Last Name: %s",
-        $this->Index,
-        $this->FirstName,
-        $this->LastName
-        );
+        $parts = array();
+        $parts[] = sprintf('Composer-ID: %d', (int)$this->Index);
+        logAppendFilled($parts, 'FirstName', $this->FirstName);
+        logAppendFilled($parts, 'LastName', $this->LastName);
+        return implode(', ', $parts);
+    }
+
+    public function getChanges() {
+        $old = new Composer;
+        $old->load_by_id($this->Index);
+        $parts = array();
+        logAppendChange($parts, 'FirstName', $old->FirstName, $this->FirstName);
+        logAppendChange($parts, 'LastName', $old->LastName, $this->LastName);
+        if(!$parts) {
+            return '';
+        }
+        return sprintf('Composer-ID: %d, ', (int)$this->Index).implode(', ', $parts);
     }
         
     public function delete() {
+        $vars = $this->getVars();
         $sql = sprintf('DELETE FROM `%sComposer` WHERE `Index` = "%d";',
         $GLOBALS['dbprefix'],
         $this->Index
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
-        sqlerror();        
+        sqlerror();
+        if($dbr && $vars !== '') {
+            $logentry = new Log;
+            $logentry->DBdelete($vars);
+        }
     }
     
     public function fill_from_array($row) {

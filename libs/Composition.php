@@ -87,9 +87,12 @@ class Composition
     public function save() {
         if(!$this->is_valid()) return false;
         if($this->Index > 0) {
+            $changes = $this->getChanges();
             $this->update();
-            $logentry = new Log;
-            $logentry->DBupdate($this->getVars());
+            if($changes !== '') {
+                $logentry = new Log;
+                $logentry->DBupdate($changes);
+            }
         }
         else {
             $this->insert();
@@ -101,13 +104,47 @@ class Composition
 
     public function getVars() {
         $this->fillJoins();
-        return sprintf("Composition-ID: %d, Registration-Nr: %d, Title: %s, Composer: %s, Arranger: %s",
-        $this->Index,
-        $this->RegistrationNumber,
-        $this->Title,
-        $this->ComposerName,
-        $this->ArrangerName
-        );
+        $parts = array();
+        $parts[] = sprintf('Composition-ID: %d', (int)$this->Index);
+        logAppendFilled($parts, 'RegistrationNumber', $this->RegistrationNumber, (string)(int)$this->RegistrationNumber, true);
+        logAppendFilled($parts, 'Title', archivPlainText($this->Title));
+        logAppendFilled($parts, 'Composer', $this->ComposerName, htmlspecialchars(archivPlainText($this->ComposerName), ENT_QUOTES, 'UTF-8'), true);
+        logAppendFilled($parts, 'Arranger', $this->ArrangerName, htmlspecialchars(archivPlainText($this->ArrangerName), ENT_QUOTES, 'UTF-8'), true);
+        logAppendFilled($parts, 'Publisher', $this->PublisherName, htmlspecialchars(archivPlainText($this->PublisherName), ENT_QUOTES, 'UTF-8'), true);
+        logAppendFilled($parts, 'Year', $this->Year, (string)(int)$this->Year, true);
+        logAppendFilled($parts, 'Grade', $this->Grade, (string)$this->Grade, true);
+        logAppendFilled($parts, 'PerformanceTime', $this->PerformanceTime);
+        return implode(', ', $parts);
+    }
+
+    public function getChanges() {
+        $old = new Composition;
+        $old->load_by_id($this->Index);
+        $old->fillJoins();
+        $this->fillJoins();
+        $parts = array();
+        logAppendChange($parts, 'RegistrationNumber', $old->RegistrationNumber, $this->RegistrationNumber);
+        logAppendChange($parts, 'Title', archivPlainText($old->Title), archivPlainText($this->Title));
+        if((int)$old->Composer !== (int)$this->Composer) {
+            $parts[] = 'Composer: '.htmlspecialchars(archivPlainText($old->ComposerName), ENT_QUOTES, 'UTF-8')
+                .' &rArr; <b>'.htmlspecialchars(archivPlainText($this->ComposerName), ENT_QUOTES, 'UTF-8').'</b>';
+        }
+        if((int)$old->Arranger !== (int)$this->Arranger) {
+            $parts[] = 'Arranger: '.htmlspecialchars(archivPlainText($old->ArrangerName), ENT_QUOTES, 'UTF-8')
+                .' &rArr; <b>'.htmlspecialchars(archivPlainText($this->ArrangerName), ENT_QUOTES, 'UTF-8').'</b>';
+        }
+        if((int)$old->Publisher !== (int)$this->Publisher) {
+            $parts[] = 'Publisher: '.htmlspecialchars(archivPlainText($old->PublisherName), ENT_QUOTES, 'UTF-8')
+                .' &rArr; <b>'.htmlspecialchars(archivPlainText($this->PublisherName), ENT_QUOTES, 'UTF-8').'</b>';
+        }
+        logAppendChange($parts, 'Year', $old->Year, $this->Year);
+        logAppendChange($parts, 'Grade', $old->Grade, $this->Grade);
+        logAppendChange($parts, 'PerformanceTime', $old->PerformanceTime, $this->PerformanceTime);
+        logAppendChange($parts, 'FilePath', $old->FilePath, $this->FilePath);
+        if(!$parts) {
+            return '';
+        }
+        return sprintf('Composition-ID: %d, ', (int)$this->Index).implode(', ', $parts);
     }
     
     public function makeFilePath() {
@@ -117,7 +154,7 @@ class Composition
                 mkdir($path, 0775);
             }
             $this->FilePath = $path."/";
-            $this->save();
+            $this->update();
         }
     }
 
@@ -200,6 +237,7 @@ class Composition
     }
 
     public function delete() {
+        $vars = $this->getVars();
         $sql = sprintf('DELETE FROM `%sCollectionItem` WHERE `Composition` = "%d";',
         $GLOBALS['dbprefix'],
         $this->Index
@@ -220,8 +258,10 @@ class Composition
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
         sqlerror();
-        $logentry = new Log;
-        $logentry->DBdelete($this->getVars());
+        if($vars !== '') {
+            $logentry = new Log;
+            $logentry->DBdelete($vars);
+        }
 }
 
     public function printLine() {
@@ -300,10 +340,38 @@ class Composition
         return $GLOBALS['optionsDB']['defaultCompositionCover'];
     }
 
-    public function deleteCover() {
-        if($this->getCover() != $GLOBALS['optionsDB']['defaultCompositionCover']) {
-            unlink($this->getCover());
+    public function deleteCover($writeLog = true) {
+        $cover = $this->getCover();
+        $default = isset($GLOBALS['optionsDB']['defaultCompositionCover'])
+            ? (string)$GLOBALS['optionsDB']['defaultCompositionCover']
+            : '';
+        if($cover === $default || $cover === '') {
+            return;
         }
+        $base = basename($cover);
+        $path = $this->getFilePathPHP().$base;
+        if(is_file($path)) {
+            unlink($path);
+        } elseif(is_file($cover)) {
+            unlink($cover);
+        }
+        if($writeLog) {
+            $logentry = new Log;
+            $logentry->DBupdate(sprintf(
+                'Composition-ID: %d, Cover: %s &rArr; <b>(gelöscht)</b>',
+                (int)$this->Index,
+                htmlspecialchars($base, ENT_QUOTES, 'UTF-8')
+            ));
+        }
+    }
+
+    public function logCoverUpload($fileName) {
+        $logentry = new Log;
+        $logentry->DBupdate(sprintf(
+            'Composition-ID: %d, Cover: (leer) &rArr; <b>%s</b>',
+            (int)$this->Index,
+            htmlspecialchars(basename((string)$fileName), ENT_QUOTES, 'UTF-8')
+        ));
     }
     
     public function listParts() {

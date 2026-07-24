@@ -28,9 +28,12 @@ class Publisher
     public function save() {
         if(!$this->is_valid()) return false;
         if($this->Index > 0) {
+            $changes = $this->getChanges();
             $this->update();
-            $logentry = new Log;
-            $logentry->DBupdate($this->getVars());
+            if($changes !== '') {
+                $logentry = new Log;
+                $logentry->DBupdate($changes);
+            }
         }
         else {
             $this->insert();
@@ -40,7 +43,42 @@ class Publisher
     }
 
     public function getVars() {
-        
+        $parts = array();
+        $parts[] = sprintf('Publisher-ID: %d', (int)$this->Index);
+        logAppendFilled($parts, 'Name', $this->Name);
+        logAppendFilled($parts, 'Address', $this->Address);
+        return implode(', ', $parts);
+    }
+
+    public function getChanges() {
+        $old = new Publisher;
+        $old->load_by_id($this->Index);
+        $parts = array();
+        logAppendChange($parts, 'Name', $old->Name, $this->Name);
+        logAppendChange($parts, 'Address', $old->Address, $this->Address);
+        if(!$parts) {
+            return '';
+        }
+        return sprintf('Publisher-ID: %d, ', (int)$this->Index).implode(', ', $parts);
+    }
+
+    public function delete() {
+        $id = (int)$this->Index;
+        if($id < 1) {
+            return false;
+        }
+        $vars = $this->getVars();
+        $sql = sprintf('DELETE FROM `%sPublisher` WHERE `Index` = "%d";',
+            $GLOBALS['dbprefix'],
+            $id
+        );
+        $dbr = mysqli_query($GLOBALS['conn'], $sql);
+        sqlerror();
+        if($dbr && $vars !== '') {
+            $logentry = new Log;
+            $logentry->DBdelete($vars);
+        }
+        return (bool)$dbr;
     }
         
     public function fill_from_array($row) {

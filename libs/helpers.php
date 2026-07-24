@@ -244,6 +244,53 @@ function logMessageHasChanges($message) {
     return false;
 }
 
+/** Build one log fragment: "Label: <b>value</b>". */
+function logPart($label, $valueHtml) {
+    return $label.': <b>'.$valueHtml.'</b>';
+}
+
+function logValueFilled($value, $allowZero = false) {
+    if($value === null) {
+        return false;
+    }
+    if(is_bool($value)) {
+        return $value;
+    }
+    if(is_int($value) || is_float($value)) {
+        if(!$allowZero && (float)$value == 0) {
+            return false;
+        }
+        return true;
+    }
+    $s = trim((string)$value);
+    return !($s === '' || $s === '-');
+}
+
+/** Append logPart to $parts if value is filled. */
+function logAppendFilled(array &$parts, $label, $value, $valueHtml = null, $allowZero = false) {
+    if(!logValueFilled($value, $allowZero)) {
+        return;
+    }
+    $parts[] = logPart($label, $valueHtml !== null ? $valueHtml : htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8'));
+}
+
+/**
+ * Append a Melde-style field diff ("old &rArr; <b>new</b>") when values differ.
+ */
+function logAppendChange(array &$parts, $label, $oldValue, $newValue, $allowZero = true) {
+    $old = $oldValue === null ? '' : (string)$oldValue;
+    $new = $newValue === null ? '' : (string)$newValue;
+    if($old === $new) {
+        return;
+    }
+    if(!$allowZero && $old === '' && $new === '0') {
+        return;
+    }
+    $oldHtml = $old === '' ? '(leer)' : htmlspecialchars($old, ENT_QUOTES, 'UTF-8');
+    $newHtml = $new === '' ? '(leer)' : htmlspecialchars($new, ENT_QUOTES, 'UTF-8');
+    $parts[] = $label.': '.$oldHtml.' &rArr; <b>'.$newHtml.'</b>';
+}
+
 function formatConfigLogValue($value, $type = '') {
     if($value === null || $value === '') {
         return '(leer)';
