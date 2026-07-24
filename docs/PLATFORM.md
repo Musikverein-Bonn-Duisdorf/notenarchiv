@@ -38,8 +38,8 @@ Sibling-App: **eigene** Config- und Update-Fläche; **kein** Melde-Admin-Host.
 | Schema / Update | Eigene `updater.php` + `SchemaManager` nur für `archiv_*`; Version in `ArchivSchemaVersion` (nicht Melde-`SchemaVersion`). `pruneObsoleteSchema` droppt nur `{dbprefix}*`-Tabellen/Spalten/Config — nie `meldeliste_*` / `mit_*`. |
 | Prefix-Schutz | `SchemaManager` / Config-Writes verweigern wenn `$dbprefix === $identityPrefix` |
 | Config-Slim | Keine Melde-RSVP-Farben (`BtnYes`/`Maybe`/`No`) und keine ungenutzten Log-Chip-Farben in `{dbprefix}config` — Log-UI nutzt CSS-Chips |
-| Backup | **Keine** Backup-UI im Archiv — kein Port von Melde-`backup.php`, kein Include/Iframe |
-| Backup praktisch | Hosting/mysqldump der gemeinsamen DB (+ optional Dateien unter `data/`) |
+| Backup | Eigene Backup-UI (`backup.php` / `cron.php`) — nur `{dbprefix}%` (`archiv_*`). **Nie** Melde-Identity. Kein Include/Iframe von Melde-`backup.php`. |
+| Backup praktisch | ZIP (`manifest.json` + `database.sql`) via UI/CLI/`$backupToken`; Dateien unter `data/` weiterhin Hosting/rsync |
 
 Siehe Melde Ownership-Matrix Abschnitte A/B (MELD-157).
 

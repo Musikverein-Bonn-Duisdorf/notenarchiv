@@ -94,6 +94,7 @@ $sections[] = array(
 <li><b>Stück anlegen</b> – neues Werk mit Stammdaten und Stimmsatz anlegen</li>
 '.($canEditConfig ? '
 <li><b>Konfiguration</b> – Farben/Farbschema, Site-Name, URLs, Feature-Schalter; Änderungen erscheinen im Log. Archiv-Parameter heißen in der Datenbank <code>Archiv*</code> (Anzeige in der Hilfe/UI oft unter dem kurzen Namen)</li>
+<li><b>Backup</b> – ZIP mit Versionsinfo und SQL nur für Archiv-Tabellen (<code>archiv_*</code>), nicht Melde-Identity. Download im Browser, CLI <code>php cron.php CRONID backup</code>, remote nur mit eigenem <code>$backupToken</code> (≥32 Zeichen) über <code>cron.php?id=…&amp;cmd=backup</code>. Erfolgreiche Downloads erscheinen im Log als Info, Fehler als Error. PDFs unter <code>data/</code> gehören nicht ins ZIP</li>
 <li><b>Updater</b> – Software-Update vom Remote und Datenbank-Prüfung/Reparatur; der Bericht listet nur Änderungen und Probleme</li>
 ' : '').'
 '.($canShowLog ? '

@@ -116,12 +116,13 @@ if(hasPermission('perm_editConfig')) {
         <div class="admin-nav app-nav-admin">
           <div class="app-nav-admin-title"><i class="fas fa-wrench" aria-hidden="true"></i><span class="nav-label">Admin</span></div>
           <div class="w3-bar-block <?php echo $navAdminColor; ?>">
-            <div class="w3-dropdown-hover w3-mobile admin-nav-group<?php echo adminNavGroupActiveClass(array('newcomposition', 'config', 'log', 'update', 'updater')); ?>">
+            <div class="w3-dropdown-hover w3-mobile admin-nav-group<?php echo adminNavGroupActiveClass(array('newcomposition', 'config', 'backup', 'log', 'update', 'updater')); ?>">
               <button type="button" class="w3-button w3-mobile w3-block w3-left-align <?php echo htmlspecialchars(navGroupClass('system'), ENT_QUOTES, 'UTF-8'); ?>">Verwaltung <i class="fas fa-caret-right admin-nav-caret"></i></button>
               <div class="w3-dropdown-content w3-bar-block w3-card-4 <?php echo $navAdminColor; ?> w3-mobile">
                 <a title="Stück anlegen" href="new-composition.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('newcomposition'); ?>"><i class="fas fa-plus-circle"></i> Stück anlegen</a>
 <?php if($canEditConfig) { ?>
                 <a title="Konfiguration" href="config-menu.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('config'); ?>"><i class="fas fa-cogs"></i> Konfiguration</a>
+                <a title="Backup" href="backup.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('backup'); ?>"><i class="fas fa-file-archive"></i> Backup</a>
                 <a title="Updater" href="updater.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('updater'); ?>"><i class="fas fa-code-branch"></i> Updater</a>
 <?php } ?>
 <?php if($canShowLog) { ?>

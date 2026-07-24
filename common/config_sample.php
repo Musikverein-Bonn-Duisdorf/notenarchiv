@@ -28,11 +28,16 @@ global $conn;
 mysqli_select_db($GLOBALS['conn'], $sql['database']) or die(mysqli_error($conn));
 
 $cronID = 'xxxx-xxxx-xxxx-xxxx';
+// Opt-in HTTP remote backup token (min 32 chars). Empty = HTTP backup disabled.
+// Generate: openssl rand -hex 32
+// Never reuse $cronID for HTTP backup.
+$backupToken = '';
 
 $googlemapsapi = "xxxx-xxxx-xxxx-xxxx";
 
 global $mailconfig;
 global $cronID;
+global $backupToken;
 global $dbprefix;
 global $identityPrefix;
 global $googlemapsapi;
