@@ -87,30 +87,27 @@ class Collections
     }
     
     public function printContent() {
-        $str = "";
-        $maindiv = new div;
-        $maindiv->class="w3-sand w3-margin-top w3-border-top w3-border-black w3-border-bottom";
-        $str=$str.$maindiv->open();
+        $h = function($s) {
+            return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
+        };
+        $str = '<section class="collection-section" data-search="'.$h((string)$this->Name).'">';
+        $str .= '<h3 class="collection-section-title">'.$h((string)$this->Name).'</h3>';
+        $str .= '<div class="collection-section-list">';
 
-        $header = new div;
-        /* $header->class=$GLOBALS['optionsDB']['colorTitleBar']; */
-        $header->class="w3-container";
-        $header->body="<h3>".$this->Name."</h3>";
-        $str=$str.$header->print();
-        
-        $sql = sprintf('SELECT `Index` FROM `%sCollectionItem` WHERE `Collections` = "%d" ORDER BY `CollectionNumber` ASC;',
-        $GLOBALS['dbprefix'],
-        $this->Index
+        $sql = sprintf(
+            'SELECT `Index` FROM `%sCollectionItem` WHERE `Collections` = "%d" ORDER BY `CollectionNumber` ASC;',
+            $GLOBALS['dbprefix'],
+            (int)$this->Index
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
         sqlerror();
         while($row = mysqli_fetch_array($dbr)) {
             $content = new Collection;
             $content->load_by_id($row['Index']);
-            $str=$str.$content->printLine();
+            $str .= $content->printLine();
         }
-        
-        $str=$str.$maindiv->close();
+
+        $str .= '</div></section>';
         return $str;
     }
 };

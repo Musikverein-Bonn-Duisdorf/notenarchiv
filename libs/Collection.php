@@ -136,22 +136,47 @@ class Collection
     }
 
     public function printLine() {
-        $str = "";
-        $maindiv = new div;
-        $maindiv->class="w3-margin w3-row w3-border-bottom w3-border-black";
-        $str=$str.$maindiv->open();
+        $h = function($s) {
+            return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
+        };
+        $num = $this->CollectionNumber !== null && $this->CollectionNumber !== ''
+            ? (string)$this->CollectionNumber
+            : '';
+        $title = (string)$this->Title;
+        $search = trim(preg_replace('/\s+/', ' ', implode(' ', array($num, $title, (string)$this->Composition))));
 
-        $col = new div;
-        $col->col(1,6,6);
-        $col->body=$this->CollectionNumber;
-        $str=$str.$col->print();
+        $classes = array('collection-row', 'list-row');
+        $hover = isset($GLOBALS['optionsDB']['HoverEffect']) ? (string)$GLOBALS['optionsDB']['HoverEffect'] : '';
+        if($hover !== '') {
+            $classes[] = $hover;
+        }
 
-        $col = new div;
-        $col->col(2,6,6);
-        $col->body=$this->Title;
-        $str=$str.$col->print();
-        
-        $str=$str.$maindiv->close();
+        $compId = (int)$this->Composition;
+        $formId = 'collectionForm'.$this->Index;
+        $openJs = $compId > 0
+            ? 'document.getElementById(\''.$formId.'\').submit();'
+            : '';
+
+        $str = '';
+        if($compId > 0) {
+            $str .= '<form id="'.$h($formId).'" action="composition.php" method="POST" class="archiv-list-nav-form">'
+                .'<input type="hidden" name="pieceID" value="'.$compId.'">'
+                .'</form>';
+        }
+        $str .= '<div class="'.$h(implode(' ', $classes)).'"'
+            .' data-search="'.$h($search).'"'
+            .' data-sort-nr="'.$h($num).'"'
+            .' data-sort-title="'.$h($title).'"';
+        if($openJs !== '') {
+            $str .= ' onclick="'.$openJs.'"'
+                .' role="button" tabindex="0"'
+                .' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();'.$openJs.'}"';
+        }
+        $str .= '>';
+        $str .= '<div class="collection-id"><div class="collection-nr">'.$h($num !== '' ? $num : '—').'</div></div>';
+        $str .= '<div class="collection-rail" aria-hidden="true"></div>';
+        $str .= '<div class="collection-main"><div class="collection-title">'.$h($title !== '' ? $title : '—').'</div></div>';
+        $str .= '</div>';
         return $str;
     }
 };

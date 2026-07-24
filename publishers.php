@@ -32,7 +32,7 @@ if($_SESSION['admin']) {
 
     $addBtn = '<button type="button" class="w3-button '.htmlspecialchars($GLOBALS['optionsDB']['colorBtnSubmit'], ENT_QUOTES, 'UTF-8').'" onclick="document.getElementById(\'inputModal\').style.display=\'block\'" title="Anlegen"><i class="fas fa-plus"></i></button>';
     adminListPageBegin('Verlage', 'Verlage ('.$nPublishers.')', array('actionsHtml' => $addBtn));
-    adminListSearchField('Suchen…', array('onkeyup' => 'filterPieces()'));
+    adminListSearchField('Verlag…', array('onkeyup' => 'filterPieces()'));
 ?>
 <script src="<?php echo assetUrl('js/filterPieces.js'); ?>"></script>
 <?php

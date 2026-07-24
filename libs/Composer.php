@@ -104,144 +104,72 @@ class Composer
     }
 
     public function printLine() {
-        $str = "";
-        $indent=1;
-        $maindiv = new div;
-        $maindiv->indent=$indent;
-        $maindiv->class="w3-margin w3-row w3-border-bottom w3-border-black";
-        $maindiv->onclick="document.getElementById('composer".$this->Index."').style.display='block'";
-        $str=$str.$maindiv->open();
+        $h = function($s) {
+            return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
+        };
+        $id = (int)$this->Index;
+        $name = trim((string)$this->FirstName.' '.(string)$this->LastName);
+        $search = trim(preg_replace(
+            '/\s+/',
+            ' ',
+            implode(' ', array($name, (string)$this->FirstName, (string)$this->LastName, (string)$id))
+        ));
 
-        $indent++;
-        $row = new div;
-        $row->indent=$indent;
-        $row->col(1,3,3);
-        $row->body=$this->FirstName." ".$this->LastName;
-        $str=$str.$row->print();
+        $classes = array('composer-row', 'list-row');
+        $hover = isset($GLOBALS['optionsDB']['HoverEffect']) ? (string)$GLOBALS['optionsDB']['HoverEffect'] : '';
+        if($hover !== '') {
+            $classes[] = $hover;
+        }
+        $modalId = 'composer'.$id;
+        $openJs = 'document.getElementById(\''.$modalId.'\').style.display=\'block\'';
 
-        $str=$str.$maindiv->close();
+        $str = '<div class="'.$h(implode(' ', $classes)).'"'
+            .' data-search="'.$h($search).'"'
+            .' data-sort-name="'.$h($name).'"'
+            .' data-sort-index="'.$h((string)$id).'"'
+            .' onclick="'.$openJs.'"'
+            .' role="button" tabindex="0"'
+            .' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();'.$openJs.';}">';
+        $str .= '<div class="composer-id"><div class="composer-id-num">'.$h((string)$id).'</div></div>';
+        $str .= '<div class="composer-rail" aria-hidden="true"></div>';
+        $str .= '<div class="composer-main"><div class="composer-name">'.$h($name !== '' ? $name : '—').'</div></div>';
+        $str .= '</div>';
+        return $str;
+    }
 
-        $indent--;
-        $modal = new div;
-        $modal->indent=$indent;
-        $modal->id="composer".$this->Index;
-        $modal->class="w3-modal";
-        $str=$str.$modal->open();
+    public function printEditModal() {
+        $h = function($s) {
+            return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
+        };
+        $id = (int)$this->Index;
+        $modalId = 'composer'.$id;
+        $btn = isset($GLOBALS['optionsDB']['colorBtnSubmit'])
+            ? (string)$GLOBALS['optionsDB']['colorBtnSubmit']
+            : '';
+        $inputBg = isset($GLOBALS['optionsDB']['colorInputBackground'])
+            ? (string)$GLOBALS['optionsDB']['colorInputBackground']
+            : '';
 
-        $indent++;
-        $modalcontent = new div;
-        $modalcontent->indent=$indent;
-        $modalcontent->class="w3-modal-content";
-        $modalcontent->tag="form";
-        $modalcontent->action="";
-        $modalcontent->method="POST";
-        $str=$str.$modalcontent->open();
-
-        $indent++;
-        $header = new div;
-        $header->indent=$indent;
-        $header->tag="header";
-        $header->class="w3-container w3-row";
-        $header->class=$GLOBALS['optionsDB']['colorTitleBar'];
-        $str=$str.$header->open();
-
-        $indent++;
-        $close = new div;
-        $close->indent=$indent;
-        $close->tag="span";
-        $close->class="w3-button w3-display-topright";
-        $close->onclick="document.getElementById('composer".$this->Index."').style.display='none'";
-        $close->body="&times;";
-        $str=$str.$close->print();
-           
-        $title = new div;
-        $title->indent=$indent;
-        $title->tag="h2";
-        $title->body="bearbeiten";
-        $str=$str.$title->print();
-    
-        $str=$str.$header->close();
-        
-        $indent--;
-        $content = new div;
-        $content->indent=$indent;
-        $content->class="w3-container w3-row w3-padding";
-        $str=$str.$content->open();
-
-        $indent++;
-        $row = new div;
-        $row->indent=$indent;
-        $row->col(2,6,6);
-        $row->class="w3-row w3-padding";
-        $row->body="<b>Vorname</b>";
-        $str=$str.$row->print();
-
-        $row = new div;
-        $row->tag="input";
-        $row->type="text";
-        $row->indent=$indent;
-        $row->col(2,6,6);
-        $row->class="w3-button w3-row w3-padding";
-        $row->class=$GLOBALS['optionsDB']['colorInputBackground'];
-        $row->name="FirstName";
-        $row->value=$this->FirstName;
-        $str=$str.$row->print();
-        $str=$str.$content->close();
-
-        $str=$str.$content->open();
-        $row = new div;
-        $row->indent=$indent;
-        $row->col(2,6,6);
-        $row->class="w3-row w3-padding";
-        $row->body="<b>Nachname</b>";
-        $str=$str.$row->print();
-
-        $row = new div;
-        $row->tag="input";
-        $row->type="text";
-        $row->indent=$indent;
-        $row->col(2,6,6);
-        $row->class="w3-button w3-row w3-padding";
-        $row->class=$GLOBALS['optionsDB']['colorInputBackground'];
-        $row->name="LastName";
-        $row->value=$this->LastName;
-        $str=$str.$row->print();
-        $str=$str.$content->close();
-
-        $row = new div;
-        $row->tag="input";
-        $row->type="hidden";
-        $row->indent=$indent;
-        $row->name="Index";
-        $row->value=$this->Index;
-        $str=$str.$row->print();
-
-        $str=$str.$content->open();
-        $submit = new div;
-        $submit->tag="input";
-        $submit->type="submit";
-        $submit->indent=$indent;
-        $submit->col(2,6,6);
-        $submit->class="w3-button w3-row w3-padding";
-        $submit->class=$GLOBALS['optionsDB']['colorBtnSubmit'];
-        $submit->name="update";
-        $submit->value="speichern";
-        $str=$str.$submit->print();
-
-        $submit = new div;
-        $submit->tag="input";
-        $submit->type="submit";
-        $submit->indent=$indent;
-        $submit->col(2,6,6);
-        $submit->class="w3-button w3-row w3-padding w3-margin-left";
-        $submit->class=$GLOBALS['optionsDB']['colorBtnSubmit'];
-        $submit->name="delete";
-        $submit->value="l&ouml;schen";
-        $str=$str.$submit->print();
-
-        $str=$str.$content->close();
-        $str=$str.$modalcontent->close();
-        $str=$str.$modal->close();      
+        $str = '<div id="'.$h($modalId).'" class="w3-modal">';
+        $str .= '<form class="w3-modal-content profile-shell modal-shell" action="" method="POST">';
+        $str .= '<header class="profile-hero">';
+        $str .= '<div class="profile-hero-text">';
+        $str .= '<p class="profile-kicker">Komponisten</p>';
+        $str .= '<h2 class="profile-title">Bearbeiten</h2>';
+        $str .= '</div>';
+        $str .= '<button type="button" class="modal-close w3-button" onclick="document.getElementById(\''.$h($modalId).'\').style.display=\'none\'" aria-label="Schließen">&times;</button>';
+        $str .= '</header>';
+        $str .= '<div class="profile-grid">';
+        $str .= '<input type="hidden" name="Index" value="'.$id.'">';
+        $str .= '<div class="profile-field"><label class="profile-label">Vorname</label>'
+            .'<input name="FirstName" type="text" class="w3-input w3-border profile-control '.$h($inputBg).'" value="'.$h($this->FirstName).'"/></div>';
+        $str .= '<div class="profile-field"><label class="profile-label">Nachname</label>'
+            .'<input name="LastName" type="text" class="w3-input w3-border profile-control '.$h($inputBg).'" value="'.$h($this->LastName).'"/></div>';
+        $str .= '<div class="profile-field profile-actions">'
+            .'<button type="submit" name="update" value="1" class="w3-button '.$h($btn).'">Speichern</button> '
+            .'<button type="submit" name="delete" value="1" class="w3-button w3-border w3-red">Löschen</button>'
+            .'</div>';
+        $str .= '</div></form></div>';
         return $str;
     }
 };

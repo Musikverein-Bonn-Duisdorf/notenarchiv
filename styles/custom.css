@@ -5027,6 +5027,181 @@ select.profile-control {
   }
 }
 
+/* ARCHIV-19: Melde-parity list cards (piece / composer / publisher / collection) */
+.piece-row.list-filtered-out,
+.composer-row.list-filtered-out,
+.publisher-row.list-filtered-out,
+.collection-row.list-filtered-out,
+.collection-section.list-filtered-out {
+  display: none !important;
+}
+
+.archiv-list-nav-form {
+  display: none;
+}
+
+.piece-row,
+.composer-row,
+.publisher-row,
+.collection-row {
+  --archiv-id-col-w: 9.75rem;
+  --archiv-rail-w: 0.35rem;
+  --archiv-rail-color: var(--page-title-accent, #345A95);
+  --archiv-row-pad-y: 0.85rem;
+  --archiv-rail-inset: 0.4rem;
+  display: grid;
+  grid-template-columns: var(--archiv-id-col-w) var(--archiv-rail-w) minmax(0, 1fr);
+  column-gap: 0.85rem;
+  align-items: start;
+  box-sizing: border-box;
+  padding: var(--archiv-row-pad-y) 1rem;
+  margin: 0 0 0.55rem;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 0.35rem;
+  overflow: hidden;
+}
+
+.piece-row,
+.composer-row,
+.collection-row[role="button"] {
+  cursor: pointer;
+}
+
+.piece-row:focus-visible,
+.composer-row:focus-visible,
+.publisher-row:focus-visible,
+.collection-row:focus-visible {
+  outline: 2px solid rgba(0, 0, 0, 0.45);
+  outline-offset: 2px;
+}
+
+.piece-id,
+.composer-id,
+.publisher-id,
+.collection-id {
+  width: var(--archiv-id-col-w);
+  max-width: var(--archiv-id-col-w);
+  min-width: 0;
+  box-sizing: border-box;
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
+}
+
+.piece-reg,
+.composer-id-num,
+.publisher-id-num,
+.collection-nr {
+  font-weight: 700;
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.piece-chip {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 0.12rem 0.4rem;
+  border-radius: 0.25rem;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  opacity: 0.9;
+}
+
+.piece-rail,
+.composer-rail,
+.publisher-rail,
+.collection-rail {
+  width: var(--archiv-rail-w);
+  align-self: stretch;
+  margin-top: calc(-1 * var(--archiv-row-pad-y) + var(--archiv-rail-inset));
+  margin-bottom: calc(-1 * var(--archiv-row-pad-y) + var(--archiv-rail-inset));
+  min-height: calc(100% + 2 * var(--archiv-row-pad-y) - 2 * var(--archiv-rail-inset));
+  background: var(--archiv-rail-color);
+  border-radius: 2px;
+}
+
+.piece-main,
+.composer-main,
+.publisher-main,
+.collection-main {
+  min-width: 0;
+  align-self: start;
+}
+
+.piece-title,
+.composer-name,
+.publisher-name,
+.collection-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+.publisher-address {
+  margin-top: 0.2rem;
+  font-size: 0.95rem;
+  line-height: 1.35;
+  opacity: 0.9;
+  white-space: pre-line;
+  word-break: break-word;
+}
+
+.piece-meta-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  margin-top: 0.35rem;
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.piece-meta-item {
+  min-width: 0;
+  word-break: break-word;
+}
+
+.piece-meta-k {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  opacity: 0.65;
+  margin-right: 0.25rem;
+}
+
+.collection-section {
+  margin: 0 0 1.25rem;
+}
+
+.collection-section-title {
+  margin: 0 0 0.55rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.collection-section-list {
+  margin: 0;
+}
+
+@media (max-width: 600px) {
+  .piece-row,
+  .composer-row,
+  .publisher-row,
+  .collection-row {
+    --archiv-id-col-w: 7.5rem;
+    --archiv-row-pad-y: 0.75rem;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+}
+
 /* MELD-148: admin log rows (inventar list layout) */
 .log-row {
   --log-id-col-w: 11rem;

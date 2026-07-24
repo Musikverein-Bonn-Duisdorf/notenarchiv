@@ -225,59 +225,72 @@ class Composition
 }
 
     public function printLine() {
-        $str = "";
-        $maindiv = new div;
-        $maindiv->class="w3-row w3-padding w3-mobile w3-border-bottom w3-border-black";
-        $maindiv->id="pieceID".$this->Index;
-        $str=$str.$maindiv->open();
+        $h = function($s) {
+            return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
+        };
+        $id = (int)$this->Index;
+        $title = (string)$this->Title;
+        $composer = (string)$this->ComposerName;
+        $arranger = (string)$this->ArrangerName;
+        $publisher = (string)$this->PublisherName;
+        $year = $this->Year !== null && $this->Year !== '' ? (string)$this->Year : '';
+        $grade = $this->Grade !== null && $this->Grade !== '' ? (string)$this->Grade : '';
+        $reg = $this->RegistrationNumber !== null && $this->RegistrationNumber !== ''
+            ? (string)$this->RegistrationNumber
+            : '';
 
-        $str=$str."<form id=\"form".$this->Index."\" action=\"composition.php\" method=\"POST\">";
-        $str=$str."<input type=\"hidden\" name=\"pieceID\" value=\"".$this->Index."\">";
-        $str=$str."</form>";
+        $searchParts = array($reg, $title, $composer, $arranger, $publisher, $year, $grade);
+        $search = trim(preg_replace('/\s+/', ' ', implode(' ', $searchParts)));
 
-        $str=$str."<script>";
-        $str=$str."var form".$this->Index." = document.getElementById(\"form".$this->Index."\");";
-        $str=$str."document.getElementById(\"pieceID".$this->Index."\").addEventListener(\"click\", function () {form".$this->Index.".submit();});";
-        $str=$str."</script>";
-        
-        $row = new div;
-        $row->col(1,3,3);
-        $row->body=$this->RegistrationNumber;
-        $str=$str.$row->print();
+        $classes = array('piece-row', 'list-row');
+        $hover = isset($GLOBALS['optionsDB']['HoverEffect']) ? (string)$GLOBALS['optionsDB']['HoverEffect'] : '';
+        if($hover !== '') {
+            $classes[] = $hover;
+        }
 
-        $row = new div;
-        $row->col(3,6,6);
-        $row->body=$this->Title;
-        $str=$str.$row->print();
+        $formId = 'form'.$id;
+        $openJs = 'document.getElementById(\''.$formId.'\').submit();';
 
-        $row = new div;
-        $row->col(2,6,6);
-        $row->body=$this->ComposerName;
-        $str=$str.$row->print();
-
-        $row = new div;
-        $row->col(2,6,6);
-        $row->body=$this->ArrangerName;
-        $str=$str.$row->print();
-
-        $row = new div;
-        $row->col(2,6,6);
-        $row->body=$this->PublisherName;
-        $str=$str.$row->print();
-
-        $row = new div;
-        $row->col(1,3,3);
-        $row->class="w3-center";
-        $row->body=$this->Year;
-        $str=$str.$row->print();
-
-        $row = new div;
-        $row->col(1,3,3);
-        $row->class="w3-center";
-        $row->body=$this->Grade;
-        $str=$str.$row->print();
-
-        $str=$str.$maindiv->close();
+        $str = '<form id="'.$h($formId).'" action="composition.php" method="POST" class="archiv-list-nav-form">'
+            .'<input type="hidden" name="pieceID" value="'.$id.'">'
+            .'</form>';
+        $str .= '<div class="'.$h(implode(' ', $classes)).'"'
+            .' id="pieceID'.$id.'"'
+            .' data-search="'.$h($search).'"'
+            .' data-sort-nr="'.$h($reg).'"'
+            .' data-sort-title="'.$h($title).'"'
+            .' data-sort-composer="'.$h($composer).'"'
+            .' data-sort-publisher="'.$h($publisher).'"'
+            .' data-sort-year="'.$h($year).'"'
+            .' data-sort-grade="'.$h($grade).'"'
+            .' onclick="'.$openJs.'"'
+            .' role="button" tabindex="0"'
+            .' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();'.$openJs.'}">';
+        $str .= '<div class="piece-id">';
+        $str .= '<div class="piece-reg">'.$h($reg !== '' ? $reg : '—').'</div>';
+        if($grade !== '') {
+            $str .= '<span class="piece-chip">'.$h($grade).'</span>';
+        }
+        $str .= '</div>';
+        $str .= '<div class="piece-rail" aria-hidden="true"></div>';
+        $str .= '<div class="piece-main">';
+        $str .= '<div class="piece-title">'.$h($title).'</div>';
+        $str .= '<div class="piece-meta-line">';
+        if($composer !== '') {
+            $str .= '<span class="piece-meta-item"><span class="piece-meta-k">Komponist</span> '.$h($composer).'</span>';
+        }
+        if($arranger !== '') {
+            $str .= '<span class="piece-meta-item"><span class="piece-meta-k">Arrangeur</span> '.$h($arranger).'</span>';
+        }
+        if($publisher !== '') {
+            $str .= '<span class="piece-meta-item"><span class="piece-meta-k">Verlag</span> '.$h($publisher).'</span>';
+        }
+        if($year !== '') {
+            $str .= '<span class="piece-meta-item"><span class="piece-meta-k">Jahr</span> '.$h($year).'</span>';
+        }
+        $str .= '</div>';
+        $str .= '</div>';
+        $str .= '</div>';
         return $str;
     }
     public function getCover() {

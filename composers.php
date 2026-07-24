@@ -32,7 +32,7 @@ if($_SESSION['admin']) {
 
     $addBtn = '<button type="button" class="w3-button '.htmlspecialchars($GLOBALS['optionsDB']['colorBtnSubmit'], ENT_QUOTES, 'UTF-8').'" onclick="document.getElementById(\'inputModal\').style.display=\'block\'" title="Anlegen"><i class="fas fa-plus"></i></button>';
     adminListPageBegin('Komponisten', 'Komponisten und Arrangeure ('.$nComposers.')', array('actionsHtml' => $addBtn));
-    adminListSearchField('Suchen…', array('onkeyup' => 'filterPieces()'));
+    adminListSearchField('Komponist…', array('onkeyup' => 'filterPieces()'));
 ?>
 <script src="<?php echo assetUrl('js/filterPieces.js'); ?>"></script>
 <?php
@@ -63,10 +63,8 @@ if($_SESSION['admin']) {
   </form>
 </div>
 <?php
-    deferPageModalHtml(ob_get_clean());
-?>
-<div id="Liste">
-<?php
+    $modals = ob_get_clean();
+    $listHtml = '';
     $sql = sprintf('SELECT `Index` FROM `%sComposer` ORDER BY `LastName`, `FirstName`;',
     $GLOBALS['dbprefix']
     );
@@ -75,9 +73,13 @@ if($_SESSION['admin']) {
     while($row = mysqli_fetch_array($dbr)) {
         $M = new Composer;
         $M->load_by_id($row['Index']);
-        echo $M->printLine();
+        $listHtml .= $M->printLine();
+        $modals .= $M->printEditModal();
     }
+    deferPageModalHtml($modals);
 ?>
+<div id="Liste">
+<?php echo $listHtml; ?>
 </div>
 <?php
     adminListPageEnd();

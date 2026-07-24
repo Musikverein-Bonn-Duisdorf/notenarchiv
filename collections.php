@@ -6,7 +6,9 @@ $_SESSION['adminpage']=false;
 include "common/header.php";
 
 adminListPageBegin('Archiv', 'Mappen');
+adminListSearchField('Mappe, Stück…', array('onkeyup' => 'filterPieces()'));
 ?>
+<script src="<?php echo assetUrl('js/filterPieces.js'); ?>"></script>
 <div id="Liste">
 <?php
 $sql = sprintf('SELECT `Index` FROM `%sCollection` ORDER BY `Name`;',

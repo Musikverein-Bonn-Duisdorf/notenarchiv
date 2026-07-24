@@ -91,22 +91,32 @@ class Publisher
     }
 
     public function printLine() {
-        $str = "";
-        $maindiv = new div;
-        $maindiv->class="w3-margin w3-row w3-border-bottom w3-border-black";
-        $str=$str.$maindiv->open();
+        $h = function($s) {
+            return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
+        };
+        $id = (int)$this->Index;
+        $name = (string)$this->Name;
+        $address = (string)$this->Address;
+        $search = trim(preg_replace('/\s+/', ' ', implode(' ', array($name, $address, (string)$id))));
 
-        $row = new div;
-        $row->col(1,3,3);
-        $row->body=$this->Name;
-        $str=$str.$row->print();
+        $classes = array('publisher-row', 'list-row');
+        $hover = isset($GLOBALS['optionsDB']['HoverEffect']) ? (string)$GLOBALS['optionsDB']['HoverEffect'] : '';
+        if($hover !== '') {
+            $classes[] = $hover;
+        }
 
-        $row = new div;
-        $row->col(2,3,3);
-        $row->body=$this->Address;
-        $str=$str.$row->print();
-
-        $str=$str.$maindiv->close();
+        $str = '<div class="'.$h(implode(' ', $classes)).'"'
+            .' data-search="'.$h($search).'"'
+            .' data-sort-name="'.$h($name).'"'
+            .' data-sort-index="'.$h((string)$id).'">';
+        $str .= '<div class="publisher-id"><div class="publisher-id-num">'.$h((string)$id).'</div></div>';
+        $str .= '<div class="publisher-rail" aria-hidden="true"></div>';
+        $str .= '<div class="publisher-main">';
+        $str .= '<div class="publisher-name">'.$h($name !== '' ? $name : '—').'</div>';
+        if($address !== '') {
+            $str .= '<div class="publisher-address">'.$h($address).'</div>';
+        }
+        $str .= '</div></div>';
         return $str;
     }
 };
