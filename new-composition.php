@@ -101,6 +101,21 @@ $backLink = '<a class="w3-button w3-border '.htmlspecialchars($inputBg, ENT_QUOT
         <input id="editTime" class="w3-input w3-border profile-control <?php echo htmlspecialchars($inputBg, ENT_QUOTES, 'UTF-8'); ?>" name="PerformanceTime" type="text" value="<?php echo archivEscHtml($piece->PerformanceTime); ?>" placeholder="00:00">
       </div>
     </section>
+<?php if($isEdit) { ?>
+    <section class="profile-col" aria-labelledby="edit-col-collections">
+      <h3 id="edit-col-collections" class="profile-col-title">Sammlungen</h3>
+      <?php
+        echo archivCollectionChipsEditorHtml(
+            'piece-edit-coll',
+            'mail-recipient-chip--collection',
+            'collectionsSpec',
+            archivCollectionsCatalog(),
+            $piece->getCollectionsChipSpec(),
+            'Sammlung…'
+        );
+      ?>
+    </section>
+<?php } ?>
   </div>
 </form>
 </div>
