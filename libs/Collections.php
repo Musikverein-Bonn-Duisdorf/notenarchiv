@@ -130,30 +130,6 @@ class Collections
         }
     }
 
-    public function delete() {
-        $id = (int)$this->Index;
-        if($id < 1) {
-            return false;
-        }
-        $sql = sprintf(
-            'DELETE FROM `%sCollectionItem` WHERE `Collections` = "%d";',
-            $GLOBALS['dbprefix'],
-            $id
-        );
-        $dbr = mysqli_query($GLOBALS['conn'], $sql);
-        sqlerror();
-        $sql = sprintf(
-            'DELETE FROM `%sCollection` WHERE `Index` = "%d";',
-            $GLOBALS['dbprefix'],
-            $id
-        );
-        $dbr = mysqli_query($GLOBALS['conn'], $sql);
-        sqlerror();
-        $logentry = new Log;
-        $logentry->DBdelete('Collection-ID: '.$id.', Name: '.archivPlainText($this->Name));
-        return true;
-    }
-
     public function printContent() {
         $id = (int)$this->Index;
         $name = archivPlainText($this->Name);
