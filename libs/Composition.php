@@ -396,22 +396,29 @@ class Composition
         return $str;
     }
 
-    public function listCollections() {
+    public function getCollectionsChipSpec() {
+        $items = array();
+        $id = (int)$this->Index;
+        if($id < 1) {
+            return $items;
+        }
         $sql = sprintf(
             'SELECT `Collections`, `CollectionNumber` FROM `%sCollectionItem` WHERE `Composition` = "%d" ORDER BY `CollectionNumber` ASC;',
             $GLOBALS['dbprefix'],
-            (int)$this->Index
+            $id
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
         sqlerror();
-        $initial = array();
         while($row = mysqli_fetch_array($dbr)) {
-            $initial[] = array(
+            $items[] = array(
                 'id' => (int)$row['Collections'],
                 'number' => (int)$row['CollectionNumber'],
             );
         }
+        return $items;
+    }
 
+    public function listCollections() {
         $str = '<form class="profile-grid collection-chips-form" action="" method="POST">';
         $str .= '<input type="hidden" name="Composition" value="'.(int)$this->Index.'">';
         $str .= '<div class="profile-field">';
@@ -420,7 +427,7 @@ class Composition
             'mail-recipient-chip--collection',
             'collectionsSpec',
             archivCollectionsCatalog(),
-            $initial,
+            $this->getCollectionsChipSpec(),
             'Sammlung…'
         );
         $str .= '</div>';

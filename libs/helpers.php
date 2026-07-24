@@ -1067,26 +1067,109 @@ function renderChangelogHtml() {
 }
 
 /**
+ * Chip short label for a composition: "{ID} {Titel} - {Komponist}, {Arrangeur} ({Verlag})".
+ * Only set parts; no empty separators.
+ *
+ * @param string|int|null $registrationNumber
+ * @param string $title
+ * @param string $composer
+ * @param string $arranger
+ * @param string $publisher
+ * @param int $fallbackId DB Index used only if everything else is empty
+ * @return string
+ */
+function archivCompositionChipLabel($registrationNumber, $title, $composer, $arranger, $publisher, $fallbackId = 0) {
+    $id = ($registrationNumber !== null && $registrationNumber !== '')
+        ? trim((string)$registrationNumber)
+        : '';
+    $title = trim(archivPlainText($title));
+    $composer = trim(archivPlainText($composer));
+    $arranger = trim(archivPlainText($arranger));
+    $publisher = trim(archivPlainText($publisher));
+
+    $leftParts = array();
+    if($id !== '') {
+        $leftParts[] = $id;
+    }
+    if($title !== '') {
+        $leftParts[] = $title;
+    }
+    $left = implode(' ', $leftParts);
+
+    $peopleParts = array();
+    if($composer !== '') {
+        $peopleParts[] = $composer;
+    }
+    if($arranger !== '') {
+        $peopleParts[] = $arranger;
+    }
+    $people = implode(', ', $peopleParts);
+
+    $label = $left;
+    if($people !== '') {
+        $label = $label !== '' ? ($label.' - '.$people) : $people;
+    }
+    if($publisher !== '') {
+        $label = $label !== '' ? ($label.' ('.$publisher.')') : ('('.$publisher.')');
+    }
+    if($label === '') {
+        $label = 'Stück #'.(int)$fallbackId;
+    }
+    return $label;
+}
+
+/**
+ * Build "FirstName LastName" from composer row columns (plain text).
+ * @param string|null $firstName
+ * @param string|null $lastName
+ * @return string
+ */
+function archivComposerDisplayName($firstName, $lastName) {
+    $parts = array();
+    $fn = trim(archivPlainText((string)$firstName));
+    $ln = trim(archivPlainText((string)$lastName));
+    if($fn !== '') {
+        $parts[] = $fn;
+    }
+    if($ln !== '') {
+        $parts[] = $ln;
+    }
+    return implode(' ', $parts);
+}
+
+/**
  * Catalog entries for composition typeahead: [{id, label, meta}, ...]
  * @return array
  */
 function archivCompositionsCatalog() {
     $out = array();
+    $p = $GLOBALS['dbprefix'];
     $sql = sprintf(
-        'SELECT `Index`, `RegistrationNumber`, `Title` FROM `%sComposition` ORDER BY `RegistrationNumber`, `Title`;',
-        $GLOBALS['dbprefix']
+        'SELECT c.`Index`, c.`RegistrationNumber`, c.`Title`,'
+        .' comp.`FirstName` AS `ComposerFirst`, comp.`LastName` AS `ComposerLast`,'
+        .' arr.`FirstName` AS `ArrangerFirst`, arr.`LastName` AS `ArrangerLast`,'
+        .' pub.`Name` AS `PublisherName`'
+        .' FROM `%sComposition` c'
+        .' LEFT JOIN `%sComposer` comp ON comp.`Index` = c.`Composer`'
+        .' LEFT JOIN `%sComposer` arr ON arr.`Index` = c.`Arranger`'
+        .' LEFT JOIN `%sPublisher` pub ON pub.`Index` = c.`Publisher`'
+        .' ORDER BY c.`RegistrationNumber`, c.`Title`;',
+        $p, $p, $p, $p
     );
     $dbr = mysqli_query($GLOBALS['conn'], $sql);
     sqlerror();
     while($row = mysqli_fetch_array($dbr)) {
-        $reg = $row['RegistrationNumber'] !== null && $row['RegistrationNumber'] !== ''
-            ? (string)$row['RegistrationNumber']
-            : '';
-        $title = archivPlainText($row['Title']);
         $out[] = array(
             'id' => (int)$row['Index'],
-            'label' => $title !== '' ? $title : ('Stück #'.(int)$row['Index']),
-            'meta' => $reg !== '' ? 'Inv. '.$reg : '',
+            'label' => archivCompositionChipLabel(
+                $row['RegistrationNumber'],
+                $row['Title'],
+                archivComposerDisplayName($row['ComposerFirst'], $row['ComposerLast']),
+                archivComposerDisplayName($row['ArrangerFirst'], $row['ArrangerLast']),
+                isset($row['PublisherName']) ? $row['PublisherName'] : '',
+                (int)$row['Index']
+            ),
+            'meta' => '',
         );
     }
     return $out;
