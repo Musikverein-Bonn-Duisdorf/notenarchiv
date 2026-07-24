@@ -28,9 +28,12 @@ class Publisher
     public function save() {
         if(!$this->is_valid()) return false;
         if($this->Index > 0) {
+            $changes = $this->getChanges();
             $this->update();
-            $logentry = new Log;
-            $logentry->DBupdate($this->getVars());
+            if($changes !== '') {
+                $logentry = new Log;
+                $logentry->DBupdate($changes);
+            }
         }
         else {
             $this->insert();
@@ -40,7 +43,69 @@ class Publisher
     }
 
     public function getVars() {
-        
+        $parts = array();
+        $parts[] = sprintf('Publisher-ID: %d', (int)$this->Index);
+        logAppendFilled($parts, 'Name', $this->Name);
+        logAppendFilled($parts, 'Address', $this->Address);
+        return implode(', ', $parts);
+    }
+
+    public function getChanges() {
+        $old = new Publisher;
+        $old->load_by_id($this->Index);
+        $parts = array();
+        logAppendChange($parts, 'Name', $old->Name, $this->Name);
+        logAppendChange($parts, 'Address', $old->Address, $this->Address);
+        if(!$parts) {
+            return '';
+        }
+        return sprintf('Publisher-ID: %d, ', (int)$this->Index).implode(', ', $parts);
+    }
+
+    public function delete() {
+        $id = (int)$this->Index;
+        if($id < 1) {
+            return false;
+        }
+        $vars = $this->getVars();
+        $sql = sprintf('DELETE FROM `%sPublisher` WHERE `Index` = "%d";',
+            $GLOBALS['dbprefix'],
+            $id
+        );
+        $dbr = mysqli_query($GLOBALS['conn'], $sql);
+        sqlerror();
+        if($dbr) {
+            archivEntityAvatarDelete('Publishers', $id, false);
+            if($vars !== '') {
+                $logentry = new Log;
+                $logentry->DBdelete($vars);
+            }
+        }
+        return (bool)$dbr;
+    }
+
+    public function avatarInitials() {
+        $name = trim(archivPlainText($this->Name));
+        $s = mb_substr($name, 0, 2, 'UTF-8');
+        return $s !== '' ? mb_strtoupper($s, 'UTF-8') : '—';
+    }
+
+    public function uploadAvatar(array $file) {
+        return archivEntityAvatarUpload(
+            'Publishers',
+            (int)$this->Index,
+            $file,
+            sprintf('Publisher-ID: %d', (int)$this->Index)
+        );
+    }
+
+    public function deleteAvatar($writeLog = true) {
+        return archivEntityAvatarDelete(
+            'Publishers',
+            (int)$this->Index,
+            $writeLog,
+            sprintf('Publisher-ID: %d', (int)$this->Index)
+        );
     }
         
     public function fill_from_array($row) {
@@ -91,23 +156,43 @@ class Publisher
     }
 
     public function printLine() {
-        $str = "";
-        $maindiv = new div;
-        $maindiv->class="w3-margin w3-row w3-border-bottom w3-border-black";
-        $str=$str.$maindiv->open();
+        $id = (int)$this->Index;
+        $name = archivPlainText($this->Name);
+        $address = archivPlainText($this->Address);
+        $search = trim(preg_replace('/\s+/', ' ', implode(' ', array($name, $address, (string)$id))));
 
-        $row = new div;
-        $row->col(1,3,3);
-        $row->body=$this->Name;
-        $str=$str.$row->print();
+        $classes = array('publisher-row', 'list-row');
+        $hover = isset($GLOBALS['optionsDB']['HoverEffect']) ? (string)$GLOBALS['optionsDB']['HoverEffect'] : '';
+        if($hover !== '') {
+            $classes[] = $hover;
+        }
+        $openJs = 'openModal(\'publisher\', '.$id.')';
 
-        $row = new div;
-        $row->col(2,3,3);
-        $row->body=$this->Address;
-        $str=$str.$row->print();
-
-        $str=$str.$maindiv->close();
+        $str = '<div class="'.archivEscHtml(implode(' ', $classes)).'"'
+            .' data-search="'.archivEscHtml($search).'"'
+            .' data-sort-name="'.archivEscHtml($name).'"'
+            .' data-sort-index="'.archivEscHtml((string)$id).'"'
+            .' onclick="'.$openJs.'"'
+            .' role="button" tabindex="0"'
+            .' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();'.$openJs.';}">';
+        $str .= '<div class="publisher-id"><div class="publisher-id-num">'.archivEscHtml((string)$id).'</div></div>';
+        $str .= '<div class="publisher-rail" aria-hidden="true"></div>';
+        $str .= '<div class="publisher-main">';
+        $str .= archivEntityAvatarHtml('Publishers', $id, $this->avatarInitials(), 'entity-avatar entity-avatar--row');
+        $str .= '<div class="publisher-text">';
+        $str .= '<div class="publisher-name">'.archivEscHtml($name !== '' ? $name : '—').'</div>';
+        if($address !== '') {
+            $str .= '<div class="publisher-address">'.archivEscHtml($address).'</div>';
+        }
+        $str .= '</div></div></div>';
         return $str;
+    }
+
+    public function getModalHtml($showEditButton = false) {
+        return render('publisher/modal', array(
+            'publisher' => $this,
+            'showEditButton' => (bool)$showEditButton,
+        ));
     }
 };
 ?>

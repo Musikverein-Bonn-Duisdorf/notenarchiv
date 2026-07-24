@@ -17,7 +17,7 @@ $sections[] = array(
     'id' => 'einfuehrung',
     'title' => 'Einführung',
     'body' => '
-<p>Das <b>Notenarchiv</b> verwaltet den Vereinsnotenbestand: Stücke, Stimmen, Mappen, Komponisten und Verlage. Login und Rechte kommen aus der Meldeliste (SSO).</p>
+<p>Das <b>Notenarchiv</b> verwaltet den Vereinsnotenbestand: Stücke, Stimmen, Sammlungen, Komponisten und Verlage. Login und Rechte kommen aus der Meldeliste (SSO).</p>
 <p>Über die Navigation erreichst du die Bereiche, die für dich freigeschaltet sind: auf breiten Bildschirmen links mit Text, auf dem Smartphone unten als Leiste (weitere Einträge und Admin unter <b>Mehr</b>). Diese Hilfe zeigt nur Abschnitte, die zu deinen aktuellen Rechten passen.</p>
 '
 );
@@ -29,13 +29,13 @@ $sections[] = array(
 <p>Auf dem Desktop steht die Navigation links (Icons mit Beschriftung). Auf dem Smartphone unten; unter <b>Mehr</b> findest du weitere Einträge, Admin und Ausloggen.</p>
 <ul class="help-list">
 <li><i class="fas fa-home"></i> <b>Stücke</b> – Katalog der Kompositionen (Suche, Filter, Detail)</li>
-<li><i class="fas fa-folder-open"></i> <b>Mappen</b> – physische oder thematische Sammlungen</li>
+<li><i class="fas fa-folder-open"></i> <b>Sammlungen</b> – physische oder thematische Zusammenstellungen</li>
 <li><i class="fas fa-feather"></i> <b>Komponisten</b> – Komponisten und Arrangeure</li>
 <li><i class="fas fa-industry"></i> <b>Verlage</b> – Verlagsstammdaten</li>
 '.($meldeUrl !== '' ? '<li><i class="fas fa-clipboard-list"></i> <b>Meldeliste</b> – Rückkehr zur Meldeliste (SSO)</li>' : '').'
 <li>Logo oben rechts – öffnet die <b>Vereinshomepage</b> in einem neuen Tab</li>
 <li><i class="fas fa-circle-question"></i> <b>Hilfe</b> – diese Seite inkl. Changelog</li>
-'.($showAdmin ? '<li><i class="fas fa-wrench"></i> <b>Admin</b> – Verwaltung (Stück anlegen, Konfiguration, Updater, Log); Desktop unter Mehr, mobil ebenfalls unter Mehr</li>' : '').'
+'.($showAdmin ? '<li><i class="fas fa-wrench"></i> <b>Admin</b> – Verwaltung (Anlegen je Kategorie, Konfiguration, Updater, Log); Desktop unter Mehr, mobil ebenfalls unter Mehr</li>' : '').'
 <li><i class="fas fa-sign-out-alt"></i> <b>Ausloggen</b> – Sitzung beenden</li>
 </ul>
 '
@@ -46,15 +46,16 @@ $sections[] = array(
     'title' => 'Stücke',
     'body' => '
 <p>Unter <b>Stücke</b> siehst du den Katalog. Über die Suchzeile filterst du nach Titel, Komponist oder weiteren Feldern; lange Listen werden beim Scrollen nachgeladen.</p>
-<p>Ein Klick auf ein Stück öffnet die Detailseite: Stammdaten, Cover, Stimmsatz und zugehörige Mappen. Von dort aus kannst du den Stimmsatz anzeigen/drucken und – mit entsprechenden Rechten – bearbeiten oder löschen.</p>
+<p>Ein Klick öffnet zuerst ein Detail-Modal; von dort gelangst du mit <b>Öffnen</b> zur Stückseite (Cover, Stimmsatz, Sammlungen)'.($showAdmin ? ' bzw. mit <b>Bearbeiten</b> zur Anlege-/Edit-Seite' : '').'.</p>
+'.($showAdmin ? '<p>Admins legen neue Stücke über <b>Admin → Stück</b> bzw. Plus auf der Stückliste an. Sammlungen, Komponisten und Verlage haben jeweils eigene Anlege-Seiten.</p>' : '').'
 '
 );
 
 $sections[] = array(
-    'id' => 'mappen',
-    'title' => 'Mappen',
+    'id' => 'sammlungen',
+    'title' => 'Sammlungen',
     'body' => '
-<p>Unter <b>Mappen</b> verwaltest du Sammlungen (z.&nbsp;B. Ordner im Schrank oder thematische Listen). Stücke können einer oder mehreren Mappen zugeordnet sein; die Zuordnung pflegst du in der Stück-Detailansicht.</p>
+<p>Unter <b>Sammlungen</b> verwaltest du Zusammenstellungen (z.&nbsp;B. Ordner im Schrank oder thematische Listen). Stücke können einer oder mehreren Sammlungen zugeordnet sein. Ein Klick auf den Sammlungstitel öffnet ein Detail-Modal'.($showAdmin ? '; <b>Bearbeiten</b> führt zur Anlege-Seite. Dort und im Sammlungen-Dialog am Stück pflegst du den Inhalt per Chips (Nr = Reihenfolge). Anlegen über Plus bzw. <b>Admin → Sammlung</b>' : '').'.</p>
 '
 );
 
@@ -62,7 +63,7 @@ $sections[] = array(
     'id' => 'komponisten-verlage',
     'title' => 'Komponisten &amp; Verlage',
     'body' => '
-<p><b>Komponisten</b> und <b>Verlage</b> sind Stammdaten für den Katalog. Anlegen und Bearbeiten erfolgen über die jeweiligen Listen (Plus-Button bzw. Eintrag öffnen). Stücke verweisen auf diese Einträge.</p>
+<p><b>Komponisten</b> und <b>Verlage</b> sind Stammdaten für den Katalog. Anlegen geht über die jeweiligen Anlege-Seiten (<b>Admin → Komponist</b> / <b>Verlag</b> oder Plus in der Liste). Ein Klick in der Liste öffnet ein Detail-Modal; <b>Bearbeiten</b> führt auf die Anlege-Seite (dort auch Löschen und Foto). Stücke verweisen auf diese Einträge.</p>
 '
 );
 
@@ -91,7 +92,7 @@ $sections[] = array(
     'visible' => $showAdmin,
     'body' => '
 <ul class="help-list">
-<li><b>Stück anlegen</b> – neues Werk mit Stammdaten und Stimmsatz anlegen</li>
+<li><b>Stück / Sammlung / Komponist / Verlag</b> – jeweils eigene Anlege-Seite (Melde-Stil); Liste → Detail-Modal → Bearbeiten</li>
 '.($canEditConfig ? '
 <li><b>Konfiguration</b> – Farben/Farbschema, Site-Name, URLs, Feature-Schalter; Änderungen erscheinen im Log. Archiv-Parameter heißen in der Datenbank <code>Archiv*</code> (Anzeige in der Hilfe/UI oft unter dem kurzen Namen)</li>
 <li><b>Backup</b> – ZIP mit Versionsinfo und SQL nur für Archiv-Tabellen (<code>archiv_*</code>), nicht Melde-Identity. Download im Browser, CLI <code>php cron.php CRONID backup</code>, remote nur mit eigenem <code>$backupToken</code> (≥32 Zeichen) über <code>cron.php?id=…&amp;cmd=backup</code>. Erfolgreiche Downloads erscheinen im Log als Info, Fehler als Error. PDFs unter <code>data/</code> gehören nicht ins ZIP</li>

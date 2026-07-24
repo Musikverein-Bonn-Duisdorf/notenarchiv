@@ -225,7 +225,7 @@ try {
         'jugend' => seedPublisher('JugendBlasorchester Verlag', 'Stuttgart'),
     );
 
-    // —— Mappen ——
+    // —— Sammlungen ——
     $collections = array(
         'konzert' => seedCollection('Jahreskonzert 2026'),
         'marsch' => seedCollection('Marschmappe A'),

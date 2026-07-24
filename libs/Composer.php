@@ -28,9 +28,12 @@ class Composer
     public function save() {
         if(!$this->is_valid()) return false;
         if($this->Index > 0) {
+            $changes = $this->getChanges();
             $this->update();
-            $logentry = new Log;
-            $logentry->DBupdate($this->getVars());
+            if($changes !== '') {
+                $logentry = new Log;
+                $logentry->DBupdate($changes);
+            }
         }
         else {
             $this->insert();
@@ -40,20 +43,66 @@ class Composer
     }
 
     public function getVars() {
-        return sprintf("Composer-ID: %d, First Name: %s, Last Name: %s",
-        $this->Index,
-        $this->FirstName,
-        $this->LastName
-        );
+        $parts = array();
+        $parts[] = sprintf('Composer-ID: %d', (int)$this->Index);
+        logAppendFilled($parts, 'FirstName', $this->FirstName);
+        logAppendFilled($parts, 'LastName', $this->LastName);
+        return implode(', ', $parts);
+    }
+
+    public function getChanges() {
+        $old = new Composer;
+        $old->load_by_id($this->Index);
+        $parts = array();
+        logAppendChange($parts, 'FirstName', $old->FirstName, $this->FirstName);
+        logAppendChange($parts, 'LastName', $old->LastName, $this->LastName);
+        if(!$parts) {
+            return '';
+        }
+        return sprintf('Composer-ID: %d, ', (int)$this->Index).implode(', ', $parts);
     }
         
     public function delete() {
+        $vars = $this->getVars();
+        $id = (int)$this->Index;
         $sql = sprintf('DELETE FROM `%sComposer` WHERE `Index` = "%d";',
         $GLOBALS['dbprefix'],
-        $this->Index
+        $id
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
-        sqlerror();        
+        sqlerror();
+        if($dbr) {
+            archivEntityAvatarDelete('Composers', $id, false);
+            if($vars !== '') {
+                $logentry = new Log;
+                $logentry->DBdelete($vars);
+            }
+        }
+    }
+
+    public function avatarInitials() {
+        $a = mb_substr(trim(archivPlainText($this->FirstName)), 0, 1, 'UTF-8');
+        $b = mb_substr(trim(archivPlainText($this->LastName)), 0, 1, 'UTF-8');
+        $s = $a.$b;
+        return $s !== '' ? mb_strtoupper($s, 'UTF-8') : '—';
+    }
+
+    public function uploadAvatar(array $file) {
+        return archivEntityAvatarUpload(
+            'Composers',
+            (int)$this->Index,
+            $file,
+            sprintf('Composer-ID: %d', (int)$this->Index)
+        );
+    }
+
+    public function deleteAvatar($writeLog = true) {
+        return archivEntityAvatarDelete(
+            'Composers',
+            (int)$this->Index,
+            $writeLog,
+            sprintf('Composer-ID: %d', (int)$this->Index)
+        );
     }
     
     public function fill_from_array($row) {
@@ -104,145 +153,42 @@ class Composer
     }
 
     public function printLine() {
-        $str = "";
-        $indent=1;
-        $maindiv = new div;
-        $maindiv->indent=$indent;
-        $maindiv->class="w3-margin w3-row w3-border-bottom w3-border-black";
-        $maindiv->onclick="document.getElementById('composer".$this->Index."').style.display='block'";
-        $str=$str.$maindiv->open();
+        $id = (int)$this->Index;
+        $name = trim(archivPlainText($this->FirstName).' '.archivPlainText($this->LastName));
+        $search = trim(preg_replace(
+            '/\s+/',
+            ' ',
+            implode(' ', array($name, archivPlainText($this->FirstName), archivPlainText($this->LastName), (string)$id))
+        ));
 
-        $indent++;
-        $row = new div;
-        $row->indent=$indent;
-        $row->col(1,3,3);
-        $row->body=$this->FirstName." ".$this->LastName;
-        $str=$str.$row->print();
+        $classes = array('composer-row', 'list-row');
+        $hover = isset($GLOBALS['optionsDB']['HoverEffect']) ? (string)$GLOBALS['optionsDB']['HoverEffect'] : '';
+        if($hover !== '') {
+            $classes[] = $hover;
+        }
+        $openJs = 'openModal(\'composer\', '.$id.')';
 
-        $str=$str.$maindiv->close();
-
-        $indent--;
-        $modal = new div;
-        $modal->indent=$indent;
-        $modal->id="composer".$this->Index;
-        $modal->class="w3-modal";
-        $str=$str.$modal->open();
-
-        $indent++;
-        $modalcontent = new div;
-        $modalcontent->indent=$indent;
-        $modalcontent->class="w3-modal-content";
-        $modalcontent->tag="form";
-        $modalcontent->action="";
-        $modalcontent->method="POST";
-        $str=$str.$modalcontent->open();
-
-        $indent++;
-        $header = new div;
-        $header->indent=$indent;
-        $header->tag="header";
-        $header->class="w3-container w3-row";
-        $header->class=$GLOBALS['optionsDB']['colorTitleBar'];
-        $str=$str.$header->open();
-
-        $indent++;
-        $close = new div;
-        $close->indent=$indent;
-        $close->tag="span";
-        $close->class="w3-button w3-display-topright";
-        $close->onclick="document.getElementById('composer".$this->Index."').style.display='none'";
-        $close->body="&times;";
-        $str=$str.$close->print();
-           
-        $title = new div;
-        $title->indent=$indent;
-        $title->tag="h2";
-        $title->body="bearbeiten";
-        $str=$str.$title->print();
-    
-        $str=$str.$header->close();
-        
-        $indent--;
-        $content = new div;
-        $content->indent=$indent;
-        $content->class="w3-container w3-row w3-padding";
-        $str=$str.$content->open();
-
-        $indent++;
-        $row = new div;
-        $row->indent=$indent;
-        $row->col(2,6,6);
-        $row->class="w3-row w3-padding";
-        $row->body="<b>Vorname</b>";
-        $str=$str.$row->print();
-
-        $row = new div;
-        $row->tag="input";
-        $row->type="text";
-        $row->indent=$indent;
-        $row->col(2,6,6);
-        $row->class="w3-button w3-row w3-padding";
-        $row->class=$GLOBALS['optionsDB']['colorInputBackground'];
-        $row->name="FirstName";
-        $row->value=$this->FirstName;
-        $str=$str.$row->print();
-        $str=$str.$content->close();
-
-        $str=$str.$content->open();
-        $row = new div;
-        $row->indent=$indent;
-        $row->col(2,6,6);
-        $row->class="w3-row w3-padding";
-        $row->body="<b>Nachname</b>";
-        $str=$str.$row->print();
-
-        $row = new div;
-        $row->tag="input";
-        $row->type="text";
-        $row->indent=$indent;
-        $row->col(2,6,6);
-        $row->class="w3-button w3-row w3-padding";
-        $row->class=$GLOBALS['optionsDB']['colorInputBackground'];
-        $row->name="LastName";
-        $row->value=$this->LastName;
-        $str=$str.$row->print();
-        $str=$str.$content->close();
-
-        $row = new div;
-        $row->tag="input";
-        $row->type="hidden";
-        $row->indent=$indent;
-        $row->name="Index";
-        $row->value=$this->Index;
-        $str=$str.$row->print();
-
-        $str=$str.$content->open();
-        $submit = new div;
-        $submit->tag="input";
-        $submit->type="submit";
-        $submit->indent=$indent;
-        $submit->col(2,6,6);
-        $submit->class="w3-button w3-row w3-padding";
-        $submit->class=$GLOBALS['optionsDB']['colorBtnSubmit'];
-        $submit->name="update";
-        $submit->value="speichern";
-        $str=$str.$submit->print();
-
-        $submit = new div;
-        $submit->tag="input";
-        $submit->type="submit";
-        $submit->indent=$indent;
-        $submit->col(2,6,6);
-        $submit->class="w3-button w3-row w3-padding w3-margin-left";
-        $submit->class=$GLOBALS['optionsDB']['colorBtnSubmit'];
-        $submit->name="delete";
-        $submit->value="l&ouml;schen";
-        $str=$str.$submit->print();
-
-        $str=$str.$content->close();
-        $str=$str.$modalcontent->close();
-        $str=$str.$modal->close();      
+        $str = '<div class="'.archivEscHtml(implode(' ', $classes)).'"'
+            .' data-search="'.archivEscHtml($search).'"'
+            .' data-sort-name="'.archivEscHtml($name).'"'
+            .' data-sort-index="'.archivEscHtml((string)$id).'"'
+            .' onclick="'.$openJs.'"'
+            .' role="button" tabindex="0"'
+            .' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();'.$openJs.';}">';
+        $str .= '<div class="composer-id"><div class="composer-id-num">'.archivEscHtml((string)$id).'</div></div>';
+        $str .= '<div class="composer-rail" aria-hidden="true"></div>';
+        $str .= '<div class="composer-main">';
+        $str .= archivEntityAvatarHtml('Composers', $id, $this->avatarInitials(), 'entity-avatar entity-avatar--row');
+        $str .= '<div class="composer-name">'.archivEscHtml($name !== '' ? $name : '—').'</div>';
+        $str .= '</div></div>';
         return $str;
+    }
+
+    public function getModalHtml($showEditButton = false) {
+        return render('composer/modal', array(
+            'composer' => $this,
+            'showEditButton' => (bool)$showEditButton,
+        ));
     }
 };
 ?>

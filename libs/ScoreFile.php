@@ -59,9 +59,53 @@ class ScoreFile
     public function save() {
         if(!$this->is_valid()) return false;
         if($this->Index > 0) {
-            return $this->update();
+            $changes = $this->getChanges();
+            if(!$this->update()) {
+                return false;
+            }
+            if($changes !== '') {
+                $logentry = new Log;
+                $logentry->DBupdate($changes);
+            }
+            return true;
         }
-        return $this->insert();
+        if(!$this->insert()) {
+            return false;
+        }
+        $logentry = new Log;
+        $logentry->DBinsert($this->getVars());
+        return true;
+    }
+
+    public function getVars() {
+        $this->fillJoins();
+        $parts = array();
+        $parts[] = sprintf('ScoreFile-ID: %d', (int)$this->Index);
+        logAppendFilled($parts, 'Composition', $this->Composition, (string)(int)$this->Composition, true);
+        logAppendFilled($parts, 'Instrument', $this->InstrumentName !== null && $this->InstrumentName !== ''
+            ? $this->InstrumentName
+            : $this->Instrument,
+            htmlspecialchars((string)($this->InstrumentName !== null && $this->InstrumentName !== '' ? $this->InstrumentName : $this->Instrument), ENT_QUOTES, 'UTF-8'),
+            true);
+        logAppendFilled($parts, 'Voice', $this->VoiceLabel);
+        logAppendFilled($parts, 'FilePath', $this->FilePath);
+        return implode(', ', $parts);
+    }
+
+    public function getChanges() {
+        $old = new ScoreFile;
+        $old->load_by_id($this->Index);
+        $parts = array();
+        logAppendChange($parts, 'Composition', $old->Composition, $this->Composition);
+        logAppendChange($parts, 'Instrument', $old->Instrument, $this->Instrument);
+        logAppendChange($parts, 'Voice', $old->VoiceLabel, $this->VoiceLabel);
+        logAppendChange($parts, 'FilePath', $old->FilePath, $this->FilePath);
+        logAppendChange($parts, 'NextcloudPath', $old->NextcloudPath, $this->NextcloudPath);
+        logAppendChange($parts, 'PageCount', $old->PageCount, $this->PageCount);
+        if(!$parts) {
+            return '';
+        }
+        return sprintf('ScoreFile-ID: %d, ', (int)$this->Index).implode(', ', $parts);
     }
 
     public function is_valid() {
@@ -110,6 +154,7 @@ class ScoreFile
 
     public function delete() {
         if(!$this->Index) return false;
+        $vars = $this->getVars();
         $sql = sprintf('DELETE FROM `%sScoreFile` WHERE `Index` = %d;',
             $GLOBALS['dbprefix'],
             $this->Index
@@ -117,6 +162,10 @@ class ScoreFile
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
         sqlerror();
         if(!$dbr) return false;
+        if($vars !== '') {
+            $logentry = new Log;
+            $logentry->DBdelete($vars);
+        }
         $this->_data['Index'] = null;
         return true;
     }

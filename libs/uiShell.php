@@ -192,6 +192,7 @@ function adminListSectionGroupId($kicker) {
     $map = array(
         'Archiv' => 'system',
         'Stücke' => 'system',
+        'Sammlungen' => 'system',
         'Mappen' => 'system',
         'Komponisten' => 'system',
         'Verlage' => 'system',

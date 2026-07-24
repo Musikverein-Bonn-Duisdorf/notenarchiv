@@ -36,9 +36,12 @@ class Collection
     public function save() {
         if(!$this->is_valid()) return false;
         if($this->Index > 0) {
+            $changes = $this->getChanges();
             $this->update();
-            $logentry = new Log;
-            $logentry->DBupdate($this->getVars());
+            if($changes !== '') {
+                $logentry = new Log;
+                $logentry->DBupdate($changes);
+            }
         }
         else {
             $this->insert();
@@ -48,16 +51,40 @@ class Collection
     }
 
     public function getVars() {
-        
+        $this->fillJoins();
+        $parts = array();
+        $parts[] = sprintf('CollectionItem-ID: %d', (int)$this->Index);
+        logAppendFilled($parts, 'Collection', $this->CollectionName, htmlspecialchars((string)$this->CollectionName, ENT_QUOTES, 'UTF-8'), true);
+        logAppendFilled($parts, 'Composition', $this->Title, htmlspecialchars((string)$this->Title, ENT_QUOTES, 'UTF-8'), true);
+        logAppendFilled($parts, 'Number', $this->CollectionNumber, (string)(int)$this->CollectionNumber, true);
+        return implode(', ', $parts);
+    }
+
+    public function getChanges() {
+        $old = new Collection;
+        $old->load_by_id($this->Index);
+        $parts = array();
+        logAppendChange($parts, 'Collections', $old->Collections, $this->Collections);
+        logAppendChange($parts, 'Composition', $old->Composition, $this->Composition);
+        logAppendChange($parts, 'Number', $old->CollectionNumber, $this->CollectionNumber);
+        if(!$parts) {
+            return '';
+        }
+        return sprintf('CollectionItem-ID: %d, ', (int)$this->Index).implode(', ', $parts);
     }
 
     public function delete() {
+        $vars = $this->getVars();
         $sql = sprintf('DELETE FROM `%sCollectionItem` WHERE `Index` = "%d";',
         $GLOBALS['dbprefix'],
         $this->Index
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
-        sqlerror();        
+        sqlerror();
+        if($dbr && $vars !== '') {
+            $logentry = new Log;
+            $logentry->DBdelete($vars);
+        }
     }
 
     public function fillJoins() {
@@ -136,22 +163,44 @@ class Collection
     }
 
     public function printLine() {
-        $str = "";
-        $maindiv = new div;
-        $maindiv->class="w3-margin w3-row w3-border-bottom w3-border-black";
-        $str=$str.$maindiv->open();
+        $num = $this->CollectionNumber !== null && $this->CollectionNumber !== ''
+            ? (string)$this->CollectionNumber
+            : '';
+        $title = archivPlainText($this->Title);
+        $search = trim(preg_replace('/\s+/', ' ', implode(' ', array($num, $title, (string)$this->Composition))));
 
-        $col = new div;
-        $col->col(1,6,6);
-        $col->body=$this->CollectionNumber;
-        $str=$str.$col->print();
+        $classes = array('collection-row', 'list-row');
+        $hover = isset($GLOBALS['optionsDB']['HoverEffect']) ? (string)$GLOBALS['optionsDB']['HoverEffect'] : '';
+        if($hover !== '') {
+            $classes[] = $hover;
+        }
 
-        $col = new div;
-        $col->col(2,6,6);
-        $col->body=$this->Title;
-        $str=$str.$col->print();
-        
-        $str=$str.$maindiv->close();
+        $compId = (int)$this->Composition;
+        $formId = 'collectionForm'.$this->Index;
+        $openJs = $compId > 0
+            ? 'document.getElementById(\''.$formId.'\').submit();'
+            : '';
+
+        $str = '';
+        if($compId > 0) {
+            $str .= '<form id="'.archivEscHtml($formId).'" action="composition.php" method="POST" class="archiv-list-nav-form">'
+                .'<input type="hidden" name="pieceID" value="'.$compId.'">'
+                .'</form>';
+        }
+        $str .= '<div class="'.archivEscHtml(implode(' ', $classes)).'"'
+            .' data-search="'.archivEscHtml($search).'"'
+            .' data-sort-nr="'.archivEscHtml($num).'"'
+            .' data-sort-title="'.archivEscHtml($title).'"';
+        if($openJs !== '') {
+            $str .= ' onclick="'.$openJs.'"'
+                .' role="button" tabindex="0"'
+                .' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();'.$openJs.'}"';
+        }
+        $str .= '>';
+        $str .= '<div class="collection-id"><div class="collection-nr">'.archivEscHtml($num !== '' ? $num : '—').'</div></div>';
+        $str .= '<div class="collection-rail" aria-hidden="true"></div>';
+        $str .= '<div class="collection-main"><div class="collection-title">'.archivEscHtml($title !== '' ? $title : '—').'</div></div>';
+        $str .= '</div>';
         return $str;
     }
 };

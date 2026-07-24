@@ -87,9 +87,12 @@ class Composition
     public function save() {
         if(!$this->is_valid()) return false;
         if($this->Index > 0) {
+            $changes = $this->getChanges();
             $this->update();
-            $logentry = new Log;
-            $logentry->DBupdate($this->getVars());
+            if($changes !== '') {
+                $logentry = new Log;
+                $logentry->DBupdate($changes);
+            }
         }
         else {
             $this->insert();
@@ -101,13 +104,47 @@ class Composition
 
     public function getVars() {
         $this->fillJoins();
-        return sprintf("Composition-ID: %d, Registration-Nr: %d, Title: %s, Composer: %s, Arranger: %s",
-        $this->Index,
-        $this->RegistrationNumber,
-        $this->Title,
-        $this->ComposerName,
-        $this->ArrangerName
-        );
+        $parts = array();
+        $parts[] = sprintf('Composition-ID: %d', (int)$this->Index);
+        logAppendFilled($parts, 'RegistrationNumber', $this->RegistrationNumber, (string)(int)$this->RegistrationNumber, true);
+        logAppendFilled($parts, 'Title', archivPlainText($this->Title));
+        logAppendFilled($parts, 'Composer', $this->ComposerName, htmlspecialchars(archivPlainText($this->ComposerName), ENT_QUOTES, 'UTF-8'), true);
+        logAppendFilled($parts, 'Arranger', $this->ArrangerName, htmlspecialchars(archivPlainText($this->ArrangerName), ENT_QUOTES, 'UTF-8'), true);
+        logAppendFilled($parts, 'Publisher', $this->PublisherName, htmlspecialchars(archivPlainText($this->PublisherName), ENT_QUOTES, 'UTF-8'), true);
+        logAppendFilled($parts, 'Year', $this->Year, (string)(int)$this->Year, true);
+        logAppendFilled($parts, 'Grade', $this->Grade, (string)$this->Grade, true);
+        logAppendFilled($parts, 'PerformanceTime', $this->PerformanceTime);
+        return implode(', ', $parts);
+    }
+
+    public function getChanges() {
+        $old = new Composition;
+        $old->load_by_id($this->Index);
+        $old->fillJoins();
+        $this->fillJoins();
+        $parts = array();
+        logAppendChange($parts, 'RegistrationNumber', $old->RegistrationNumber, $this->RegistrationNumber);
+        logAppendChange($parts, 'Title', archivPlainText($old->Title), archivPlainText($this->Title));
+        if((int)$old->Composer !== (int)$this->Composer) {
+            $parts[] = 'Composer: '.htmlspecialchars(archivPlainText($old->ComposerName), ENT_QUOTES, 'UTF-8')
+                .' &rArr; <b>'.htmlspecialchars(archivPlainText($this->ComposerName), ENT_QUOTES, 'UTF-8').'</b>';
+        }
+        if((int)$old->Arranger !== (int)$this->Arranger) {
+            $parts[] = 'Arranger: '.htmlspecialchars(archivPlainText($old->ArrangerName), ENT_QUOTES, 'UTF-8')
+                .' &rArr; <b>'.htmlspecialchars(archivPlainText($this->ArrangerName), ENT_QUOTES, 'UTF-8').'</b>';
+        }
+        if((int)$old->Publisher !== (int)$this->Publisher) {
+            $parts[] = 'Publisher: '.htmlspecialchars(archivPlainText($old->PublisherName), ENT_QUOTES, 'UTF-8')
+                .' &rArr; <b>'.htmlspecialchars(archivPlainText($this->PublisherName), ENT_QUOTES, 'UTF-8').'</b>';
+        }
+        logAppendChange($parts, 'Year', $old->Year, $this->Year);
+        logAppendChange($parts, 'Grade', $old->Grade, $this->Grade);
+        logAppendChange($parts, 'PerformanceTime', $old->PerformanceTime, $this->PerformanceTime);
+        logAppendChange($parts, 'FilePath', $old->FilePath, $this->FilePath);
+        if(!$parts) {
+            return '';
+        }
+        return sprintf('Composition-ID: %d, ', (int)$this->Index).implode(', ', $parts);
     }
     
     public function makeFilePath() {
@@ -117,7 +154,7 @@ class Composition
                 mkdir($path, 0775);
             }
             $this->FilePath = $path."/";
-            $this->save();
+            $this->update();
         }
     }
 
@@ -200,6 +237,7 @@ class Composition
     }
 
     public function delete() {
+        $vars = $this->getVars();
         $sql = sprintf('DELETE FROM `%sCollectionItem` WHERE `Composition` = "%d";',
         $GLOBALS['dbprefix'],
         $this->Index
@@ -220,66 +258,82 @@ class Composition
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
         sqlerror();
-        $logentry = new Log;
-        $logentry->DBdelete($this->getVars());
+        if($vars !== '') {
+            $logentry = new Log;
+            $logentry->DBdelete($vars);
+        }
 }
 
     public function printLine() {
-        $str = "";
-        $maindiv = new div;
-        $maindiv->class="w3-row w3-padding w3-mobile w3-border-bottom w3-border-black";
-        $maindiv->id="pieceID".$this->Index;
-        $str=$str.$maindiv->open();
+        $id = (int)$this->Index;
+        $title = archivPlainText($this->Title);
+        $composer = archivPlainText($this->ComposerName);
+        $arranger = archivPlainText($this->ArrangerName);
+        $publisher = archivPlainText($this->PublisherName);
+        $year = $this->Year !== null && $this->Year !== '' ? (string)$this->Year : '';
+        $grade = $this->Grade !== null && $this->Grade !== '' ? (string)$this->Grade : '';
+        $reg = $this->RegistrationNumber !== null && $this->RegistrationNumber !== ''
+            ? (string)$this->RegistrationNumber
+            : '';
 
-        $str=$str."<form id=\"form".$this->Index."\" action=\"composition.php\" method=\"POST\">";
-        $str=$str."<input type=\"hidden\" name=\"pieceID\" value=\"".$this->Index."\">";
-        $str=$str."</form>";
+        $searchParts = array($reg, $title, $composer, $arranger, $publisher, $year, $grade);
+        $search = trim(preg_replace('/\s+/', ' ', implode(' ', $searchParts)));
 
-        $str=$str."<script>";
-        $str=$str."var form".$this->Index." = document.getElementById(\"form".$this->Index."\");";
-        $str=$str."document.getElementById(\"pieceID".$this->Index."\").addEventListener(\"click\", function () {form".$this->Index.".submit();});";
-        $str=$str."</script>";
-        
-        $row = new div;
-        $row->col(1,3,3);
-        $row->body=$this->RegistrationNumber;
-        $str=$str.$row->print();
+        $classes = array('piece-row', 'list-row');
+        $hover = isset($GLOBALS['optionsDB']['HoverEffect']) ? (string)$GLOBALS['optionsDB']['HoverEffect'] : '';
+        if($hover !== '') {
+            $classes[] = $hover;
+        }
 
-        $row = new div;
-        $row->col(3,6,6);
-        $row->body=$this->Title;
-        $str=$str.$row->print();
+        $openJs = 'openModal(\'composition\', '.$id.')';
 
-        $row = new div;
-        $row->col(2,6,6);
-        $row->body=$this->ComposerName;
-        $str=$str.$row->print();
-
-        $row = new div;
-        $row->col(2,6,6);
-        $row->body=$this->ArrangerName;
-        $str=$str.$row->print();
-
-        $row = new div;
-        $row->col(2,6,6);
-        $row->body=$this->PublisherName;
-        $str=$str.$row->print();
-
-        $row = new div;
-        $row->col(1,3,3);
-        $row->class="w3-center";
-        $row->body=$this->Year;
-        $str=$str.$row->print();
-
-        $row = new div;
-        $row->col(1,3,3);
-        $row->class="w3-center";
-        $row->body=$this->Grade;
-        $str=$str.$row->print();
-
-        $str=$str.$maindiv->close();
+        $str = '<div class="'.archivEscHtml(implode(' ', $classes)).'"'
+            .' id="pieceID'.$id.'"'
+            .' data-search="'.archivEscHtml($search).'"'
+            .' data-sort-nr="'.archivEscHtml($reg).'"'
+            .' data-sort-title="'.archivEscHtml($title).'"'
+            .' data-sort-composer="'.archivEscHtml($composer).'"'
+            .' data-sort-publisher="'.archivEscHtml($publisher).'"'
+            .' data-sort-year="'.archivEscHtml($year).'"'
+            .' data-sort-grade="'.archivEscHtml($grade).'"'
+            .' onclick="'.$openJs.'"'
+            .' role="button" tabindex="0"'
+            .' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();'.$openJs.';}">';
+        $str .= '<div class="piece-id">';
+        $str .= '<div class="piece-reg">'.archivEscHtml($reg !== '' ? $reg : '—').'</div>';
+        if($grade !== '') {
+            $str .= '<span class="piece-chip">'.archivEscHtml($grade).'</span>';
+        }
+        $str .= '</div>';
+        $str .= '<div class="piece-rail" aria-hidden="true"></div>';
+        $str .= '<div class="piece-main">';
+        $str .= '<div class="piece-title">'.archivEscHtml($title).'</div>';
+        $str .= '<div class="piece-meta-line">';
+        if($composer !== '') {
+            $str .= '<span class="piece-meta-item"><span class="piece-meta-k">Komponist</span> '.archivEscHtml($composer).'</span>';
+        }
+        if($arranger !== '') {
+            $str .= '<span class="piece-meta-item"><span class="piece-meta-k">Arrangeur</span> '.archivEscHtml($arranger).'</span>';
+        }
+        if($publisher !== '') {
+            $str .= '<span class="piece-meta-item"><span class="piece-meta-k">Verlag</span> '.archivEscHtml($publisher).'</span>';
+        }
+        if($year !== '') {
+            $str .= '<span class="piece-meta-item"><span class="piece-meta-k">Jahr</span> '.archivEscHtml($year).'</span>';
+        }
+        $str .= '</div>';
+        $str .= '</div>';
+        $str .= '</div>';
         return $str;
     }
+
+    public function getModalHtml($showEditButton = false) {
+        return render('composition/modal', array(
+            'piece' => $this,
+            'showEditButton' => (bool)$showEditButton,
+        ));
+    }
+
     public function getCover() {
         if($this->FilePath) {
             if(is_file($this->getFilePathPHP()."cover.png")) return $this->FilePath."cover.png";
@@ -290,10 +344,38 @@ class Composition
         return $GLOBALS['optionsDB']['defaultCompositionCover'];
     }
 
-    public function deleteCover() {
-        if($this->getCover() != $GLOBALS['optionsDB']['defaultCompositionCover']) {
-            unlink($this->getCover());
+    public function deleteCover($writeLog = true) {
+        $cover = $this->getCover();
+        $default = isset($GLOBALS['optionsDB']['defaultCompositionCover'])
+            ? (string)$GLOBALS['optionsDB']['defaultCompositionCover']
+            : '';
+        if($cover === $default || $cover === '') {
+            return;
         }
+        $base = basename($cover);
+        $path = $this->getFilePathPHP().$base;
+        if(is_file($path)) {
+            unlink($path);
+        } elseif(is_file($cover)) {
+            unlink($cover);
+        }
+        if($writeLog) {
+            $logentry = new Log;
+            $logentry->DBupdate(sprintf(
+                'Composition-ID: %d, Cover: %s &rArr; <b>(gelöscht)</b>',
+                (int)$this->Index,
+                htmlspecialchars($base, ENT_QUOTES, 'UTF-8')
+            ));
+        }
+    }
+
+    public function logCoverUpload($fileName) {
+        $logentry = new Log;
+        $logentry->DBupdate(sprintf(
+            'Composition-ID: %d, Cover: (leer) &rArr; <b>%s</b>',
+            (int)$this->Index,
+            htmlspecialchars(basename((string)$fileName), ENT_QUOTES, 'UTF-8')
+        ));
     }
     
     public function listParts() {
@@ -315,131 +397,40 @@ class Composition
     }
 
     public function listCollections() {
-        $sql = sprintf('SELECT `Index`, `CollectionNumber`, `cName` FROM `%sCollectionItem` INNER JOIN (SELECT `Index` AS `iIndex`, `Name` AS `cName` FROM `%sCollection`) `%sCollection` ON `iIndex` = `Collections` WHERE `Composition` = "%d" ORDER BY `cName`;',
-        $GLOBALS['dbprefix'],
-        $GLOBALS['dbprefix'],
-        $GLOBALS['dbprefix'],
-        $this->Index
+        $sql = sprintf(
+            'SELECT `Collections`, `CollectionNumber` FROM `%sCollectionItem` WHERE `Composition` = "%d" ORDER BY `CollectionNumber` ASC;',
+            $GLOBALS['dbprefix'],
+            (int)$this->Index
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
         sqlerror();
-        $str = "";
-        $indent=0;
+        $initial = array();
         while($row = mysqli_fetch_array($dbr)) {
-            $line = new div;
-            $line->tag="form";
-            $line->action="";
-            $line->method="POST";
-            $line->indent=$indent;
-            $line->class="w3-row w3-padding";
-            $str=$str.$line->open();
-
-            $indent++;
-            $name = new div;
-            $name->indent=$indent;
-            $name->col(2,6,6);
-            $name->body="<b>".$row['cName']."</b>";
-            $str=$str.$name->print();
-
-            $collnum = new div;
-            $collnum->indent=$indent;
-            $collnum->col(2,6,6);
-            $collnum->class="w3-input";
-            $collnum->tag="input";
-            $collnum->type="number";
-            $collnum->name="CollectionNumber";
-            $collnum->value=$row['CollectionNumber'];
-            $str=$str.$collnum->print();
-            
-            $Index = new div;
-            $Index->indent=$indent;
-            $Index->tag="input";
-            $Index->type="hidden";
-            $Index->name="Index";
-            $Index->value=$row['Index'];
-            $str=$str.$Index->print();
-
-            $Index = new div;
-            $Index->indent=$indent;
-            $Index->tag="input";
-            $Index->type="hidden";
-            $Index->name="Composition";
-            $Index->value=$this->Index;
-            $str=$str.$Index->print();
-
-            $save = new div;
-            $save->indent=$indent;
-            $save->col(2,6,6);
-            $save->class="w3-button";
-            $save->class=$GLOBALS['optionsDB']['colorBtnSubmit'];
-            $save->tag="input";
-            $save->type="submit";
-            $save->name="updateCollection";
-            $save->value="speichern";
-            $str=$str.$save->print();
-
-            $delete = new div;
-            $delete->indent=$indent;
-            $delete->col(2,6,6);
-            $delete->class="w3-button";
-            $delete->class=$GLOBALS['optionsDB']['colorBtnDelete'];
-            $delete->tag="input";
-            $delete->type="submit";
-            $delete->name="deleteCollection";
-            $delete->value="l&ouml;schen";
-            $str=$str.$delete->print();
-
-            $str=$str.$line->close();
+            $initial[] = array(
+                'id' => (int)$row['Collections'],
+                'number' => (int)$row['CollectionNumber'],
+            );
         }
-        $line = new div;
-        $line->tag="form";
-        $line->action="";
-        $line->method="POST";
-        $line->indent=$indent;
-        $line->class="w3-row w3-padding";
-        $str=$str.$line->open();
 
-        $select = new div;
-        $select->indent=$indent;
-        $select->tag="select";
-        $select->name="Collections";
-        $select->class="w3-input";
-        $select->col(4,12,12);
-        $str=$str.$select->open();
-        $str=$str.collectionsOption();
-        $str=$str.$select->close();
-
-        $collnum = new div;
-        $collnum->indent=$indent;
-        $collnum->col(2,6,6);
-        $collnum->class="w3-input";
-        $collnum->tag="input";
-        $collnum->type="number";
-        $collnum->name="CollectionNumber";
-        $collnum->value=0;
-        $str=$str.$collnum->print();
-
-        $Index = new div;
-        $Index->indent=$indent;
-        $Index->tag="input";
-        $Index->type="hidden";
-        $Index->name="Composition";
-        $Index->value=$this->Index;
-        $str=$str.$Index->print();
-
-        $save = new div;
-        $save->indent=$indent;
-        $save->col(2,6,6);
-        $save->class="w3-button";
-        $save->class=$GLOBALS['optionsDB']['colorBtnSubmit'];
-        $save->tag="input";
-        $save->type="submit";
-        $save->name="insertCollection";
-        $save->value="hinzuf&uuml;gen";
-        $str=$str.$save->print();
-
-        $str=$str.$line->close();
-        return $str;        
+        $str = '<form class="profile-grid collection-chips-form" action="" method="POST">';
+        $str .= '<input type="hidden" name="Composition" value="'.(int)$this->Index.'">';
+        $str .= '<div class="profile-field">';
+        $str .= archivCollectionChipsEditorHtml(
+            'piece-coll',
+            'mail-recipient-chip--collection',
+            'collectionsSpec',
+            archivCollectionsCatalog(),
+            $initial,
+            'Sammlung…'
+        );
+        $str .= '</div>';
+        $btn = isset($GLOBALS['optionsDB']['colorBtnSubmit'])
+            ? (string)$GLOBALS['optionsDB']['colorBtnSubmit']
+            : '';
+        $str .= '<div class="profile-field profile-actions">';
+        $str .= '<button type="submit" name="syncCollections" value="1" class="w3-button '.archivEscHtml($btn).'">Speichern</button>';
+        $str .= '</div></form>';
+        return $str;
     }
 };
 ?>

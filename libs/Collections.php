@@ -26,9 +26,12 @@ class Collections
     public function save() {
         if(!$this->is_valid()) return false;
         if($this->Index > 0) {
+            $changes = $this->getChanges();
             $this->update();
-            $logentry = new Log;
-            $logentry->DBupdate($this->getVars());
+            if($changes !== '') {
+                $logentry = new Log;
+                $logentry->DBupdate($changes);
+            }
         }
         else {
             $this->insert();
@@ -38,7 +41,48 @@ class Collections
     }
 
     public function getVars() {
-        
+        $parts = array();
+        $parts[] = sprintf('Collection-ID: %d', (int)$this->Index);
+        logAppendFilled($parts, 'Name', $this->Name);
+        return implode(', ', $parts);
+    }
+
+    public function getChanges() {
+        $old = new Collections;
+        $old->load_by_id($this->Index);
+        $parts = array();
+        logAppendChange($parts, 'Name', $old->Name, $this->Name);
+        if(!$parts) {
+            return '';
+        }
+        return sprintf('Collection-ID: %d, ', (int)$this->Index).implode(', ', $parts);
+    }
+
+    public function delete() {
+        $id = (int)$this->Index;
+        if($id < 1) {
+            return false;
+        }
+        $vars = $this->getVars();
+        $sql = sprintf(
+            'DELETE FROM `%sCollectionItem` WHERE `Collections` = "%d";',
+            $GLOBALS['dbprefix'],
+            $id
+        );
+        $dbr = mysqli_query($GLOBALS['conn'], $sql);
+        sqlerror();
+        $sql = sprintf(
+            'DELETE FROM `%sCollection` WHERE `Index` = "%d";',
+            $GLOBALS['dbprefix'],
+            $id
+        );
+        $dbr = mysqli_query($GLOBALS['conn'], $sql);
+        sqlerror();
+        if($dbr && $vars !== '') {
+            $logentry = new Log;
+            $logentry->DBdelete($vars);
+        }
+        return (bool)$dbr;
     }
         
     public function fill_from_array($row) {
@@ -85,33 +129,107 @@ class Collections
             $this->fill_from_array($row);
         }
     }
-    
-    public function printContent() {
-        $str = "";
-        $maindiv = new div;
-        $maindiv->class="w3-sand w3-margin-top w3-border-top w3-border-black w3-border-bottom";
-        $str=$str.$maindiv->open();
 
-        $header = new div;
-        /* $header->class=$GLOBALS['optionsDB']['colorTitleBar']; */
-        $header->class="w3-container";
-        $header->body="<h3>".$this->Name."</h3>";
-        $str=$str.$header->print();
-        
-        $sql = sprintf('SELECT `Index` FROM `%sCollectionItem` WHERE `Collections` = "%d" ORDER BY `CollectionNumber` ASC;',
-        $GLOBALS['dbprefix'],
-        $this->Index
+    public function printContent() {
+        $id = (int)$this->Index;
+        $name = archivPlainText($this->Name);
+        $canEdit = !empty($_SESSION['admin']);
+        $openJs = 'openModal(\'collection\', '.$id.')';
+
+        $str = '<section class="collection-section" data-search="'.archivEscHtml($name).'">';
+        if($canEdit) {
+            $str .= '<h3 class="collection-section-title collection-section-title--editable" role="button" tabindex="0"'
+                .' onclick="'.$openJs.'"'
+                .' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();'.$openJs.';}">'
+                .archivEscHtml($name !== '' ? $name : '—')
+                .'</h3>';
+        } else {
+            $str .= '<h3 class="collection-section-title collection-section-title--openable" role="button" tabindex="0"'
+                .' onclick="'.$openJs.'"'
+                .' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();'.$openJs.';}">'
+                .archivEscHtml($name !== '' ? $name : '—')
+                .'</h3>';
+        }
+        $str .= '<div class="collection-section-list">';
+
+        $sql = sprintf(
+            'SELECT `Index` FROM `%sCollectionItem` WHERE `Collections` = "%d" ORDER BY `CollectionNumber` ASC;',
+            $GLOBALS['dbprefix'],
+            $id
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
         sqlerror();
         while($row = mysqli_fetch_array($dbr)) {
             $content = new Collection;
             $content->load_by_id($row['Index']);
-            $str=$str.$content->printLine();
+            $str .= $content->printLine();
         }
-        
-        $str=$str.$maindiv->close();
+
+        $str .= '</div></section>';
         return $str;
+    }
+
+    public function getItemsChipSpec() {
+        $items = array();
+        $id = (int)$this->Index;
+        if($id < 1) {
+            return $items;
+        }
+        $sql = sprintf(
+            'SELECT `Composition`, `CollectionNumber` FROM `%sCollectionItem` WHERE `Collections` = "%d" ORDER BY `CollectionNumber` ASC;',
+            $GLOBALS['dbprefix'],
+            $id
+        );
+        $dbr = mysqli_query($GLOBALS['conn'], $sql);
+        sqlerror();
+        while($row = mysqli_fetch_array($dbr)) {
+            $items[] = array(
+                'id' => (int)$row['Composition'],
+                'number' => (int)$row['CollectionNumber'],
+            );
+        }
+        return $items;
+    }
+
+    public function getItemSummaries() {
+        $id = (int)$this->Index;
+        $items = array();
+        if($id < 1) {
+            return $items;
+        }
+        $sql = sprintf(
+            'SELECT `CollectionNumber`, `Composition` FROM `%sCollectionItem` WHERE `Collections` = "%d" ORDER BY `CollectionNumber` ASC;',
+            $GLOBALS['dbprefix'],
+            $id
+        );
+        $dbr = mysqli_query($GLOBALS['conn'], $sql);
+        sqlerror();
+        while($row = mysqli_fetch_array($dbr)) {
+            $title = '';
+            $compId = (int)$row['Composition'];
+            if($compId > 0) {
+                $piece = new Composition;
+                $piece->load_by_id($compId);
+                $title = archivPlainText($piece->Title);
+            }
+            $items[] = array(
+                'number' => $row['CollectionNumber'] !== null && $row['CollectionNumber'] !== ''
+                    ? (string)$row['CollectionNumber']
+                    : '',
+                'title' => $title,
+            );
+        }
+        return $items;
+    }
+
+    public function getModalHtml($showEditButton = false) {
+        $items = $this->getItemSummaries();
+        return render('collection/modal', array(
+            'collection' => $this,
+            'showEditButton' => (bool)$showEditButton,
+            'itemCount' => count($items),
+            'items' => $items,
+        ));
     }
 };
 ?>
