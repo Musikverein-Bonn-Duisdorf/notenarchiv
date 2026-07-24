@@ -91,12 +91,9 @@ class Publisher
     }
 
     public function printLine() {
-        $h = function($s) {
-            return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
-        };
         $id = (int)$this->Index;
-        $name = (string)$this->Name;
-        $address = (string)$this->Address;
+        $name = archivPlainText($this->Name);
+        $address = archivPlainText($this->Address);
         $search = trim(preg_replace('/\s+/', ' ', implode(' ', array($name, $address, (string)$id))));
 
         $classes = array('publisher-row', 'list-row');
@@ -105,16 +102,16 @@ class Publisher
             $classes[] = $hover;
         }
 
-        $str = '<div class="'.$h(implode(' ', $classes)).'"'
-            .' data-search="'.$h($search).'"'
-            .' data-sort-name="'.$h($name).'"'
-            .' data-sort-index="'.$h((string)$id).'">';
-        $str .= '<div class="publisher-id"><div class="publisher-id-num">'.$h((string)$id).'</div></div>';
+        $str = '<div class="'.archivEscHtml(implode(' ', $classes)).'"'
+            .' data-search="'.archivEscHtml($search).'"'
+            .' data-sort-name="'.archivEscHtml($name).'"'
+            .' data-sort-index="'.archivEscHtml((string)$id).'">';
+        $str .= '<div class="publisher-id"><div class="publisher-id-num">'.archivEscHtml((string)$id).'</div></div>';
         $str .= '<div class="publisher-rail" aria-hidden="true"></div>';
         $str .= '<div class="publisher-main">';
-        $str .= '<div class="publisher-name">'.$h($name !== '' ? $name : '—').'</div>';
+        $str .= '<div class="publisher-name">'.archivEscHtml($name !== '' ? $name : '—').'</div>';
         if($address !== '') {
-            $str .= '<div class="publisher-address">'.$h($address).'</div>';
+            $str .= '<div class="publisher-address">'.archivEscHtml($address).'</div>';
         }
         $str .= '</div></div>';
         return $str;

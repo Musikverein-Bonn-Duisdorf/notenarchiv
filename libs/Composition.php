@@ -225,14 +225,11 @@ class Composition
 }
 
     public function printLine() {
-        $h = function($s) {
-            return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
-        };
         $id = (int)$this->Index;
-        $title = (string)$this->Title;
-        $composer = (string)$this->ComposerName;
-        $arranger = (string)$this->ArrangerName;
-        $publisher = (string)$this->PublisherName;
+        $title = archivPlainText($this->Title);
+        $composer = archivPlainText($this->ComposerName);
+        $arranger = archivPlainText($this->ArrangerName);
+        $publisher = archivPlainText($this->PublisherName);
         $year = $this->Year !== null && $this->Year !== '' ? (string)$this->Year : '';
         $grade = $this->Grade !== null && $this->Grade !== '' ? (string)$this->Grade : '';
         $reg = $this->RegistrationNumber !== null && $this->RegistrationNumber !== ''
@@ -251,42 +248,42 @@ class Composition
         $formId = 'form'.$id;
         $openJs = 'document.getElementById(\''.$formId.'\').submit();';
 
-        $str = '<form id="'.$h($formId).'" action="composition.php" method="POST" class="archiv-list-nav-form">'
+        $str = '<form id="'.archivEscHtml($formId).'" action="composition.php" method="POST" class="archiv-list-nav-form">'
             .'<input type="hidden" name="pieceID" value="'.$id.'">'
             .'</form>';
-        $str .= '<div class="'.$h(implode(' ', $classes)).'"'
+        $str .= '<div class="'.archivEscHtml(implode(' ', $classes)).'"'
             .' id="pieceID'.$id.'"'
-            .' data-search="'.$h($search).'"'
-            .' data-sort-nr="'.$h($reg).'"'
-            .' data-sort-title="'.$h($title).'"'
-            .' data-sort-composer="'.$h($composer).'"'
-            .' data-sort-publisher="'.$h($publisher).'"'
-            .' data-sort-year="'.$h($year).'"'
-            .' data-sort-grade="'.$h($grade).'"'
+            .' data-search="'.archivEscHtml($search).'"'
+            .' data-sort-nr="'.archivEscHtml($reg).'"'
+            .' data-sort-title="'.archivEscHtml($title).'"'
+            .' data-sort-composer="'.archivEscHtml($composer).'"'
+            .' data-sort-publisher="'.archivEscHtml($publisher).'"'
+            .' data-sort-year="'.archivEscHtml($year).'"'
+            .' data-sort-grade="'.archivEscHtml($grade).'"'
             .' onclick="'.$openJs.'"'
             .' role="button" tabindex="0"'
             .' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();'.$openJs.'}">';
         $str .= '<div class="piece-id">';
-        $str .= '<div class="piece-reg">'.$h($reg !== '' ? $reg : '—').'</div>';
+        $str .= '<div class="piece-reg">'.archivEscHtml($reg !== '' ? $reg : '—').'</div>';
         if($grade !== '') {
-            $str .= '<span class="piece-chip">'.$h($grade).'</span>';
+            $str .= '<span class="piece-chip">'.archivEscHtml($grade).'</span>';
         }
         $str .= '</div>';
         $str .= '<div class="piece-rail" aria-hidden="true"></div>';
         $str .= '<div class="piece-main">';
-        $str .= '<div class="piece-title">'.$h($title).'</div>';
+        $str .= '<div class="piece-title">'.archivEscHtml($title).'</div>';
         $str .= '<div class="piece-meta-line">';
         if($composer !== '') {
-            $str .= '<span class="piece-meta-item"><span class="piece-meta-k">Komponist</span> '.$h($composer).'</span>';
+            $str .= '<span class="piece-meta-item"><span class="piece-meta-k">Komponist</span> '.archivEscHtml($composer).'</span>';
         }
         if($arranger !== '') {
-            $str .= '<span class="piece-meta-item"><span class="piece-meta-k">Arrangeur</span> '.$h($arranger).'</span>';
+            $str .= '<span class="piece-meta-item"><span class="piece-meta-k">Arrangeur</span> '.archivEscHtml($arranger).'</span>';
         }
         if($publisher !== '') {
-            $str .= '<span class="piece-meta-item"><span class="piece-meta-k">Verlag</span> '.$h($publisher).'</span>';
+            $str .= '<span class="piece-meta-item"><span class="piece-meta-k">Verlag</span> '.archivEscHtml($publisher).'</span>';
         }
         if($year !== '') {
-            $str .= '<span class="piece-meta-item"><span class="piece-meta-k">Jahr</span> '.$h($year).'</span>';
+            $str .= '<span class="piece-meta-item"><span class="piece-meta-k">Jahr</span> '.archivEscHtml($year).'</span>';
         }
         $str .= '</div>';
         $str .= '</div>';

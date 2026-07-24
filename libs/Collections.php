@@ -87,11 +87,8 @@ class Collections
     }
     
     public function printContent() {
-        $h = function($s) {
-            return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
-        };
-        $str = '<section class="collection-section" data-search="'.$h((string)$this->Name).'">';
-        $str .= '<h3 class="collection-section-title">'.$h((string)$this->Name).'</h3>';
+        $str = '<section class="collection-section" data-search="'.archivEscHtml(archivPlainText($this->Name)).'">';
+        $str .= '<h3 class="collection-section-title">'.archivEscHtml(archivPlainText($this->Name)).'</h3>';
         $str .= '<div class="collection-section-list">';
 
         $sql = sprintf(

@@ -136,13 +136,10 @@ class Collection
     }
 
     public function printLine() {
-        $h = function($s) {
-            return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
-        };
         $num = $this->CollectionNumber !== null && $this->CollectionNumber !== ''
             ? (string)$this->CollectionNumber
             : '';
-        $title = (string)$this->Title;
+        $title = archivPlainText($this->Title);
         $search = trim(preg_replace('/\s+/', ' ', implode(' ', array($num, $title, (string)$this->Composition))));
 
         $classes = array('collection-row', 'list-row');
@@ -159,23 +156,23 @@ class Collection
 
         $str = '';
         if($compId > 0) {
-            $str .= '<form id="'.$h($formId).'" action="composition.php" method="POST" class="archiv-list-nav-form">'
+            $str .= '<form id="'.archivEscHtml($formId).'" action="composition.php" method="POST" class="archiv-list-nav-form">'
                 .'<input type="hidden" name="pieceID" value="'.$compId.'">'
                 .'</form>';
         }
-        $str .= '<div class="'.$h(implode(' ', $classes)).'"'
-            .' data-search="'.$h($search).'"'
-            .' data-sort-nr="'.$h($num).'"'
-            .' data-sort-title="'.$h($title).'"';
+        $str .= '<div class="'.archivEscHtml(implode(' ', $classes)).'"'
+            .' data-search="'.archivEscHtml($search).'"'
+            .' data-sort-nr="'.archivEscHtml($num).'"'
+            .' data-sort-title="'.archivEscHtml($title).'"';
         if($openJs !== '') {
             $str .= ' onclick="'.$openJs.'"'
                 .' role="button" tabindex="0"'
                 .' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();'.$openJs.'}"';
         }
         $str .= '>';
-        $str .= '<div class="collection-id"><div class="collection-nr">'.$h($num !== '' ? $num : '—').'</div></div>';
+        $str .= '<div class="collection-id"><div class="collection-nr">'.archivEscHtml($num !== '' ? $num : '—').'</div></div>';
         $str .= '<div class="collection-rail" aria-hidden="true"></div>';
-        $str .= '<div class="collection-main"><div class="collection-title">'.$h($title !== '' ? $title : '—').'</div></div>';
+        $str .= '<div class="collection-main"><div class="collection-title">'.archivEscHtml($title !== '' ? $title : '—').'</div></div>';
         $str .= '</div>';
         return $str;
     }

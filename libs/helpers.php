@@ -177,6 +177,21 @@ function redirectAfterPost($url) {
     exit;
 }
 
+/**
+ * Legacy Archiv text may store HTML entities (&uuml;, &bdquo;, …).
+ * Decode to UTF-8 plain text for search/sort/display.
+ */
+function archivPlainText($value) {
+    return html_entity_decode((string)$value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+}
+
+/**
+ * Safe HTML text: decode legacy entities, then escape.
+ */
+function archivEscHtml($value) {
+    return htmlspecialchars(archivPlainText($value), ENT_QUOTES, 'UTF-8');
+}
+
 function archivRequest($key, $default = null) {
     if(isset($_POST[$key])) {
         return $_POST[$key];
