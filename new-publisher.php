@@ -18,6 +18,9 @@ if(isset($_POST['insert'])) {
     $n = new Publisher;
     $n->fill_from_array($_POST);
     $n->save();
+    if((int)$n->Index > 0 && !empty($_FILES['avatar']['tmp_name'])) {
+        $n->uploadAvatar($_FILES['avatar']);
+    }
     header('Location: publishers.php');
     exit;
 }
@@ -34,7 +37,7 @@ $backLink = '<a class="w3-button w3-border '.htmlspecialchars($inputBg, ENT_QUOT
 ?>
 <div class="w3-container w3-margin-bottom termin-page">
 <div class="profile-shell termin-shell">
-<form class="profile-form" action="new-publisher.php" method="POST">
+<form class="profile-form" action="new-publisher.php" method="POST" enctype="multipart/form-data">
   <header class="profile-hero">
     <div class="profile-hero-text">
       <p class="profile-kicker">Verlag</p>
@@ -60,6 +63,10 @@ $backLink = '<a class="w3-button w3-border '.htmlspecialchars($inputBg, ENT_QUOT
       <div class="profile-field">
         <label class="profile-label" for="publisherAddress">Adresse</label>
         <textarea id="publisherAddress" name="Address" class="w3-input w3-border profile-control <?php echo htmlspecialchars($inputBg, ENT_QUOTES, 'UTF-8'); ?>" rows="3"></textarea>
+      </div>
+      <div class="profile-field">
+        <label class="profile-label" for="publisherAvatar">Foto</label>
+        <input id="publisherAvatar" type="file" name="avatar" accept=".png,.jpeg,.gif,.jpg,.webp,image/*" class="w3-input w3-border profile-control <?php echo htmlspecialchars($inputBg, ENT_QUOTES, 'UTF-8'); ?>">
       </div>
     </section>
   </div>

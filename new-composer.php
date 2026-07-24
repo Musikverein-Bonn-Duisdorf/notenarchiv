@@ -18,6 +18,9 @@ if(isset($_POST['insert'])) {
     $n = new Composer;
     $n->fill_from_array($_POST);
     $n->save();
+    if((int)$n->Index > 0 && !empty($_FILES['avatar']['tmp_name'])) {
+        $n->uploadAvatar($_FILES['avatar']);
+    }
     header('Location: composers.php');
     exit;
 }
@@ -34,7 +37,7 @@ $backLink = '<a class="w3-button w3-border '.htmlspecialchars($inputBg, ENT_QUOT
 ?>
 <div class="w3-container w3-margin-bottom termin-page">
 <div class="profile-shell termin-shell">
-<form class="profile-form" action="new-composer.php" method="POST">
+<form class="profile-form" action="new-composer.php" method="POST" enctype="multipart/form-data">
   <header class="profile-hero">
     <div class="profile-hero-text">
       <p class="profile-kicker">Komponist</p>
@@ -60,6 +63,10 @@ $backLink = '<a class="w3-button w3-border '.htmlspecialchars($inputBg, ENT_QUOT
       <div class="profile-field">
         <label class="profile-label" for="composerLast">Nachname</label>
         <input id="composerLast" name="LastName" type="text" class="w3-input w3-border profile-control <?php echo htmlspecialchars($inputBg, ENT_QUOTES, 'UTF-8'); ?>" required>
+      </div>
+      <div class="profile-field">
+        <label class="profile-label" for="composerAvatar">Foto</label>
+        <input id="composerAvatar" type="file" name="avatar" accept=".png,.jpeg,.gif,.jpg,.webp,image/*" class="w3-input w3-border profile-control <?php echo htmlspecialchars($inputBg, ENT_QUOTES, 'UTF-8'); ?>">
       </div>
     </section>
   </div>

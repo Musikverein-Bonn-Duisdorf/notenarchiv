@@ -5,6 +5,18 @@ $_SESSION['page']='publishers';
 $_SESSION['adminpage']=false;
 include "common/header.php";
 
+if(isset($_POST['uploadAvatar'])) {
+    $n = new Publisher;
+    $n->load_by_id($_POST['Index']);
+    if(!empty($_FILES['avatar'])) {
+        $n->uploadAvatar($_FILES['avatar']);
+    }
+}
+if(isset($_POST['deleteAvatar'])) {
+    $n = new Publisher;
+    $n->load_by_id($_POST['Index']);
+    $n->deleteAvatar();
+}
 if(isset($_POST['update'])) {
     $n = new Publisher;
     $n->load_by_id($_POST['Index']);

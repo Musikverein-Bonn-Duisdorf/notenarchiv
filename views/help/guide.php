@@ -63,7 +63,7 @@ $sections[] = array(
     'id' => 'komponisten-verlage',
     'title' => 'Komponisten &amp; Verlage',
     'body' => '
-<p><b>Komponisten</b> und <b>Verlage</b> sind Stammdaten für den Katalog. Anlegen geht über die jeweiligen Anlege-Seiten (<b>Admin → Komponist</b> / <b>Verlag</b> oder Plus in der Liste); Bearbeiten und Löschen über Klick auf den Eintrag. Stücke verweisen auf diese Einträge.</p>
+<p><b>Komponisten</b> und <b>Verlage</b> sind Stammdaten für den Katalog. Anlegen geht über die jeweiligen Anlege-Seiten (<b>Admin → Komponist</b> / <b>Verlag</b> oder Plus in der Liste); Bearbeiten und Löschen über Klick auf den Eintrag. Optional kann ein Foto hinterlegt werden (Anlegen oder Bearbeiten). Stücke verweisen auf diese Einträge.</p>
 '
 );
 

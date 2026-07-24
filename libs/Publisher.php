@@ -74,11 +74,38 @@ class Publisher
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
         sqlerror();
-        if($dbr && $vars !== '') {
-            $logentry = new Log;
-            $logentry->DBdelete($vars);
+        if($dbr) {
+            archivEntityAvatarDelete('Publishers', $id, false);
+            if($vars !== '') {
+                $logentry = new Log;
+                $logentry->DBdelete($vars);
+            }
         }
         return (bool)$dbr;
+    }
+
+    public function avatarInitials() {
+        $name = trim(archivPlainText($this->Name));
+        $s = mb_substr($name, 0, 2, 'UTF-8');
+        return $s !== '' ? mb_strtoupper($s, 'UTF-8') : '—';
+    }
+
+    public function uploadAvatar(array $file) {
+        return archivEntityAvatarUpload(
+            'Publishers',
+            (int)$this->Index,
+            $file,
+            sprintf('Publisher-ID: %d', (int)$this->Index)
+        );
+    }
+
+    public function deleteAvatar($writeLog = true) {
+        return archivEntityAvatarDelete(
+            'Publishers',
+            (int)$this->Index,
+            $writeLog,
+            sprintf('Publisher-ID: %d', (int)$this->Index)
+        );
     }
         
     public function fill_from_array($row) {
@@ -152,11 +179,13 @@ class Publisher
         $str .= '<div class="publisher-id"><div class="publisher-id-num">'.archivEscHtml((string)$id).'</div></div>';
         $str .= '<div class="publisher-rail" aria-hidden="true"></div>';
         $str .= '<div class="publisher-main">';
+        $str .= archivEntityAvatarHtml('Publishers', $id, $this->avatarInitials(), 'entity-avatar entity-avatar--row');
+        $str .= '<div class="publisher-text">';
         $str .= '<div class="publisher-name">'.archivEscHtml($name !== '' ? $name : '—').'</div>';
         if($address !== '') {
             $str .= '<div class="publisher-address">'.archivEscHtml($address).'</div>';
         }
-        $str .= '</div></div>';
+        $str .= '</div></div></div>';
         return $str;
     }
 
@@ -171,7 +200,7 @@ class Publisher
             : '';
 
         $str = '<div id="'.archivEscHtml($modalId).'" class="w3-modal">';
-        $str .= '<form class="w3-modal-content profile-shell modal-shell" action="" method="POST">';
+        $str .= '<form class="w3-modal-content profile-shell modal-shell" action="" method="POST" enctype="multipart/form-data">';
         $str .= '<header class="profile-hero">';
         $str .= '<div class="profile-hero-text">';
         $str .= '<p class="profile-kicker">Verlage</p>';
@@ -181,6 +210,7 @@ class Publisher
         $str .= '</header>';
         $str .= '<div class="profile-grid">';
         $str .= '<input type="hidden" name="Index" value="'.$id.'">';
+        $str .= archivEntityAvatarFormFields('Publishers', $id, $inputBg, $btn, 'w3-red', $this->avatarInitials());
         $str .= '<div class="profile-field"><label class="profile-label">Name</label>'
             .'<input name="Name" type="text" class="w3-input w3-border profile-control '.archivEscHtml($inputBg).'" value="'.archivEscHtml($this->Name).'"/></div>';
         $str .= '<div class="profile-field"><label class="profile-label">Adresse</label>'

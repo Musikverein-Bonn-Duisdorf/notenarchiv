@@ -64,16 +64,45 @@ class Composer
         
     public function delete() {
         $vars = $this->getVars();
+        $id = (int)$this->Index;
         $sql = sprintf('DELETE FROM `%sComposer` WHERE `Index` = "%d";',
         $GLOBALS['dbprefix'],
-        $this->Index
+        $id
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
         sqlerror();
-        if($dbr && $vars !== '') {
-            $logentry = new Log;
-            $logentry->DBdelete($vars);
+        if($dbr) {
+            archivEntityAvatarDelete('Composers', $id, false);
+            if($vars !== '') {
+                $logentry = new Log;
+                $logentry->DBdelete($vars);
+            }
         }
+    }
+
+    public function avatarInitials() {
+        $a = mb_substr(trim(archivPlainText($this->FirstName)), 0, 1, 'UTF-8');
+        $b = mb_substr(trim(archivPlainText($this->LastName)), 0, 1, 'UTF-8');
+        $s = $a.$b;
+        return $s !== '' ? mb_strtoupper($s, 'UTF-8') : '—';
+    }
+
+    public function uploadAvatar(array $file) {
+        return archivEntityAvatarUpload(
+            'Composers',
+            (int)$this->Index,
+            $file,
+            sprintf('Composer-ID: %d', (int)$this->Index)
+        );
+    }
+
+    public function deleteAvatar($writeLog = true) {
+        return archivEntityAvatarDelete(
+            'Composers',
+            (int)$this->Index,
+            $writeLog,
+            sprintf('Composer-ID: %d', (int)$this->Index)
+        );
     }
     
     public function fill_from_array($row) {
@@ -149,8 +178,10 @@ class Composer
             .' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();'.$openJs.';}">';
         $str .= '<div class="composer-id"><div class="composer-id-num">'.archivEscHtml((string)$id).'</div></div>';
         $str .= '<div class="composer-rail" aria-hidden="true"></div>';
-        $str .= '<div class="composer-main"><div class="composer-name">'.archivEscHtml($name !== '' ? $name : '—').'</div></div>';
-        $str .= '</div>';
+        $str .= '<div class="composer-main">';
+        $str .= archivEntityAvatarHtml('Composers', $id, $this->avatarInitials(), 'entity-avatar entity-avatar--row');
+        $str .= '<div class="composer-name">'.archivEscHtml($name !== '' ? $name : '—').'</div>';
+        $str .= '</div></div>';
         return $str;
     }
 
@@ -165,7 +196,7 @@ class Composer
             : '';
 
         $str = '<div id="'.archivEscHtml($modalId).'" class="w3-modal">';
-        $str .= '<form class="w3-modal-content profile-shell modal-shell" action="" method="POST">';
+        $str .= '<form class="w3-modal-content profile-shell modal-shell" action="" method="POST" enctype="multipart/form-data">';
         $str .= '<header class="profile-hero">';
         $str .= '<div class="profile-hero-text">';
         $str .= '<p class="profile-kicker">Komponisten</p>';
@@ -175,6 +206,7 @@ class Composer
         $str .= '</header>';
         $str .= '<div class="profile-grid">';
         $str .= '<input type="hidden" name="Index" value="'.$id.'">';
+        $str .= archivEntityAvatarFormFields('Composers', $id, $inputBg, $btn, 'w3-red', $this->avatarInitials());
         $str .= '<div class="profile-field"><label class="profile-label">Vorname</label>'
             .'<input name="FirstName" type="text" class="w3-input w3-border profile-control '.archivEscHtml($inputBg).'" value="'.archivEscHtml($this->FirstName).'"/></div>';
         $str .= '<div class="profile-field"><label class="profile-label">Nachname</label>'

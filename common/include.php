@@ -20,6 +20,7 @@ include "libs/Collections.php";
 include "libs/Collection.php";
 include "libs/Composer.php";
 include "libs/Publisher.php";
+include "libs/entityAvatar.php";
 include "libs/ScoreFile.php";
 include "libs/RehearsalPhase.php";
 include "libs/Stimmsatz.php";
