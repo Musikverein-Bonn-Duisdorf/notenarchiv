@@ -166,8 +166,7 @@ class Composer
         if($hover !== '') {
             $classes[] = $hover;
         }
-        $modalId = 'composer'.$id;
-        $openJs = 'document.getElementById(\''.$modalId.'\').style.display=\'block\'';
+        $openJs = 'openModal(\'composer\', '.$id.')';
 
         $str = '<div class="'.archivEscHtml(implode(' ', $classes)).'"'
             .' data-search="'.archivEscHtml($search).'"'
@@ -185,38 +184,11 @@ class Composer
         return $str;
     }
 
-    public function printEditModal() {
-        $id = (int)$this->Index;
-        $modalId = 'composer'.$id;
-        $btn = isset($GLOBALS['optionsDB']['colorBtnSubmit'])
-            ? (string)$GLOBALS['optionsDB']['colorBtnSubmit']
-            : '';
-        $inputBg = isset($GLOBALS['optionsDB']['colorInputBackground'])
-            ? (string)$GLOBALS['optionsDB']['colorInputBackground']
-            : '';
-
-        $str = '<div id="'.archivEscHtml($modalId).'" class="w3-modal">';
-        $str .= '<form class="w3-modal-content profile-shell modal-shell" action="" method="POST" enctype="multipart/form-data">';
-        $str .= '<header class="profile-hero">';
-        $str .= '<div class="profile-hero-text">';
-        $str .= '<p class="profile-kicker">Komponisten</p>';
-        $str .= '<h2 class="profile-title">Bearbeiten</h2>';
-        $str .= '</div>';
-        $str .= '<button type="button" class="modal-close w3-button" onclick="document.getElementById(\''.archivEscHtml($modalId).'\').style.display=\'none\'" aria-label="Schließen">&times;</button>';
-        $str .= '</header>';
-        $str .= '<div class="profile-grid">';
-        $str .= '<input type="hidden" name="Index" value="'.$id.'">';
-        $str .= archivEntityAvatarFormFields('Composers', $id, $inputBg, $btn, 'w3-red', $this->avatarInitials());
-        $str .= '<div class="profile-field"><label class="profile-label">Vorname</label>'
-            .'<input name="FirstName" type="text" class="w3-input w3-border profile-control '.archivEscHtml($inputBg).'" value="'.archivEscHtml($this->FirstName).'"/></div>';
-        $str .= '<div class="profile-field"><label class="profile-label">Nachname</label>'
-            .'<input name="LastName" type="text" class="w3-input w3-border profile-control '.archivEscHtml($inputBg).'" value="'.archivEscHtml($this->LastName).'"/></div>';
-        $str .= '<div class="profile-field profile-actions">'
-            .'<button type="submit" name="update" value="1" class="w3-button '.archivEscHtml($btn).'">Speichern</button> '
-            .'<button type="submit" name="delete" value="1" class="w3-button w3-border w3-red">Löschen</button>'
-            .'</div>';
-        $str .= '</div></form></div>';
-        return $str;
+    public function getModalHtml($showEditButton = false) {
+        return render('composer/modal', array(
+            'composer' => $this,
+            'showEditButton' => (bool)$showEditButton,
+        ));
     }
 };
 ?>

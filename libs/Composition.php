@@ -285,13 +285,9 @@ class Composition
             $classes[] = $hover;
         }
 
-        $formId = 'form'.$id;
-        $openJs = 'document.getElementById(\''.$formId.'\').submit();';
+        $openJs = 'openModal(\'composition\', '.$id.')';
 
-        $str = '<form id="'.archivEscHtml($formId).'" action="composition.php" method="POST" class="archiv-list-nav-form">'
-            .'<input type="hidden" name="pieceID" value="'.$id.'">'
-            .'</form>';
-        $str .= '<div class="'.archivEscHtml(implode(' ', $classes)).'"'
+        $str = '<div class="'.archivEscHtml(implode(' ', $classes)).'"'
             .' id="pieceID'.$id.'"'
             .' data-search="'.archivEscHtml($search).'"'
             .' data-sort-nr="'.archivEscHtml($reg).'"'
@@ -302,7 +298,7 @@ class Composition
             .' data-sort-grade="'.archivEscHtml($grade).'"'
             .' onclick="'.$openJs.'"'
             .' role="button" tabindex="0"'
-            .' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();'.$openJs.'}">';
+            .' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();'.$openJs.';}">';
         $str .= '<div class="piece-id">';
         $str .= '<div class="piece-reg">'.archivEscHtml($reg !== '' ? $reg : '—').'</div>';
         if($grade !== '') {
@@ -330,6 +326,14 @@ class Composition
         $str .= '</div>';
         return $str;
     }
+
+    public function getModalHtml($showEditButton = false) {
+        return render('composition/modal', array(
+            'piece' => $this,
+            'showEditButton' => (bool)$showEditButton,
+        ));
+    }
+
     public function getCover() {
         if($this->FilePath) {
             if(is_file($this->getFilePathPHP()."cover.png")) return $this->FilePath."cover.png";

@@ -5,29 +5,6 @@ $_SESSION['page']='publishers';
 $_SESSION['adminpage']=false;
 include "common/header.php";
 
-if(isset($_POST['uploadAvatar'])) {
-    $n = new Publisher;
-    $n->load_by_id($_POST['Index']);
-    if(!empty($_FILES['avatar'])) {
-        $n->uploadAvatar($_FILES['avatar']);
-    }
-}
-if(isset($_POST['deleteAvatar'])) {
-    $n = new Publisher;
-    $n->load_by_id($_POST['Index']);
-    $n->deleteAvatar();
-}
-if(isset($_POST['update'])) {
-    $n = new Publisher;
-    $n->load_by_id($_POST['Index']);
-    $n->fill_from_array($_POST);
-    $n->save();
-}
-if(isset($_POST['delete'])) {
-    $n = new Publisher;
-    $n->load_by_id($_POST['Index']);
-    $n->delete();
-}
 if($_SESSION['admin']) {
     $sql = sprintf('SELECT COUNT(`Index`) AS `Count` FROM `%sPublisher`;',
     $GLOBALS['dbprefix']
@@ -43,7 +20,6 @@ if($_SESSION['admin']) {
 ?>
 <script src="<?php echo assetUrl('js/filterPieces.js'); ?>"></script>
 <?php
-    $modals = '';
     $listHtml = '';
     $sql = sprintf('SELECT `Index` FROM `%sPublisher` ORDER BY `Name`;',
     $GLOBALS['dbprefix']
@@ -54,9 +30,7 @@ if($_SESSION['admin']) {
         $M = new Publisher;
         $M->load_by_id($row['Index']);
         $listHtml .= $M->printLine();
-        $modals .= $M->printEditModal();
     }
-    deferPageModalHtml($modals);
 ?>
 <div id="Liste">
 <?php echo $listHtml; ?>

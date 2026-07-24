@@ -5,29 +5,6 @@ $_SESSION['page']='composers';
 $_SESSION['adminpage']=false;
 include "common/header.php";
 
-if(isset($_POST['uploadAvatar'])) {
-    $n = new Composer;
-    $n->load_by_id($_POST['Index']);
-    if(!empty($_FILES['avatar'])) {
-        $n->uploadAvatar($_FILES['avatar']);
-    }
-}
-if(isset($_POST['deleteAvatar'])) {
-    $n = new Composer;
-    $n->load_by_id($_POST['Index']);
-    $n->deleteAvatar();
-}
-if(isset($_POST['update'])) {
-    $n = new Composer;
-    $n->load_by_id($_POST['Index']);
-    $n->fill_from_array($_POST);
-    $n->save();
-}
-if(isset($_POST['delete'])) {
-    $n = new Composer;
-    $n->load_by_id($_POST['Index']);
-    $n->delete();
-}
 if($_SESSION['admin']) {
     $sql = sprintf('SELECT COUNT(`Index`) AS `Count` FROM `%sComposer`;',
     $GLOBALS['dbprefix']
@@ -43,7 +20,6 @@ if($_SESSION['admin']) {
 ?>
 <script src="<?php echo assetUrl('js/filterPieces.js'); ?>"></script>
 <?php
-    $modals = '';
     $listHtml = '';
     $sql = sprintf('SELECT `Index` FROM `%sComposer` ORDER BY `LastName`, `FirstName`;',
     $GLOBALS['dbprefix']
@@ -54,9 +30,7 @@ if($_SESSION['admin']) {
         $M = new Composer;
         $M->load_by_id($row['Index']);
         $listHtml .= $M->printLine();
-        $modals .= $M->printEditModal();
     }
-    deferPageModalHtml($modals);
 ?>
 <div id="Liste">
 <?php echo $listHtml; ?>
