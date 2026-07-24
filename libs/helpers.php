@@ -1200,13 +1200,15 @@ function archivCollectionsCatalog() {
 
 /**
  * Parse chip spec JSON into list of {id, number}.
+ * Returns null if JSON is invalid (callers must not treat that as "clear all").
  * @param string $json
- * @return array
+ * @return array|null
  */
 function archivParseCollectionChipSpec($json) {
-    $decoded = json_decode((string)$json, true);
-    if(!is_array($decoded)) {
-        return array();
+    $raw = (string)$json;
+    $decoded = json_decode($raw, true);
+    if(json_last_error() !== JSON_ERROR_NONE || !is_array($decoded)) {
+        return null;
     }
     $out = array();
     $seen = array();
@@ -1255,8 +1257,16 @@ function archivSyncCollectionItemsForCollection($collectionId, array $items) {
     $dbr = mysqli_query($GLOBALS['conn'], $sql);
     sqlerror();
     while($row = mysqli_fetch_array($dbr)) {
-        $existing[(int)$row['Composition']] = array(
-            'Index' => (int)$row['Index'],
+        $compId = (int)$row['Composition'];
+        $idx = (int)$row['Index'];
+        if(isset($existing[$compId])) {
+            $dup = new Collection;
+            $dup->load_by_id($idx);
+            $dup->delete();
+            continue;
+        }
+        $existing[$compId] = array(
+            'Index' => $idx,
             'number' => (int)$row['CollectionNumber'],
         );
     }
@@ -1316,8 +1326,16 @@ function archivSyncCollectionItemsForComposition($compositionId, array $items) {
     $dbr = mysqli_query($GLOBALS['conn'], $sql);
     sqlerror();
     while($row = mysqli_fetch_array($dbr)) {
-        $existing[(int)$row['Collections']] = array(
-            'Index' => (int)$row['Index'],
+        $colId = (int)$row['Collections'];
+        $idx = (int)$row['Index'];
+        if(isset($existing[$colId])) {
+            $dup = new Collection;
+            $dup->load_by_id($idx);
+            $dup->delete();
+            continue;
+        }
+        $existing[$colId] = array(
+            'Index' => $idx,
             'number' => (int)$row['CollectionNumber'],
         );
     }
@@ -1375,21 +1393,25 @@ function archivCollectionChipsEditorHtml($prefix, $chipClass, $hiddenName, array
         .' placeholder="'.archivEscHtml($placeholder).'" autocomplete="off" aria-label="'.archivEscHtml($placeholder).'">';
     $html .= '<div id="'.archivEscHtml($suggestId).'" class="mail-recipient-suggest" hidden></div>';
     $html .= '<input type="hidden" name="'.archivEscHtml($hiddenName).'" id="'.archivEscHtml($hiddenId).'" value="'.archivEscHtml(json_encode(array_values($initial))).'">';
-    $html .= '<script type="application/json" id="'.archivEscHtml($catalogId).'">'.json_encode(array_values($catalog), JSON_UNESCAPED_UNICODE).'</script>';
+    $html .= '<script type="application/json" id="'.archivEscHtml($catalogId).'">'
+        .json_encode(
+            array_values($catalog),
+            JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS
+        )
+        .'</script>';
     $html .= '</div>';
     $html .= '<script src="'.archivEscHtml(assetUrl('js/collectionChips.js')).'"></script>';
     $html .= '<script>(function(){';
     $html .= 'var catEl=document.getElementById('.json_encode($catalogId).');';
     $html .= 'var catalog=[]; try{ catalog=JSON.parse(catEl.textContent||"[]"); }catch(e){}';
     $html .= 'var hid=document.getElementById('.json_encode($hiddenId).');';
-    $html .= 'var initial=[]; try{ initial=JSON.parse(hid.value||"[]"); }catch(e){}';
     $html .= 'CollectionChips.init({';
     $html .= 'chipsEl:document.getElementById('.json_encode($chipsId).'),';
     $html .= 'inputEl:document.getElementById('.json_encode($inputId).'),';
     $html .= 'suggestEl:document.getElementById('.json_encode($suggestId).'),';
     $html .= 'hiddenEl:hid,';
     $html .= 'catalog:catalog,';
-    $html .= 'initial:initial,';
+    $html .= 'initial:'.json_encode(array_values($initial), JSON_UNESCAPED_UNICODE).',';
     $html .= 'chipClass:'.json_encode($chipClass).',';
     $html .= 'inputBg:'.json_encode($inputBg);
     $html .= '});})();</script>';

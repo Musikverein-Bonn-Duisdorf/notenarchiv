@@ -13,10 +13,10 @@ if(isset($_POST['save'])) {
     $piece->fill_from_array($_POST);
     $piece->save();
     if((int)$piece->Index > 0 && isset($_POST['collectionsSpec'])) {
-        archivSyncCollectionItemsForComposition(
-            (int)$piece->Index,
-            archivParseCollectionChipSpec($_POST['collectionsSpec'])
-        );
+        $items = archivParseCollectionChipSpec($_POST['collectionsSpec']);
+        if($items !== null) {
+            archivSyncCollectionItemsForComposition((int)$piece->Index, $items);
+        }
     }
     header('Location: composition.php?id='.(int)$piece->Index);
     exit;

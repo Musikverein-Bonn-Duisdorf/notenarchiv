@@ -261,7 +261,13 @@
   CollectionChips.init = function(opts) {
     var inst = new CollectionChips(opts);
     inst.bind();
-    inst.notify();
+    // Always render; only rewrite the hidden field when initial was usable.
+    // Avoid wiping a server-provided itemsSpec if catalog/initial parse failed.
+    if(opts && opts.writeHiddenOnInit === false) {
+      inst.render();
+    } else {
+      inst.notify();
+    }
     return inst;
   };
 

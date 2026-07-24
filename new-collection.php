@@ -29,10 +29,10 @@ if(isset($_POST['update']) && isset($_POST['Index']) && (int)$_POST['Index'] > 0
         $n->fill_from_array($_POST);
         $n->save();
         if(isset($_POST['itemsSpec'])) {
-            archivSyncCollectionItemsForCollection(
-                (int)$n->Index,
-                archivParseCollectionChipSpec($_POST['itemsSpec'])
-            );
+            $items = archivParseCollectionChipSpec($_POST['itemsSpec']);
+            if($items !== null) {
+                archivSyncCollectionItemsForCollection((int)$n->Index, $items);
+            }
         }
     }
     header('Location: new-collection.php?id='.(int)$_POST['Index']);
