@@ -28,8 +28,8 @@ $addBtn = '';
 if(!empty($_SESSION['admin'])) {
     $addBtn = '<button type="button" class="w3-button '.htmlspecialchars($GLOBALS['optionsDB']['colorBtnSubmit'], ENT_QUOTES, 'UTF-8').'" onclick="document.getElementById(\'inputModal\').style.display=\'block\'" title="Anlegen"><i class="fas fa-plus"></i></button>';
 }
-adminListPageBegin('Archiv', 'Mappen', array('actionsHtml' => $addBtn));
-adminListSearchField('Mappe, Stück…', array('onkeyup' => 'filterPieces()'));
+adminListPageBegin('Archiv', 'Sammlungen', array('actionsHtml' => $addBtn));
+adminListSearchField('Sammlung, Stück…', array('onkeyup' => 'filterPieces()'));
 ?>
 <script src="<?php echo assetUrl('js/filterPieces.js'); ?>"></script>
 <?php
@@ -41,7 +41,7 @@ if(!empty($_SESSION['admin'])) {
   <form class="w3-modal-content profile-shell modal-shell" action="" method="POST">
     <header class="profile-hero">
       <div class="profile-hero-text">
-        <p class="profile-kicker">Mappen</p>
+        <p class="profile-kicker">Sammlungen</p>
         <h2 class="profile-title">Anlegen</h2>
       </div>
       <button type="button" class="modal-close w3-button" onclick="document.getElementById('inputModal').style.display='none'" aria-label="Schließen">&times;</button>

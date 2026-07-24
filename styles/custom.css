@@ -5213,6 +5213,18 @@ select.profile-control {
   margin: 0;
 }
 
+.anlegen-manage {
+  margin-top: 1.25rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.anlegen-manage-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 @media (max-width: 600px) {
   .piece-row,
   .composer-row,

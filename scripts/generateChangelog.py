@@ -33,7 +33,7 @@ PATH_LABELS = (
     (re.compile(r"^libs/SchemaManager|^updater|^dbintegrity|^config/schema", re.I), "Updater / Schema"),
     (re.compile(r"^libs/sso|^login|^libs/identity", re.I), "SSO / Identity"),
     (re.compile(r"^libs/Composition|^composition|^new-composition|^index\.php", re.I), "Stücke / Katalog"),
-    (re.compile(r"^libs/Collection|^collections", re.I), "Mappen"),
+    (re.compile(r"^libs/Collection|^collections", re.I), "Sammlungen"),
     (re.compile(r"^libs/Composer|^composers", re.I), "Komponisten"),
     (re.compile(r"^libs/Publisher|^publishers", re.I), "Verlage"),
     (re.compile(r"^libs/Stimmsatz|^print-stimmsatz|^libs/Part", re.I), "Stimmsatz"),

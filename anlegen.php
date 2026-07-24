@@ -28,6 +28,13 @@ if(isset($_POST['insertPublisher'])) {
     header('Location: publishers.php');
     exit;
 }
+if(isset($_POST['insertCollection'])) {
+    $n = new Collections;
+    $n->fill_from_array($_POST);
+    $n->save();
+    header('Location: collections.php');
+    exit;
+}
 if(isset($_POST['savePiece'])) {
     $piece = new Composition;
     if(!empty($_POST['Index']) && (int)$_POST['Index'] > 0) {
@@ -47,10 +54,11 @@ $inputBg = isset($GLOBALS['optionsDB']['colorInputBackground'])
 $btnSubmit = isset($GLOBALS['optionsDB']['colorBtnSubmit'])
     ? (string)$GLOBALS['optionsDB']['colorBtnSubmit']
     : '';
+$btnBorder = 'w3-button w3-border '.htmlspecialchars($inputBg, ENT_QUOTES, 'UTF-8');
 
 $piece = new Composition;
 $piece->RegistrationNumber = nextArchiverNumber();
-$backList = '<a class="w3-button w3-border '.htmlspecialchars($inputBg, ENT_QUOTES, 'UTF-8').'" href="index.php">Zur Liste</a>';
+$backList = '<a class="'.$btnBorder.'" href="index.php">Zur Liste</a>';
 ?>
 <div class="w3-container w3-margin-bottom termin-page">
 <div class="profile-shell termin-shell">
@@ -117,6 +125,19 @@ $backList = '<a class="w3-button w3-border '.htmlspecialchars($inputBg, ENT_QUOT
       </form>
     </section>
 
+    <section class="profile-col" aria-labelledby="anlegen-sammlung">
+      <form class="profile-form" action="anlegen.php" method="POST">
+        <h3 id="anlegen-sammlung" class="profile-col-title">Sammlung</h3>
+        <div class="profile-field">
+          <label class="profile-label" for="collectionName">Name</label>
+          <input id="collectionName" name="Name" type="text" class="w3-input w3-border profile-control <?php echo htmlspecialchars($inputBg, ENT_QUOTES, 'UTF-8'); ?>" required>
+        </div>
+        <div class="profile-field">
+          <button class="w3-btn profile-btn-primary <?php echo htmlspecialchars($btnSubmit, ENT_QUOTES, 'UTF-8'); ?> w3-border" type="submit" name="insertCollection" value="1">Speichern</button>
+        </div>
+      </form>
+    </section>
+
     <section class="profile-col" aria-labelledby="anlegen-komponist">
       <form class="profile-form" action="anlegen.php" method="POST">
         <h3 id="anlegen-komponist" class="profile-col-title">Komponist</h3>
@@ -151,6 +172,15 @@ $backList = '<a class="w3-button w3-border '.htmlspecialchars($inputBg, ENT_QUOT
       </form>
     </section>
   </div>
+
+  <section class="profile-col anlegen-manage" aria-labelledby="anlegen-verwalten">
+    <h3 id="anlegen-verwalten" class="profile-col-title">Verwalten</h3>
+    <div class="profile-field profile-actions anlegen-manage-actions">
+      <a class="<?php echo $btnBorder; ?>" href="collections.php">Sammlungen</a>
+      <a class="<?php echo $btnBorder; ?>" href="composers.php">Komponisten</a>
+      <a class="<?php echo $btnBorder; ?>" href="publishers.php">Verlage</a>
+    </div>
+  </section>
 </div>
 </div>
 <?php

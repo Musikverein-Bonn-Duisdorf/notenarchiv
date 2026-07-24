@@ -127,7 +127,7 @@ ob_start();
     <header class="profile-hero">
       <div class="profile-hero-text">
         <p class="profile-kicker">Stück</p>
-        <h2 class="profile-title">Mappen</h2>
+        <h2 class="profile-title">Sammlungen</h2>
       </div>
       <button type="button" class="modal-close w3-button" onclick="document.getElementById('collmodal').style.display='none'" aria-label="Schließen">&times;</button>
     </header>
@@ -159,7 +159,7 @@ deferPageModalHtml(ob_get_clean());
       <form class="w3-col l2" action="new-composition.php" method="POST">
 	<button class="w3-button <?php echo $GLOBALS['optionsDB']['colorBtnEdit']; ?>" type="submit" value="<?php echo (int)$piece->Index; ?>" name="Index">bearbeiten</button>
       </form>
-      <button class="w3-button w3-col l2 w3-margin-right <?php echo $GLOBALS['optionsDB']['colorBtnEdit']; ?>" onclick="document.getElementById('collmodal').style.display='block'">Mappen</button>
+      <button class="w3-button w3-col l2 w3-margin-right <?php echo $GLOBALS['optionsDB']['colorBtnEdit']; ?>" onclick="document.getElementById('collmodal').style.display='block'">Sammlungen</button>
       <button class="w3-button w3-col l2 <?php echo $GLOBALS['optionsDB']['colorBtnDelete']; ?>" onclick="document.getElementById('delmodal').style.display='block'">löschen</button>
     </div>
   </div>

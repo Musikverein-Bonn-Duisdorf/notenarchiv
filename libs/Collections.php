@@ -160,7 +160,7 @@ class Collections
         $str .= '<form class="w3-modal-content profile-shell modal-shell" action="" method="POST">';
         $str .= '<header class="profile-hero">';
         $str .= '<div class="profile-hero-text">';
-        $str .= '<p class="profile-kicker">Mappen</p>';
+        $str .= '<p class="profile-kicker">Sammlungen</p>';
         $str .= '<h2 class="profile-title">Bearbeiten</h2>';
         $str .= '</div>';
         $str .= '<button type="button" class="modal-close w3-button" onclick="document.getElementById(\''.archivEscHtml($modalId).'\').style.display=\'none\'" aria-label="Schließen">&times;</button>';
