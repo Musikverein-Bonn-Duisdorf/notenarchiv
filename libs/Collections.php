@@ -134,18 +134,21 @@ class Collections
         $id = (int)$this->Index;
         $name = archivPlainText($this->Name);
         $canEdit = !empty($_SESSION['admin']);
+        $openJs = 'openModal(\'collection\', '.$id.')';
 
         $str = '<section class="collection-section" data-search="'.archivEscHtml($name).'">';
         if($canEdit) {
-            $modalId = 'collectionEdit'.$id;
-            $openJs = 'document.getElementById(\''.$modalId.'\').style.display=\'block\'';
             $str .= '<h3 class="collection-section-title collection-section-title--editable" role="button" tabindex="0"'
                 .' onclick="'.$openJs.'"'
                 .' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();'.$openJs.';}">'
                 .archivEscHtml($name !== '' ? $name : '—')
                 .'</h3>';
         } else {
-            $str .= '<h3 class="collection-section-title">'.archivEscHtml($name !== '' ? $name : '—').'</h3>';
+            $str .= '<h3 class="collection-section-title collection-section-title--openable" role="button" tabindex="0"'
+                .' onclick="'.$openJs.'"'
+                .' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();'.$openJs.';}">'
+                .archivEscHtml($name !== '' ? $name : '—')
+                .'</h3>';
         }
         $str .= '<div class="collection-section-list">';
 
@@ -166,35 +169,45 @@ class Collections
         return $str;
     }
 
-    public function printEditModal() {
+    public function getItemSummaries() {
         $id = (int)$this->Index;
-        $modalId = 'collectionEdit'.$id;
-        $btn = isset($GLOBALS['optionsDB']['colorBtnSubmit'])
-            ? (string)$GLOBALS['optionsDB']['colorBtnSubmit']
-            : '';
-        $inputBg = isset($GLOBALS['optionsDB']['colorInputBackground'])
-            ? (string)$GLOBALS['optionsDB']['colorInputBackground']
-            : '';
+        $items = array();
+        if($id < 1) {
+            return $items;
+        }
+        $sql = sprintf(
+            'SELECT `CollectionNumber`, `Composition` FROM `%sCollectionItem` WHERE `Collections` = "%d" ORDER BY `CollectionNumber` ASC;',
+            $GLOBALS['dbprefix'],
+            $id
+        );
+        $dbr = mysqli_query($GLOBALS['conn'], $sql);
+        sqlerror();
+        while($row = mysqli_fetch_array($dbr)) {
+            $title = '';
+            $compId = (int)$row['Composition'];
+            if($compId > 0) {
+                $piece = new Composition;
+                $piece->load_by_id($compId);
+                $title = archivPlainText($piece->Title);
+            }
+            $items[] = array(
+                'number' => $row['CollectionNumber'] !== null && $row['CollectionNumber'] !== ''
+                    ? (string)$row['CollectionNumber']
+                    : '',
+                'title' => $title,
+            );
+        }
+        return $items;
+    }
 
-        $str = '<div id="'.archivEscHtml($modalId).'" class="w3-modal">';
-        $str .= '<form class="w3-modal-content profile-shell modal-shell" action="" method="POST">';
-        $str .= '<header class="profile-hero">';
-        $str .= '<div class="profile-hero-text">';
-        $str .= '<p class="profile-kicker">Sammlungen</p>';
-        $str .= '<h2 class="profile-title">Bearbeiten</h2>';
-        $str .= '</div>';
-        $str .= '<button type="button" class="modal-close w3-button" onclick="document.getElementById(\''.archivEscHtml($modalId).'\').style.display=\'none\'" aria-label="Schließen">&times;</button>';
-        $str .= '</header>';
-        $str .= '<div class="profile-grid">';
-        $str .= '<input type="hidden" name="Index" value="'.$id.'">';
-        $str .= '<div class="profile-field"><label class="profile-label">Name</label>'
-            .'<input name="Name" type="text" class="w3-input w3-border profile-control '.archivEscHtml($inputBg).'" value="'.archivEscHtml($this->Name).'" required/></div>';
-        $str .= '<div class="profile-field profile-actions">'
-            .'<button type="submit" name="update" value="1" class="w3-button '.archivEscHtml($btn).'">Speichern</button> '
-            .'<button type="submit" name="delete" value="1" class="w3-button w3-border w3-red">Löschen</button>'
-            .'</div>';
-        $str .= '</div></form></div>';
-        return $str;
+    public function getModalHtml($showEditButton = false) {
+        $items = $this->getItemSummaries();
+        return render('collection/modal', array(
+            'collection' => $this,
+            'showEditButton' => (bool)$showEditButton,
+            'itemCount' => count($items),
+            'items' => $items,
+        ));
     }
 };
 ?>

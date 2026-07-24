@@ -5243,12 +5243,15 @@ select.profile-control {
   line-height: 1.3;
 }
 
-.collection-section-title--editable {
+.collection-section-title--editable,
+.collection-section-title--openable {
   cursor: pointer;
 }
 
 .collection-section-title--editable:hover,
-.collection-section-title--editable:focus {
+.collection-section-title--editable:focus,
+.collection-section-title--openable:hover,
+.collection-section-title--openable:focus {
   text-decoration: underline;
 }
 

@@ -55,7 +55,7 @@ $sections[] = array(
     'id' => 'sammlungen',
     'title' => 'Sammlungen',
     'body' => '
-<p>Unter <b>Sammlungen</b> verwaltest du Zusammenstellungen (z.&nbsp;B. Ordner im Schrank oder thematische Listen). Stücke können einer oder mehreren Sammlungen zugeordnet sein; die Zuordnung pflegst du in der Stück-Detailansicht'.($showAdmin ? '; Admins legen Sammlungen über Plus bzw. <b>Admin → Sammlung</b> an und bearbeiten sie per Klick auf den Titel' : '').'.</p>
+<p>Unter <b>Sammlungen</b> verwaltest du Zusammenstellungen (z.&nbsp;B. Ordner im Schrank oder thematische Listen). Stücke können einer oder mehreren Sammlungen zugeordnet sein; die Zuordnung pflegst du in der Stück-Detailansicht. Ein Klick auf den Sammlungstitel öffnet ein Detail-Modal'.($showAdmin ? '; <b>Bearbeiten</b> führt zur Anlege-Seite (dort auch Löschen). Anlegen über Plus bzw. <b>Admin → Sammlung</b>' : '').'.</p>
 '
 );
 
@@ -92,7 +92,7 @@ $sections[] = array(
     'visible' => $showAdmin,
     'body' => '
 <ul class="help-list">
-<li><b>Stück / Sammlung / Komponist / Verlag</b> – jeweils eigene Anlege-Seite (Melde-Stil); Stück/Komponist/Verlag: Liste → Detail-Modal → Bearbeiten; Sammlung weiter per Titel</li>
+<li><b>Stück / Sammlung / Komponist / Verlag</b> – jeweils eigene Anlege-Seite (Melde-Stil); Liste → Detail-Modal → Bearbeiten</li>
 '.($canEditConfig ? '
 <li><b>Konfiguration</b> – Farben/Farbschema, Site-Name, URLs, Feature-Schalter; Änderungen erscheinen im Log. Archiv-Parameter heißen in der Datenbank <code>Archiv*</code> (Anzeige in der Hilfe/UI oft unter dem kurzen Namen)</li>
 <li><b>Backup</b> – ZIP mit Versionsinfo und SQL nur für Archiv-Tabellen (<code>archiv_*</code>), nicht Melde-Identity. Download im Browser, CLI <code>php cron.php CRONID backup</code>, remote nur mit eigenem <code>$backupToken</code> (≥32 Zeichen) über <code>cron.php?id=…&amp;cmd=backup</code>. Erfolgreiche Downloads erscheinen im Log als Info, Fehler als Error. PDFs unter <code>data/</code> gehören nicht ins ZIP</li>
