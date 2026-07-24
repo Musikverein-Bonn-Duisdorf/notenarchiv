@@ -23,13 +23,16 @@ $isEdit = false;
 if(isset($_POST['Index']) && (int)$_POST['Index'] > 0) {
     $piece->load_by_id((int)$_POST['Index']);
     $isEdit = true;
+} elseif(isset($_GET['id']) && (int)$_GET['id'] > 0) {
+    $piece->load_by_id((int)$_GET['id']);
+    $isEdit = ((int)$piece->Index > 0);
 } else {
     $piece->RegistrationNumber = nextArchiverNumber();
 }
 
 $pageTitle = $isEdit ? 'Bearbeiten' : 'Anlegen';
-$backHref = $isEdit ? 'composition.php?id='.(int)$piece->Index : 'anlegen.php';
-$backLabel = $isEdit ? 'Zum Stück' : 'Anlegen';
+$backHref = $isEdit ? 'composition.php?id='.(int)$piece->Index : 'index.php';
+$backLabel = $isEdit ? 'Zum Stück' : 'Zur Liste';
 $backLink = '<a class="w3-button w3-border '.htmlspecialchars($inputBg, ENT_QUOTES, 'UTF-8').'" href="'.htmlspecialchars($backHref, ENT_QUOTES, 'UTF-8').'">'.htmlspecialchars($backLabel, ENT_QUOTES, 'UTF-8').'</a>';
 ?>
 <div class="w3-container w3-margin-bottom termin-page">
@@ -57,7 +60,7 @@ $backLink = '<a class="w3-button w3-border '.htmlspecialchars($inputBg, ENT_QUOT
       <h3 id="edit-col-stamm" class="profile-col-title">Stammdaten</h3>
       <div class="profile-field">
         <label class="profile-label" for="editTitle">Titel</label>
-        <input id="editTitle" class="w3-input w3-border profile-control <?php echo htmlspecialchars($inputBg, ENT_QUOTES, 'UTF-8'); ?>" name="Title" type="text" value="<?php echo archivEscHtml($piece->Title); ?>">
+        <input id="editTitle" class="w3-input w3-border profile-control <?php echo htmlspecialchars($inputBg, ENT_QUOTES, 'UTF-8'); ?>" name="Title" type="text" value="<?php echo archivEscHtml($piece->Title); ?>" required>
       </div>
       <div class="profile-field">
         <label class="profile-label" for="editReg">Inventarnummer</label>
