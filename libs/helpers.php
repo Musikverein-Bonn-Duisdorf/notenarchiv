@@ -1067,6 +1067,253 @@ function renderChangelogHtml() {
 }
 
 /**
+ * Catalog entries for composition typeahead: [{id, label, meta}, ...]
+ * @return array
+ */
+function archivCompositionsCatalog() {
+    $out = array();
+    $sql = sprintf(
+        'SELECT `Index`, `RegistrationNumber`, `Title` FROM `%sComposition` ORDER BY `RegistrationNumber`, `Title`;',
+        $GLOBALS['dbprefix']
+    );
+    $dbr = mysqli_query($GLOBALS['conn'], $sql);
+    sqlerror();
+    while($row = mysqli_fetch_array($dbr)) {
+        $reg = $row['RegistrationNumber'] !== null && $row['RegistrationNumber'] !== ''
+            ? (string)$row['RegistrationNumber']
+            : '';
+        $title = archivPlainText($row['Title']);
+        $out[] = array(
+            'id' => (int)$row['Index'],
+            'label' => $title !== '' ? $title : ('Stück #'.(int)$row['Index']),
+            'meta' => $reg !== '' ? 'Inv. '.$reg : '',
+        );
+    }
+    return $out;
+}
+
+/**
+ * Catalog entries for collection typeahead: [{id, label}, ...]
+ * @return array
+ */
+function archivCollectionsCatalog() {
+    $out = array();
+    $sql = sprintf(
+        'SELECT `Index`, `Name` FROM `%sCollection` ORDER BY `Name`;',
+        $GLOBALS['dbprefix']
+    );
+    $dbr = mysqli_query($GLOBALS['conn'], $sql);
+    sqlerror();
+    while($row = mysqli_fetch_array($dbr)) {
+        $name = archivPlainText($row['Name']);
+        $out[] = array(
+            'id' => (int)$row['Index'],
+            'label' => $name !== '' ? $name : ('Sammlung #'.(int)$row['Index']),
+            'meta' => '',
+        );
+    }
+    return $out;
+}
+
+/**
+ * Parse chip spec JSON into list of {id, number}.
+ * @param string $json
+ * @return array
+ */
+function archivParseCollectionChipSpec($json) {
+    $decoded = json_decode((string)$json, true);
+    if(!is_array($decoded)) {
+        return array();
+    }
+    $out = array();
+    $seen = array();
+    foreach($decoded as $row) {
+        if(!is_array($row)) {
+            continue;
+        }
+        $id = isset($row['id']) ? (int)$row['id'] : 0;
+        if($id < 1 || isset($seen[$id])) {
+            continue;
+        }
+        $seen[$id] = true;
+        $out[] = array(
+            'id' => $id,
+            'number' => isset($row['number']) ? (int)$row['number'] : 0,
+        );
+    }
+    return $out;
+}
+
+/**
+ * Sync CollectionItem rows for one collection (id = Composition).
+ * @param int $collectionId
+ * @param array $items list of {id: compositionId, number}
+ */
+function archivSyncCollectionItemsForCollection($collectionId, array $items) {
+    $collectionId = (int)$collectionId;
+    if($collectionId < 1) {
+        return;
+    }
+    $wanted = array();
+    foreach($items as $row) {
+        $compId = (int)$row['id'];
+        if($compId < 1) {
+            continue;
+        }
+        $wanted[$compId] = (int)$row['number'];
+    }
+
+    $existing = array();
+    $sql = sprintf(
+        'SELECT `Index`, `Composition`, `CollectionNumber` FROM `%sCollectionItem` WHERE `Collections` = "%d";',
+        $GLOBALS['dbprefix'],
+        $collectionId
+    );
+    $dbr = mysqli_query($GLOBALS['conn'], $sql);
+    sqlerror();
+    while($row = mysqli_fetch_array($dbr)) {
+        $existing[(int)$row['Composition']] = array(
+            'Index' => (int)$row['Index'],
+            'number' => (int)$row['CollectionNumber'],
+        );
+    }
+
+    foreach($existing as $compId => $info) {
+        if(!isset($wanted[$compId])) {
+            $item = new Collection;
+            $item->load_by_id($info['Index']);
+            $item->delete();
+        }
+    }
+
+    foreach($wanted as $compId => $number) {
+        if(isset($existing[$compId])) {
+            $item = new Collection;
+            $item->load_by_id($existing[$compId]['Index']);
+            $item->Collections = $collectionId;
+            $item->Composition = $compId;
+            $item->CollectionNumber = $number;
+            $item->save();
+        }
+        else {
+            $item = new Collection;
+            $item->Collections = $collectionId;
+            $item->Composition = $compId;
+            $item->CollectionNumber = $number;
+            $item->save();
+        }
+    }
+}
+
+/**
+ * Sync CollectionItem rows for one composition (id = Collections).
+ * @param int $compositionId
+ * @param array $items list of {id: collectionId, number}
+ */
+function archivSyncCollectionItemsForComposition($compositionId, array $items) {
+    $compositionId = (int)$compositionId;
+    if($compositionId < 1) {
+        return;
+    }
+    $wanted = array();
+    foreach($items as $row) {
+        $colId = (int)$row['id'];
+        if($colId < 1) {
+            continue;
+        }
+        $wanted[$colId] = (int)$row['number'];
+    }
+
+    $existing = array();
+    $sql = sprintf(
+        'SELECT `Index`, `Collections`, `CollectionNumber` FROM `%sCollectionItem` WHERE `Composition` = "%d";',
+        $GLOBALS['dbprefix'],
+        $compositionId
+    );
+    $dbr = mysqli_query($GLOBALS['conn'], $sql);
+    sqlerror();
+    while($row = mysqli_fetch_array($dbr)) {
+        $existing[(int)$row['Collections']] = array(
+            'Index' => (int)$row['Index'],
+            'number' => (int)$row['CollectionNumber'],
+        );
+    }
+
+    foreach($existing as $colId => $info) {
+        if(!isset($wanted[$colId])) {
+            $item = new Collection;
+            $item->load_by_id($info['Index']);
+            $item->delete();
+        }
+    }
+
+    foreach($wanted as $colId => $number) {
+        if(isset($existing[$colId])) {
+            $item = new Collection;
+            $item->load_by_id($existing[$colId]['Index']);
+            $item->Collections = $colId;
+            $item->Composition = $compositionId;
+            $item->CollectionNumber = $number;
+            $item->save();
+        }
+        else {
+            $item = new Collection;
+            $item->Collections = $colId;
+            $item->Composition = $compositionId;
+            $item->CollectionNumber = $number;
+            $item->save();
+        }
+    }
+}
+
+/**
+ * Markup + script bootstrap for a collection chip editor.
+ * @param string $prefix unique DOM id prefix
+ * @param string $chipClass mail-recipient-chip--composition|collection
+ * @param string $hiddenName POST field name
+ * @param array $catalog
+ * @param array $initial [{id,number},...]
+ * @param string $placeholder
+ * @return string
+ */
+function archivCollectionChipsEditorHtml($prefix, $chipClass, $hiddenName, array $catalog, array $initial, $placeholder) {
+    $inputBg = isset($GLOBALS['optionsDB']['colorInputBackground'])
+        ? (string)$GLOBALS['optionsDB']['colorInputBackground']
+        : '';
+    $chipsId = $prefix.'-chips';
+    $inputId = $prefix.'-input';
+    $suggestId = $prefix.'-suggest';
+    $hiddenId = $prefix.'-spec';
+    $catalogId = $prefix.'-catalog';
+
+    $html = '<div class="profile-field collection-chips-editor">';
+    $html .= '<div id="'.archivEscHtml($chipsId).'" class="mail-recipient-chips" role="list" aria-live="polite"></div>';
+    $html .= '<input id="'.archivEscHtml($inputId).'" type="text" class="w3-input w3-border profile-control '.archivEscHtml($inputBg).'"'
+        .' placeholder="'.archivEscHtml($placeholder).'" autocomplete="off" aria-label="'.archivEscHtml($placeholder).'">';
+    $html .= '<div id="'.archivEscHtml($suggestId).'" class="mail-recipient-suggest" hidden></div>';
+    $html .= '<input type="hidden" name="'.archivEscHtml($hiddenName).'" id="'.archivEscHtml($hiddenId).'" value="'.archivEscHtml(json_encode(array_values($initial))).'">';
+    $html .= '<script type="application/json" id="'.archivEscHtml($catalogId).'">'.json_encode(array_values($catalog), JSON_UNESCAPED_UNICODE).'</script>';
+    $html .= '</div>';
+    $html .= '<script src="'.archivEscHtml(assetUrl('js/collectionChips.js')).'"></script>';
+    $html .= '<script>(function(){';
+    $html .= 'var catEl=document.getElementById('.json_encode($catalogId).');';
+    $html .= 'var catalog=[]; try{ catalog=JSON.parse(catEl.textContent||"[]"); }catch(e){}';
+    $html .= 'var hid=document.getElementById('.json_encode($hiddenId).');';
+    $html .= 'var initial=[]; try{ initial=JSON.parse(hid.value||"[]"); }catch(e){}';
+    $html .= 'CollectionChips.init({';
+    $html .= 'chipsEl:document.getElementById('.json_encode($chipsId).'),';
+    $html .= 'inputEl:document.getElementById('.json_encode($inputId).'),';
+    $html .= 'suggestEl:document.getElementById('.json_encode($suggestId).'),';
+    $html .= 'hiddenEl:hid,';
+    $html .= 'catalog:catalog,';
+    $html .= 'initial:initial,';
+    $html .= 'chipClass:'.json_encode($chipClass).',';
+    $html .= 'inputBg:'.json_encode($inputBg);
+    $html .= '});})();</script>';
+    return $html;
+}
+
+/**
  * Render a PHP view from views/ and return the HTML.
  * @param string $view Path relative to views/ without .php (e.g. 'help/guide')
  * @param array $vars Variables extracted into the view scope

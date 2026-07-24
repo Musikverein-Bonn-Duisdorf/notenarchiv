@@ -397,46 +397,39 @@ class Composition
     }
 
     public function listCollections() {
-        $btn = isset($GLOBALS['optionsDB']['colorBtnSubmit'])
-            ? (string)$GLOBALS['optionsDB']['colorBtnSubmit']
-            : '';
-        $btnDel = isset($GLOBALS['optionsDB']['colorBtnDelete'])
-            ? (string)$GLOBALS['optionsDB']['colorBtnDelete']
-            : 'w3-red';
-        $inputBg = isset($GLOBALS['optionsDB']['colorInputBackground'])
-            ? (string)$GLOBALS['optionsDB']['colorInputBackground']
-            : '';
-
         $sql = sprintf(
-            'SELECT `Index`, `CollectionNumber`, `cName` FROM `%sCollectionItem` INNER JOIN (SELECT `Index` AS `iIndex`, `Name` AS `cName` FROM `%sCollection`) `%sCollection` ON `iIndex` = `Collections` WHERE `Composition` = "%d" ORDER BY `cName`;',
-            $GLOBALS['dbprefix'],
-            $GLOBALS['dbprefix'],
+            'SELECT `Collections`, `CollectionNumber` FROM `%sCollectionItem` WHERE `Composition` = "%d" ORDER BY `CollectionNumber` ASC;',
             $GLOBALS['dbprefix'],
             (int)$this->Index
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
         sqlerror();
-        $str = '<div class="profile-grid">';
+        $initial = array();
         while($row = mysqli_fetch_array($dbr)) {
-            $str .= '<form class="profile-field collection-item-form" action="" method="POST">';
-            $str .= '<label class="profile-label">'.archivEscHtml($row['cName']).'</label>';
-            $str .= '<div class="collection-item-row">';
-            $str .= '<input type="number" name="CollectionNumber" class="w3-input w3-border profile-control '.archivEscHtml($inputBg).'" value="'.archivEscHtml((string)$row['CollectionNumber']).'">';
-            $str .= '<input type="hidden" name="Index" value="'.(int)$row['Index'].'">';
-            $str .= '<input type="hidden" name="Composition" value="'.(int)$this->Index.'">';
-            $str .= '<button type="submit" name="updateCollection" value="1" class="w3-button '.archivEscHtml($btn).'">Speichern</button>';
-            $str .= '<button type="submit" name="deleteCollection" value="1" class="w3-button '.archivEscHtml($btnDel).'">Löschen</button>';
-            $str .= '</div></form>';
+            $initial[] = array(
+                'id' => (int)$row['Collections'],
+                'number' => (int)$row['CollectionNumber'],
+            );
         }
-        $str .= '<form class="profile-field collection-item-form" action="" method="POST">';
-        $str .= '<label class="profile-label">Hinzufügen</label>';
-        $str .= '<div class="collection-item-row">';
-        $str .= '<select name="Collections" class="w3-input w3-border profile-control '.archivEscHtml($inputBg).'">'.collectionsOption().'</select>';
-        $str .= '<input type="number" name="CollectionNumber" class="w3-input w3-border profile-control '.archivEscHtml($inputBg).'" value="0">';
+
+        $str = '<form class="profile-grid collection-chips-form" action="" method="POST">';
         $str .= '<input type="hidden" name="Composition" value="'.(int)$this->Index.'">';
-        $str .= '<button type="submit" name="insertCollection" value="1" class="w3-button '.archivEscHtml($btn).'">Hinzufügen</button>';
-        $str .= '</div></form>';
+        $str .= '<div class="profile-field">';
+        $str .= archivCollectionChipsEditorHtml(
+            'piece-coll',
+            'mail-recipient-chip--collection',
+            'collectionsSpec',
+            archivCollectionsCatalog(),
+            $initial,
+            'Sammlung…'
+        );
         $str .= '</div>';
+        $btn = isset($GLOBALS['optionsDB']['colorBtnSubmit'])
+            ? (string)$GLOBALS['optionsDB']['colorBtnSubmit']
+            : '';
+        $str .= '<div class="profile-field profile-actions">';
+        $str .= '<button type="submit" name="syncCollections" value="1" class="w3-button '.archivEscHtml($btn).'">Speichern</button>';
+        $str .= '</div></form>';
         return $str;
     }
 };

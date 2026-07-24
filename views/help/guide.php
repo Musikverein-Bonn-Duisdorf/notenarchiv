@@ -55,7 +55,7 @@ $sections[] = array(
     'id' => 'sammlungen',
     'title' => 'Sammlungen',
     'body' => '
-<p>Unter <b>Sammlungen</b> verwaltest du Zusammenstellungen (z.&nbsp;B. Ordner im Schrank oder thematische Listen). Stücke können einer oder mehreren Sammlungen zugeordnet sein; die Zuordnung pflegst du in der Stück-Detailansicht. Ein Klick auf den Sammlungstitel öffnet ein Detail-Modal'.($showAdmin ? '; <b>Bearbeiten</b> führt zur Anlege-Seite (dort auch Löschen). Anlegen über Plus bzw. <b>Admin → Sammlung</b>' : '').'.</p>
+<p>Unter <b>Sammlungen</b> verwaltest du Zusammenstellungen (z.&nbsp;B. Ordner im Schrank oder thematische Listen). Stücke können einer oder mehreren Sammlungen zugeordnet sein. Ein Klick auf den Sammlungstitel öffnet ein Detail-Modal'.($showAdmin ? '; <b>Bearbeiten</b> führt zur Anlege-Seite. Dort und im Sammlungen-Dialog am Stück pflegst du den Inhalt per Chips (Nr = Reihenfolge). Anlegen über Plus bzw. <b>Admin → Sammlung</b>' : '').'.</p>
 '
 );
 

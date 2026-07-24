@@ -10,24 +10,15 @@ if(isset($_POST['delete'])) {
     $piece->load_by_id($_POST['Index']);
     $piece->deleteCover();
 }
-if(isset($_POST['deleteCollection'])) {
-    $coll = new Collection;
-    $coll->load_by_id($_POST['Index']);
-    $coll->delete();
-    $piece->load_by_id($_POST['Composition']);
-}
-if(isset($_POST['insertCollection'])) {
-    $coll = new Collection;
-    $coll->fill_from_array($_POST);
-    $coll->save();
-    $piece->load_by_id($_POST['Composition']);
-}
-if(isset($_POST['updateCollection'])) {
-    $coll = new Collection;
-    $coll->load_by_id($_POST['Index']);
-    $coll->fill_from_array($_POST);
-    $coll->save();
-    $piece->load_by_id($_POST['Composition']);
+if(isset($_POST['syncCollections']) && isset($_POST['Composition'])) {
+    $piece = new Composition;
+    $piece->load_by_id((int)$_POST['Composition']);
+    if((int)$piece->Index > 0 && isset($_POST['collectionsSpec'])) {
+        archivSyncCollectionItemsForComposition(
+            (int)$piece->Index,
+            archivParseCollectionChipSpec($_POST['collectionsSpec'])
+        );
+    }
 }
 if(isset($_POST['partupload'])) {
     $piece = new Composition;

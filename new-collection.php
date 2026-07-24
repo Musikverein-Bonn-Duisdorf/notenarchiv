@@ -28,8 +28,14 @@ if(isset($_POST['update']) && isset($_POST['Index']) && (int)$_POST['Index'] > 0
     if((int)$n->Index > 0) {
         $n->fill_from_array($_POST);
         $n->save();
+        if(isset($_POST['itemsSpec'])) {
+            archivSyncCollectionItemsForCollection(
+                (int)$n->Index,
+                archivParseCollectionChipSpec($_POST['itemsSpec'])
+            );
+        }
     }
-    header('Location: collections.php');
+    header('Location: new-collection.php?id='.(int)$_POST['Index']);
     exit;
 }
 
@@ -105,6 +111,21 @@ $delName = archivPlainText($entity->Name);
         <input id="collectionName" name="Name" type="text" class="w3-input w3-border profile-control <?php echo htmlspecialchars($inputBg, ENT_QUOTES, 'UTF-8'); ?>" value="<?php echo $isEdit ? archivEscHtml($entity->Name) : ''; ?>" required>
       </div>
     </section>
+<?php if($isEdit) { ?>
+    <section class="profile-col" aria-labelledby="new-collection-inhalt">
+      <h3 id="new-collection-inhalt" class="profile-col-title">Inhalt</h3>
+      <?php
+        echo archivCollectionChipsEditorHtml(
+            'coll-items',
+            'mail-recipient-chip--composition',
+            'itemsSpec',
+            archivCompositionsCatalog(),
+            $entity->getItemsChipSpec(),
+            'Stück…'
+        );
+      ?>
+    </section>
+<?php } ?>
   </div>
 </form>
 </div>

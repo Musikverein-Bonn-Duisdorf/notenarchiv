@@ -169,6 +169,28 @@ class Collections
         return $str;
     }
 
+    public function getItemsChipSpec() {
+        $items = array();
+        $id = (int)$this->Index;
+        if($id < 1) {
+            return $items;
+        }
+        $sql = sprintf(
+            'SELECT `Composition`, `CollectionNumber` FROM `%sCollectionItem` WHERE `Collections` = "%d" ORDER BY `CollectionNumber` ASC;',
+            $GLOBALS['dbprefix'],
+            $id
+        );
+        $dbr = mysqli_query($GLOBALS['conn'], $sql);
+        sqlerror();
+        while($row = mysqli_fetch_array($dbr)) {
+            $items[] = array(
+                'id' => (int)$row['Composition'],
+                'number' => (int)$row['CollectionNumber'],
+            );
+        }
+        return $items;
+    }
+
     public function getItemSummaries() {
         $id = (int)$this->Index;
         $items = array();

@@ -2512,6 +2512,44 @@ a.app-titlebar-logo {
   border-color: #ffb74d;
 }
 
+.mail-recipient-chip--composition {
+  background: #f7f3e3;
+  border-color: #c9b87a;
+}
+
+.mail-recipient-chip--collection {
+  background: #e8eef6;
+  border-color: #7f9dc1;
+}
+
+.collection-chip-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0 0.35rem 0.35rem 0;
+  vertical-align: middle;
+}
+
+.collection-chip-nr {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0;
+}
+
+.collection-chip-nr-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #555;
+}
+
+.collection-chip-nr-input {
+  width: 3.5rem;
+  min-width: 3.5rem;
+  padding: 0.2rem 0.35rem;
+  margin: 0;
+}
+
 .mail-recipient-chip--audience,
 .mail-recipient-chip--group {
   background: #345a95;
