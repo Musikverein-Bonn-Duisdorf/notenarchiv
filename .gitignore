@@ -3,4 +3,5 @@ data/*
 !data/.htaccess
 common/config.php
 mcp/archiv-api/node_modules/
+.cursor/mcp.json
 __pycache__/
