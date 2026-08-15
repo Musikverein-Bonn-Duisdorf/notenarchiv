@@ -296,7 +296,7 @@ function formatConfigLogValue($value, $type = '') {
         return '(leer)';
     }
     if($type === 'bool') {
-        return ((string)$value === '1' || $value === 1 || $value === true) ? 'ja' : 'nein';
+        return bool2string($value);
     }
     return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
 }
