@@ -2,6 +2,10 @@
 
 Automatisch aus Git-Release-Commits erzeugt.
 
+## 2026-08-15-0af39 (2026-08-15)
+
+- ARCHIV-37: einheitliches 3:4-Schema für Verlags-Logos
+
 ## 2026-08-15-c6ba0 (2026-08-15)
 
 - ARCHIV-38: URLs im Log klickbar machen
