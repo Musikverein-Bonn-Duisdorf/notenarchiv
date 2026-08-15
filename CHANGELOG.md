@@ -2,6 +2,12 @@
 
 Automatisch aus Git-Release-Commits erzeugt.
 
+## 2026-08-15-464e2 (2026-08-15)
+
+- ARCHIV-3: Katalog-Sortierung/Nachladen und CollectionItem-Log-Chips
+- ARCHIV-3: Log/Filter/Modals an Melde-UI-SHELL angleichen
+- ARCHIV-26: Sammlungen beim Stück-Edit und Chip-Kurztext
+
 ## 2026-07-24-22074 (2026-07-24)
 
 - ARCHIV-25: CollectionItem-Log Titel ohne HTML-Entities
