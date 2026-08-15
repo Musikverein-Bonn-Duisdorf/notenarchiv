@@ -18,7 +18,7 @@ $sections[] = array(
     'title' => 'Einführung',
     'body' => '
 <p>Das <b>Notenarchiv</b> verwaltet den Vereinsnotenbestand: Stücke, Stimmen, Sammlungen, Komponisten und Verlage. Login und Rechte kommen aus der Meldeliste (SSO).</p>
-<p>Über die Navigation erreichst du die Bereiche, die für dich freigeschaltet sind: auf breiten Bildschirmen links mit Text, auf dem Smartphone unten als Leiste (weitere Einträge und Admin unter <b>Mehr</b>). Diese Hilfe zeigt nur Abschnitte, die zu deinen aktuellen Rechten passen.</p>
+<p>Über die Navigation erreichst du die Bereiche, die für dich freigeschaltet sind: auf breiten Bildschirmen links mit Text, auf Tablet und Smartphone unten als Leiste (weitere Einträge und Admin unter <b>Mehr</b>). Diese Hilfe zeigt nur Abschnitte, die zu deinen aktuellen Rechten passen.</p>
 '
 );
 
@@ -26,7 +26,7 @@ $sections[] = array(
     'id' => 'navigation',
     'title' => 'Navigation',
     'body' => '
-<p>Auf dem Desktop steht die Navigation links (Icons mit Beschriftung). Auf dem Smartphone unten; unter <b>Mehr</b> findest du weitere Einträge, Admin und Ausloggen.</p>
+<p>Auf dem Desktop steht die Navigation links (Icons mit Beschriftung). Auf schmalen Bildschirmen (Tablet und Smartphone) unten; unter <b>Mehr</b> findest du weitere Einträge, Admin und Ausloggen.</p>
 <ul class="help-list">
 <li><i class="fas fa-home"></i> <b>Stücke</b> – Katalog der Kompositionen (Suche, Filter, Detail)</li>
 <li><i class="fas fa-folder-open"></i> <b>Sammlungen</b> – physische oder thematische Zusammenstellungen</li>

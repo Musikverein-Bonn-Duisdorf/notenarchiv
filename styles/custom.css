@@ -2,7 +2,7 @@
   color: #111;
 }
 
-/* —— App navigation (MELD-139): sidebar ≥601px, bottom bar ≤600px —— */
+/* —— App navigation (MELD-173): sidebar ≥993px, bottom bar ≤992px (tablet+phone) —— */
 html {
   height: 100%;
 }
@@ -91,7 +91,7 @@ a.app-titlebar-logo {
   text-align: left;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 992px) {
   .app-titlebar {
     padding-right: 4rem;
   }
@@ -479,7 +479,7 @@ a.app-titlebar-logo {
   background: #fff;
 }
 
-@media (min-width: 601px) {
+@media (min-width: 993px) {
   .app-nav {
     width: 15rem;
     align-self: stretch;
@@ -503,7 +503,7 @@ a.app-titlebar-logo {
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 992px) {
   .app-shell {
     flex-direction: column;
   }
@@ -517,9 +517,11 @@ a.app-titlebar-logo {
     align-items: stretch;
     width: 100%;
     max-width: none;
-    min-height: 3.75rem;
+    min-height: calc(3.75rem + env(safe-area-inset-bottom, 0px));
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.15);
-    padding-bottom: env(safe-area-inset-bottom, 0);
+    /* Safe-Area über die Tab-Farben, nicht als colorNav-Streifen (MELD-184) */
+    padding-bottom: 0;
+    background: transparent !important;
   }
 
   /* Shared modal edge gap (z-index puts modals above titlebar/nav) */
@@ -529,7 +531,7 @@ a.app-titlebar-logo {
   }
 
   .app-nav-primary {
-    /* 4 Kern-Buttons: Termine, Kalender, Nachrichten, Mein Register (+ Mehr separat) */
+    /* 4 Kern-Buttons: Stücke, Sammlungen, Komponisten, Verlage (+ Mehr separat) */
     flex: 4 1 0;
     flex-direction: row;
     align-items: stretch;
@@ -576,12 +578,12 @@ a.app-titlebar-logo {
     justify-content: center;
     align-items: center;
     gap: 0;
-    padding: 0.45rem 0.2rem;
+    padding: 0.45rem 0.2rem calc(0.45rem + env(safe-area-inset-bottom, 0px));
     margin: 0;
     min-width: 0;
     width: 100%;
     height: 100%;
-    min-height: 3.75rem;
+    min-height: calc(3.75rem + env(safe-area-inset-bottom, 0px));
     box-sizing: border-box;
     text-align: center;
     font-size: 0.7rem;
@@ -681,9 +683,15 @@ a.app-titlebar-logo {
     display: none;
   }
 
+  /* MELD-184: kein sichtbarer Body-Streifen zwischen Titlebar / Bottom-Nav und Karte */
   .app-main {
-    margin: 0.5rem 0.5rem calc(4.5rem + env(safe-area-inset-bottom, 0));
+    margin: 0 0 var(--app-nav-bottom-h, 3.75rem);
     padding: 0 1rem 1rem;
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+    border-top: 0;
+    box-shadow: none;
   }
 
   .app-main:has(.admin-list-shell) {
@@ -735,6 +743,7 @@ a.app-titlebar-logo {
     --admin-hero-accent-w: 3px;
     margin-bottom: 0.5rem;
     padding: 0.65rem 1rem;
+    border-radius: 0;
   }
 
   .app-main:has(.admin-list-shell) .admin-list-shell .profile-hero.admin-list-hero {
@@ -1143,8 +1152,8 @@ a.app-titlebar-logo {
 }
 
 /* w3.css opens ALL nested .w3-dropdown-content on ancestor hover — reset that.
-   Desktop (MELD-139): Akkordeon nach unten in der Sidebar, nicht als Flyout über dem Content. */
-@media (min-width: 601px) {
+   Desktop (MELD-139/173): Akkordeon nach unten in der Sidebar, nicht als Flyout über dem Content. */
+@media (min-width: 993px) {
   .admin-nav:hover .admin-nav-group > .w3-dropdown-content,
   .admin-nav .admin-nav-group:hover > .w3-dropdown-content {
     display: none;
@@ -1182,7 +1191,7 @@ a.app-titlebar-logo {
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 992px) {
   .admin-nav:hover .admin-nav-group > .w3-dropdown-content {
     display: none;
   }
@@ -1237,7 +1246,7 @@ a.app-titlebar-logo {
   filter: brightness(0.96);
 }
 
-@media (max-width: 600px) {
+@media (max-width: 992px) {
   .app-nav > .app-nav-primary > .app-nav-item.admin-nav-perm,
   .app-nav > .app-nav-primary > .app-nav-form > .app-nav-item.admin-nav-perm,
   .app-nav > .app-nav-more-wrap > .app-nav-more-toggle.admin-nav-perm {
@@ -1270,7 +1279,7 @@ a.app-titlebar-logo {
   white-space: nowrap;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 992px) {
   /* Admin accordion inside Mehr-Sheet */
   .admin-nav .admin-nav-group > .w3-dropdown-content {
     position: static !important;
