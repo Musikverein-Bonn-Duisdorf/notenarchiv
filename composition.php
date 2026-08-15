@@ -2,21 +2,14 @@
 require_once __DIR__.'/libs/sessionBootstrap.php';
 archivConfigureSession();
 $_SESSION['page'] = 'composition';
-include 'common/header.php';
 
-$inputBg = isset($GLOBALS['optionsDB']['colorInputBackground'])
-    ? (string)$GLOBALS['optionsDB']['colorInputBackground']
-    : '';
-$btnSubmit = isset($GLOBALS['optionsDB']['colorBtnSubmit'])
-    ? (string)$GLOBALS['optionsDB']['colorBtnSubmit']
-    : '';
-$btnEdit = isset($GLOBALS['optionsDB']['colorBtnEdit'])
-    ? (string)$GLOBALS['optionsDB']['colorBtnEdit']
-    : '';
+include_once 'common/include.php';
+mysqli_select_db($GLOBALS['conn'], $sql['database']) or die(mysqli_error($GLOBALS['conn']));
+
 $isAdmin = !empty($_SESSION['admin']);
-
 $piece = new Composition;
 
+// POST/Redirect/Get: must run before header.php (which already sends HTML).
 if(isset($_POST['save']) && $isAdmin) {
     if(isset($_POST['Index']) && (int)$_POST['Index'] > 0) {
         $piece->load_by_id((int)$_POST['Index']);
@@ -29,9 +22,22 @@ if(isset($_POST['save']) && $isAdmin) {
             archivSyncCollectionItemsForComposition((int)$piece->Index, $items);
         }
     }
-    header('Location: composition.php?id='.(int)$piece->Index);
-    exit;
+    $redirId = (int)$piece->Index;
+    redirectAfterPost($redirId > 0 ? ('composition.php?id='.$redirId) : 'composition.php');
 }
+
+include 'common/header.php';
+
+$inputBg = isset($GLOBALS['optionsDB']['colorInputBackground'])
+    ? (string)$GLOBALS['optionsDB']['colorInputBackground']
+    : '';
+$btnSubmit = isset($GLOBALS['optionsDB']['colorBtnSubmit'])
+    ? (string)$GLOBALS['optionsDB']['colorBtnSubmit']
+    : '';
+$btnEdit = isset($GLOBALS['optionsDB']['colorBtnEdit'])
+    ? (string)$GLOBALS['optionsDB']['colorBtnEdit']
+    : '';
+$isAdmin = !empty($_SESSION['admin']);
 
 if(isset($_POST['delete']) && $isAdmin) {
     $piece->load_by_id((int)$_POST['Index']);
