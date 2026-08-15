@@ -1,7 +1,7 @@
 <?php
 /**
  * Collection detail modal (read-only). Expects: $collection, $showEditButton, $itemCount, $items
- * $items: list of array{number:string,title:string}
+ * $items: list of array{number:string,title:string,coverHtml?:string}
  */
 $name = archivPlainText($collection->Name);
 $id = (int)$collection->Index;
@@ -59,9 +59,15 @@ $items = isset($items) && is_array($items) ? $items : array();
         }
         $num = isset($item['number']) ? (string)$item['number'] : '';
         $title = isset($item['title']) ? (string)$item['title'] : '';
-        echo '<div class="profile-field">';
+        $cover = isset($item['coverHtml']) ? (string)$item['coverHtml'] : '';
+        echo '<div class="profile-field collection-modal-item">';
         echo '<span class="profile-label">'.archivEscHtml($num !== '' ? $num : '—').'</span>';
-        echo '<div class="profile-value">'.archivEscHtml($title !== '' ? $title : '—').'</div>';
+        echo '<div class="profile-value collection-modal-piece">';
+        if($cover !== '') {
+            echo $cover;
+        }
+        echo '<span class="collection-modal-piece-title">'.archivEscHtml($title !== '' ? $title : '—').'</span>';
+        echo '</div>';
         echo '</div>';
         $shown++;
     }

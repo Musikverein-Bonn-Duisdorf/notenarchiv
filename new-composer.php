@@ -143,6 +143,45 @@ $delName = trim(archivPlainText($entity->FirstName).' '.archivPlainText($entity-
         <input id="composerLast" name="LastName" type="text" class="w3-input w3-border profile-control <?php echo htmlspecialchars($inputBg, ENT_QUOTES, 'UTF-8'); ?>" value="<?php echo $isEdit ? archivEscHtml($entity->LastName) : ''; ?>" required>
       </div>
     </section>
+<?php if($isEdit) {
+    $asComposer = $entity->getCompositionSummariesForRole('Composer', 100);
+    $asArranger = $entity->getCompositionSummariesForRole('Arranger', 100);
+    $nComposer = $entity->countCompositionsAsComposer();
+    $nArranger = $entity->countCompositionsAsArranger();
+?>
+    <section class="profile-col" aria-labelledby="composer-pieces-composer">
+      <h3 id="composer-pieces-composer" class="profile-col-title">Stücke als Komponist (<?php echo (int)$nComposer; ?>)</h3>
+<?php if(!$asComposer) { ?>
+      <div class="profile-field"><div class="profile-value">—</div></div>
+<?php } else {
+    foreach($asComposer as $item) {
+        $compId = (int)$item['id'];
+        $reg = $item['registrationNumber'] !== null ? (string)$item['registrationNumber'] : '';
+        $title = (string)$item['title'];
+        echo '<div class="profile-field">';
+        echo '<span class="profile-label">'.archivEscHtml($reg !== '' ? $reg : '—').'</span>';
+        echo '<div class="profile-value"><a href="composition.php?id='.$compId.'">'.archivEscHtml($title !== '' ? $title : '—').'</a></div>';
+        echo '</div>';
+    }
+} ?>
+    </section>
+    <section class="profile-col" aria-labelledby="composer-pieces-arranger">
+      <h3 id="composer-pieces-arranger" class="profile-col-title">Stücke als Arrangeur (<?php echo (int)$nArranger; ?>)</h3>
+<?php if(!$asArranger) { ?>
+      <div class="profile-field"><div class="profile-value">—</div></div>
+<?php } else {
+    foreach($asArranger as $item) {
+        $compId = (int)$item['id'];
+        $reg = $item['registrationNumber'] !== null ? (string)$item['registrationNumber'] : '';
+        $title = (string)$item['title'];
+        echo '<div class="profile-field">';
+        echo '<span class="profile-label">'.archivEscHtml($reg !== '' ? $reg : '—').'</span>';
+        echo '<div class="profile-value"><a href="composition.php?id='.$compId.'">'.archivEscHtml($title !== '' ? $title : '—').'</a></div>';
+        echo '</div>';
+    }
+} ?>
+    </section>
+<?php } ?>
   </div>
 </form>
 </div>

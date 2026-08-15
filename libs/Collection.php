@@ -233,6 +233,18 @@ class Collection
             ? 'document.getElementById(\''.$formId.'\').submit();'
             : '';
 
+        $coverHtml = '';
+        if($compId > 0) {
+            $piece = new Composition;
+            $piece->load_by_id($compId);
+            if((int)$piece->Index > 0) {
+                if($title === '') {
+                    $title = archivPlainText($piece->Title);
+                }
+                $coverHtml = $piece->coverHtml('archiv-thumb piece-cover');
+            }
+        }
+
         $str = '';
         if($compId > 0) {
             $str .= '<form id="'.archivEscHtml($formId).'" action="composition.php" method="POST" class="archiv-list-nav-form">'
@@ -251,7 +263,12 @@ class Collection
         $str .= '>';
         $str .= '<div class="collection-id"><div class="collection-nr">'.archivEscHtml($num !== '' ? $num : '—').'</div></div>';
         $str .= '<div class="collection-rail" aria-hidden="true"></div>';
-        $str .= '<div class="collection-main"><div class="collection-title">'.archivEscHtml($title !== '' ? $title : '—').'</div></div>';
+        $str .= '<div class="collection-main">';
+        if($coverHtml !== '') {
+            $str .= $coverHtml;
+        }
+        $str .= '<div class="collection-text"><div class="collection-title">'.archivEscHtml($title !== '' ? $title : '—').'</div></div>';
+        $str .= '</div>';
         $str .= '</div>';
         return $str;
     }

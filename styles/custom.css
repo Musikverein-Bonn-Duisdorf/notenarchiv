@@ -3442,9 +3442,15 @@ body.meld-cal-print {
 
 .modal-shell .profile-hero {
   padding-right: 0;
+  display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.85rem 1.25rem;
+}
+
+.modal-shell .profile-hero-thumb {
+  flex: 0 0 auto;
+  align-self: center;
 }
 
 .modal-shell .profile-hero-text {
@@ -3610,15 +3616,20 @@ body.meld-cal-print {
 @media (max-width: 600px) {
   .modal-shell .profile-hero {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: start;
     column-gap: 0.5rem;
     row-gap: 0.65rem;
     flex-wrap: unset;
   }
 
-  .modal-shell .profile-hero-text {
+  .modal-shell .profile-hero-thumb {
     grid-column: 1;
+    grid-row: 1;
+  }
+
+  .modal-shell .profile-hero-text {
+    grid-column: 2;
     grid-row: 1;
     min-width: 0;
   }
@@ -3628,7 +3639,7 @@ body.meld-cal-print {
   }
 
   .modal-shell .profile-hero-actions > .modal-close {
-    grid-column: 2;
+    grid-column: 3;
     grid-row: 1;
     align-self: start;
   }
@@ -5136,6 +5147,7 @@ select.profile-control {
 
 .piece-row,
 .composer-row,
+.publisher-row,
 .collection-row[role="button"] {
   cursor: pointer;
 }
@@ -5206,35 +5218,47 @@ select.profile-control {
   align-self: start;
 }
 
+.piece-main,
 .composer-main,
-.publisher-main {
+.publisher-main,
+.collection-main {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.65rem 0.85rem;
 }
 
-.publisher-text {
+.piece-text,
+.composer-text,
+.publisher-text,
+.collection-text {
   min-width: 0;
   flex: 1 1 8rem;
 }
 
+/* Shared list/modal thumbs: large, rectangular (covers + entity avatars) */
+.archiv-thumb,
+.piece-cover,
 .entity-avatar {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 50%;
+  width: 2.75rem;
+  height: 3.5rem;
+  border-radius: 0.25rem;
   overflow: hidden;
   flex: 0 0 auto;
   background: rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   color: rgba(0, 0, 0, 0.55);
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.02em;
+  box-sizing: border-box;
 }
 
+.archiv-thumb img,
+.piece-cover img,
 .entity-avatar img {
   width: 100%;
   height: 100%;
@@ -5242,10 +5266,119 @@ select.profile-control {
   display: block;
 }
 
-.entity-avatar--lg {
+/* Portraits: keep subject visible (landscape sources must not crop the face away) */
+.entity-avatar img {
+  object-fit: contain;
+  object-position: center center;
+}
+
+/* Publisher logos: square frame (not portrait), contain + padding */
+.entity-avatar.entity-avatar--logo {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+.archiv-thumb--lg.entity-avatar--logo,
+.entity-avatar--lg.entity-avatar--logo {
   width: 4.5rem;
   height: 4.5rem;
-  font-size: 1.1rem;
+}
+
+.archiv-thumb--detail.entity-avatar--logo,
+.entity-avatar--detail.entity-avatar--logo {
+  width: 8.5rem;
+  height: 8.5rem;
+}
+
+@media (max-width: 600px) {
+  .archiv-thumb--detail.entity-avatar--logo,
+  .entity-avatar--detail.entity-avatar--logo {
+    width: 6.5rem;
+    height: 6.5rem;
+  }
+}
+
+.entity-avatar--logo img {
+  object-fit: contain;
+  object-position: center center;
+  padding: 0.2rem;
+  box-sizing: border-box;
+}
+
+.archiv-thumb--lg,
+.piece-cover--lg,
+.entity-avatar--lg {
+  width: 4.5rem;
+  height: 5.75rem;
+  font-size: 1.15rem;
+}
+
+/* Detail / modal hero: larger cover & avatars */
+.archiv-thumb--detail,
+.piece-cover--detail,
+.entity-avatar--detail {
+  width: 9.5rem;
+  height: 12.25rem;
+  font-size: 1.75rem;
+  border-radius: 0.35rem;
+}
+
+@media (max-width: 600px) {
+  .archiv-thumb--detail,
+  .piece-cover--detail,
+  .entity-avatar--detail {
+    width: 7rem;
+    height: 9rem;
+    font-size: 1.35rem;
+  }
+}
+
+.piece-cover--placeholder,
+.entity-avatar--placeholder {
+  color: #fff;
+  border-color: rgba(0, 0, 0, 0.12);
+  font-size: 1.2rem;
+}
+
+.archiv-thumb--lg.piece-cover--placeholder,
+.piece-cover--lg.piece-cover--placeholder,
+.archiv-thumb--lg.entity-avatar--placeholder,
+.entity-avatar--lg.entity-avatar--placeholder {
+  font-size: 1.75rem;
+}
+
+.archiv-thumb--detail.piece-cover--placeholder,
+.piece-cover--detail.piece-cover--placeholder,
+.archiv-thumb--detail.entity-avatar--placeholder,
+.entity-avatar--detail.entity-avatar--placeholder {
+  font-size: 2.85rem;
+}
+
+@media (max-width: 600px) {
+  .archiv-thumb--detail.piece-cover--placeholder,
+  .piece-cover--detail.piece-cover--placeholder,
+  .archiv-thumb--detail.entity-avatar--placeholder,
+  .entity-avatar--detail.entity-avatar--placeholder {
+    font-size: 2.15rem;
+  }
+}
+
+.piece-cover--placeholder .piece-cover-initials,
+.entity-avatar--placeholder .entity-avatar-initials {
+  line-height: 1;
+  user-select: none;
+}
+
+.profile-hero-thumb {
+  flex: 0 0 auto;
+  align-self: center;
+}
+
+.termin-shell > .profile-hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
 }
 
 .entity-avatar-edit {
@@ -5280,6 +5413,28 @@ select.profile-control {
   opacity: 0.9;
   white-space: pre-line;
   word-break: break-word;
+}
+
+.publisher-website {
+  margin-top: 0.15rem;
+  font-size: 0.9rem;
+  line-height: 1.35;
+  opacity: 0.85;
+  word-break: break-all;
+}
+
+.publisher-piece-count {
+  margin-top: 0.2rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+.composer-piece-count {
+  margin-top: 0.2rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  opacity: 0.8;
 }
 
 .piece-meta-line {
@@ -5393,6 +5548,17 @@ select.profile-control {
 .collection-item-row .w3-input,
 .collection-item-row .w3-button {
   flex: 1 1 6rem;
+  min-width: 0;
+}
+
+.collection-modal-piece {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.collection-modal-piece-title {
   min-width: 0;
 }
 

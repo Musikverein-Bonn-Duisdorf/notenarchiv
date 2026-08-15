@@ -7,7 +7,8 @@
     "Publisher": {
         "Index": {"Type": "int", "Extra": "AUTO_INCREMENT"},
         "Name": {"Type": "text", "Collation": "utf8mb4_unicode_ci"},
-        "Address": {"Type": "text", "Null": "YES", "Collation": "utf8mb4_unicode_ci"}
+        "Address": {"Type": "text", "Null": "YES", "Collation": "utf8mb4_unicode_ci"},
+        "Website": {"Type": "text", "Null": "YES", "Collation": "utf8mb4_unicode_ci"}
     },
     "Collection": {
         "Index": {"Type": "int", "Extra": "AUTO_INCREMENT"},
@@ -30,7 +31,8 @@
         "Year": {"Type": "int", "Null": "YES"},
         "PerformanceTime": {"Type": "text", "Null": "YES", "Collation": "utf8mb4_unicode_ci"},
         "Grade": {"Type": "double", "Null": "YES"},
-        "FilePath": {"Type": "text", "Null": "YES", "Collation": "utf8mb4_unicode_ci"}
+        "FilePath": {"Type": "text", "Null": "YES", "Collation": "utf8mb4_unicode_ci"},
+        "Website": {"Type": "text", "Null": "YES", "Collation": "utf8mb4_unicode_ci"}
     },
     "ScoreFile": {
         "Index": {"Type": "int", "Extra": "AUTO_INCREMENT"},
@@ -68,5 +70,15 @@
         "User": {"Type": "int", "Null": "YES", "Default": 0},
         "Type": {"Type": "int"},
         "Message": {"Type": "text", "Collation": "utf8mb4_unicode_ci"}
+    },
+    "AppTokens": {
+        "Index": {"Type": "int", "Extra": "AUTO_INCREMENT"},
+        "User": {"Type": "int"},
+        "TokenHash": {"Type": "text", "Collation": "utf8mb4_unicode_ci"},
+        "DeviceLabel": {"Type": "text", "Null": "YES", "Collation": "utf8mb4_unicode_ci"},
+        "Created": {"Type": "timestamp", "Default": "CURRENT_TIMESTAMP", "Extra": "DEFAULT_GENERATED"},
+        "LastUsed": {"Type": "timestamp", "Null": "YES", "Default": null},
+        "Expires": {"Type": "timestamp", "Null": "YES", "Default": null},
+        "Revoked": {"Type": "tinyint", "Default": 0}
     }
 }

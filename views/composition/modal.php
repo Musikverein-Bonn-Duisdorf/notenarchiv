@@ -26,6 +26,7 @@ $dash = function ($v) {
 ?>
 <div class="profile-shell modal-shell composition-modal">
   <header class="profile-hero">
+    <div class="profile-hero-thumb" aria-hidden="true"><?php echo $piece->coverHtml('archiv-thumb archiv-thumb--detail piece-cover piece-cover--detail'); ?></div>
     <div class="profile-hero-text">
       <p class="profile-kicker">Stück</p>
       <h2 class="profile-title"><?php echo archivEscHtml($title !== '' ? $title : '—'); ?></h2>
@@ -33,15 +34,7 @@ $dash = function ($v) {
     <div class="profile-hero-actions">
       <div class="profile-actions">
         <div class="profile-actions-primary">
-<?php if(!empty($showEditButton)) { ?>
-          <form action="new-composition.php" method="POST" style="display:inline">
-            <button class="w3-btn profile-btn-primary <?php echo archivEscHtml($btnEdit); ?> w3-border w3-mobile" type="submit" name="Index" value="<?php echo $id; ?>">Bearbeiten</button>
-          </form>
-<?php } ?>
-          <form action="composition.php" method="POST" style="display:inline">
-            <input type="hidden" name="pieceID" value="<?php echo $id; ?>">
-            <button class="w3-btn <?php echo archivEscHtml(!empty($showEditButton) ? $btnSubmit : $btnEdit); ?> w3-border w3-mobile" type="submit">Öffnen</button>
-          </form>
+          <a class="w3-btn profile-btn-primary <?php echo archivEscHtml(!empty($showEditButton) ? $btnEdit : $btnSubmit); ?> w3-border w3-mobile" href="composition.php?id=<?php echo $id; ?>"><?php echo !empty($showEditButton) ? 'Bearbeiten' : 'Öffnen'; ?></a>
         </div>
       </div>
       <button type="button" class="modal-close w3-button" onclick="closeModal()" aria-label="Schließen">&times;</button>
@@ -72,7 +65,7 @@ $dash = function ($v) {
       <h3 id="piece-modal-meta" class="profile-col-title">Verlag &amp; Angaben</h3>
       <div class="profile-field">
         <span class="profile-label">Verlag</span>
-        <div class="profile-value"><?php echo $dash($publisher); ?></div>
+        <div class="profile-value"><?php echo $piece->publisherLinkHtml(); ?></div>
       </div>
       <div class="profile-field">
         <span class="profile-label">Jahr</span>

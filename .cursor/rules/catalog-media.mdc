@@ -1,0 +1,50 @@
+---
+description: Bilder für Cover, Komponisten-Porträts und Verlags-Logos suchen und ablegen
+alwaysApply: true
+---
+
+# Katalog-Medien: Cover, Porträts, Logos
+
+Medien über API hochladen (`api/compositions/cover.php`, `api/composers/avatar.php`, `api/publishers/avatar.php`) oder UI. Lokal hilfreich: `scripts/lib/*Fetch.php` + `scripts/refresh*Api.php --local`.
+
+## Prinzipien
+
+- **Echte** Bilder bevorzugen; GD-/Initialen-Platzhalter nur als letzter Fallback.
+- Keine falschen Personen/Titel (strenges Matching); lieber kein Bild.
+- Keine Buchstaben-Platzhalter von Favicon-Diensten als „Logo“ speichern.
+- SVG nur, wenn zu Raster (PNG/JPEG) konvertierbar; Upload als PNG/JPEG.
+- Quellen mit Bot-Schutz/SPA: Fallback-Kataloge nutzen, nicht Endlos-Scraping.
+
+## Stück-Cover
+
+1. Produktseite der **Verlags-`Website`** → `og:image` / Artikelbild  
+2. Sonst Wind-Katalog mit Original-Ausgabe-Covern (z. B. Rundel Cloudinary `/article/`) bei Titel-Score ≥ ~90 %  
+3. Commons nur wenn Datei **dieses** Werk zeigt  
+4. Lib: `scripts/lib/publisherCoverFetch.php` → `archivResolvePublisherCover` / `archivDownloadCoverFile`  
+5. Refresh: `scripts/refreshCompositionCoversApi.php --local`  
+6. Mit Cover möglichst auch `Composition.Website` (Produkt-URL) setzen
+
+## Komponisten-Porträt
+
+1. Kuratierte/offizielle URL → Commons-/Wikipedia-Override  
+2. Verlags-Personenkatalog (Rundel `/rundel/persons/`, nur Personentreffer)  
+3. **Breitere Suche**, wenn Verlagsseiten kein Porträt liefern: Wikipedia (exakte Titel + Disambiguatoren, mehrere Sprachen) → Wikidata `P18` (Beruf Komponist/Dirigent) → Wikipedia-Volltextsuche mit `pageimages` → Commons-Dateisuche (strenges Namens-Matching)  
+4. Lib: `scripts/lib/composerPortraitFetch.php` → `archivResolveComposerPortrait`  
+5. Refresh: `scripts/refreshComposerAvatarsApi.php --local`  
+6. Falsche Treffer (gleicher Name, andere Person / Gruppenfotos) verwerfen.
+
+## Verlags-Logo
+
+1. Verlags-Homepage: `apple-touch-icon`, Logo-`<img>`, große Icons (kein Partner-/Payment-Logo)  
+2. Danach Favicon-Dienste; **Letter-Placeholder ablehnen**  
+3. Lib: `scripts/lib/publisherLogoFetch.php` → `archivResolvePublisherLogo`  
+4. Refresh: `scripts/refreshPublisherLogosApi.php --local`  
+5. Kleine Icons auf ~256 px hochskalieren für Detailansicht
+
+## Ablage / Darstellung
+
+- App speichert unter `data/Compositions/{id}/`, `data/Composers/…`, `data/Publishers/…` (Avatar-Helper).  
+- Listen: kompakte Thumbs; Detail/Modal: `--detail` (nicht nur `--lg`).  
+- Komponisten-Avatare: Darstellung mit `object-fit: contain`; beim Speichern Zuschnitt ~3:4 mit Fokus auf Hautton/oberes Bilddrittel (Person bleibt sichtbar).  
+- Verlags-Logos: quadratischer Rahmen (`entity-avatar--logo`); beim Speichern zentriert auf transparenter Quadrat-Fläche (kein Abschneiden breiter Logos).  
+- Keine neuen parallelen Bildpipelines — bestehende Upload-Helper nutzen.

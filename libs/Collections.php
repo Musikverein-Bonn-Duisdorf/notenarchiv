@@ -240,17 +240,23 @@ class Collections
         sqlerror();
         while($row = mysqli_fetch_array($dbr)) {
             $title = '';
+            $coverHtml = '';
             $compId = (int)$row['Composition'];
             if($compId > 0) {
                 $piece = new Composition;
                 $piece->load_by_id($compId);
-                $title = archivPlainText($piece->Title);
+                if((int)$piece->Index > 0) {
+                    $title = archivPlainText($piece->Title);
+                    $coverHtml = $piece->coverHtml('archiv-thumb piece-cover');
+                }
             }
             $items[] = array(
                 'number' => $row['CollectionNumber'] !== null && $row['CollectionNumber'] !== ''
                     ? (string)$row['CollectionNumber']
                     : '',
+                'id' => $compId,
                 'title' => $title,
+                'coverHtml' => $coverHtml,
             );
         }
         return $items;
