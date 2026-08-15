@@ -2,6 +2,10 @@
 
 Automatisch aus Git-Release-Commits erzeugt.
 
+## 2026-08-15-daa3b (2026-08-15)
+
+- ARCHIV-31: Remote-API, Medien-Refresh und Katalog-UI
+
 ## 2026-08-15-aaf50 (2026-08-15)
 
 - ARCHIV-33: Sammlungen zugeklappt; Default-Sortierung neueste zuerst
