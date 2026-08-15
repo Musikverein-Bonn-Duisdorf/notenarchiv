@@ -158,50 +158,49 @@ function archivPortraitNormalizeFile($path) {
 }
 
 /**
- * Fit a logo into a square transparent canvas (centered, padded) so list/detail
- * thumbs do not crop or squash wide publisher marks.
+ * Fit a logo into a 3:4 transparent canvas (same aspect as covers/portraits),
+ * centered, so list/detail thumbs share one visual schema.
  *
  * @param resource|\GdImage $img
+ * @param int $canvasH Canvas height (width derived as 3:4)
  * @return resource|\GdImage
  */
-function archivLogoNormalizeGd($img, $canvas = 512, $padRatio = 0.1) {
+function archivLogoNormalizeGd($img, $canvasH = 512, $padRatio = 0.02) {
     $w = imagesx($img);
     $h = imagesy($img);
     if($w < 1 || $h < 1) {
         return $img;
     }
-    $canvas = max(64, (int)$canvas);
+    $canvasH = max(64, (int)$canvasH);
+    $canvasW = (int)max(1, round($canvasH * 3 / 4));
     $padRatio = max(0.0, min(0.25, (float)$padRatio));
-    $inner = (int)max(1, round($canvas * (1.0 - 2.0 * $padRatio)));
-    $scale = min($inner / $w, $inner / $h);
-    // Prefer slight upscale of tiny marks; avoid huge blow-ups of already-large assets
-    if($scale > 4.0) {
-        $scale = 4.0;
-    }
+    $innerW = (int)max(1, round($canvasW * (1.0 - 2.0 * $padRatio)));
+    $innerH = (int)max(1, round($canvasH * (1.0 - 2.0 * $padRatio)));
+    $scale = min($innerW / $w, $innerH / $h);
     $nw = (int)max(1, round($w * $scale));
     $nh = (int)max(1, round($h * $scale));
-    $dst = imagecreatetruecolor($canvas, $canvas);
+    $dst = imagecreatetruecolor($canvasW, $canvasH);
     if($dst === false) {
         return $img;
     }
     imagealphablending($dst, false);
     imagesavealpha($dst, true);
     $transparent = imagecolorallocatealpha($dst, 0, 0, 0, 127);
-    imagefilledrectangle($dst, 0, 0, $canvas - 1, $canvas - 1, $transparent);
+    imagefilledrectangle($dst, 0, 0, $canvasW - 1, $canvasH - 1, $transparent);
     imagealphablending($dst, true);
-    $dx = (int)floor(($canvas - $nw) / 2);
-    $dy = (int)floor(($canvas - $nh) / 2);
+    $dx = (int)floor(($canvasW - $nw) / 2);
+    $dy = (int)floor(($canvasH - $nh) / 2);
     imagecopyresampled($dst, $img, $dx, $dy, 0, 0, $nw, $nh, $w, $h);
     imagedestroy($img);
     return $dst;
 }
 
 /**
- * Normalize a logo file to a centered square PNG.
+ * Normalize a logo file to a centered 3:4 PNG (shared thumb schema).
  *
  * @return string|null
  */
-function archivLogoNormalizeFile($path, $canvas = 512) {
+function archivLogoNormalizeFile($path, $canvasH = 512) {
     $path = (string)$path;
     if($path === '' || !is_file($path)) {
         return null;
@@ -214,7 +213,7 @@ function archivLogoNormalizeFile($path, $canvas = 512) {
     if(!$img) {
         return null;
     }
-    $img = archivLogoNormalizeGd($img, $canvas);
+    $img = archivLogoNormalizeGd($img, $canvasH);
     $out = preg_match('/\.png$/i', $path) ? $path : ($path.'.png');
     imagesavealpha($img, true);
     if(!imagepng($img, $out)) {
@@ -364,9 +363,7 @@ function archivEntityAvatarHtml($kind, $id, $initials, $cssClass = 'entity-avata
     if($cls === '') {
         $cls = 'entity-avatar';
     }
-    if($kind === 'Publishers' && strpos($cls, 'entity-avatar--logo') === false) {
-        $cls .= ' entity-avatar--logo';
-    }
+    // Same thumb schema for composers and publishers (3:4 frame like covers).
     $clsEsc = archivEscHtml($cls);
     $iniRaw = mb_substr(trim((string)$initials), 0, 2, 'UTF-8');
     $ini = archivEscHtml($iniRaw);
