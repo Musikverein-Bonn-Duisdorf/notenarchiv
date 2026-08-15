@@ -53,8 +53,11 @@ Siehe Melde Ownership-Matrix Abschnitte A/B (MELD-157).
 
 ## UI-Shell (Melde-Parität)
 
+Kanonisch: Melde [`docs/UI-SHELL.md`](../meldeliste/docs/UI-SHELL.md) — Archiv hält nur den Pointer [`docs/UI-SHELL.md`](UI-SHELL.md).
+
 - Layout: `body.app-layout` → `.app-titlebar` → `.app-shell` → `nav.app-nav` → `.app-main` (siehe Melde).
-- Assets: `styles/custom.css`, `styles/w3-color-mvd.css`, lokale Font Awesome 6, `js/app-nav.js` / `toast.js` / `modal.js`.
+- Assets: `styles/custom.css`, `styles/w3-color-mvd.css`, lokale Font Awesome 6, `js/app-nav.js` / `toast.js` / `modal.js`; alle CSS/JS über `assetUrl()`.
 - Listen-Chrome: `adminListPageBegin` / `adminListSearchField` / `adminListPageEnd` in `libs/uiShell.php`.
+- Katalog-Listen: Sortier-Chips (`#listHeader.inv-sort-bar`, `js/sortList.js`, `mode: 'server'`) + Infinite-Scroll (`js/infiniteScroll.js`, `getList.php`, `libs/listChunk.php` — eigene `type`s: `compositions`, `collections`, `composers`, `publishers`, `log`).
 - Modals: `#ajaxModalHost` + `deferPageModalHtml()` außerhalb von `.app-main`.
 - Farben: Melde-Parität über `config/ConfigDefaults.php` (`color*`, Hex), `libs/colorschemes.php`, Hex-Picker in `config-menu.php`.

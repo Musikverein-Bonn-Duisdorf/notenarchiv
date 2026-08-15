@@ -226,6 +226,267 @@ function listChunkLog($beforeIndex, $limit, $q = '') {
     );
 }
 
+/**
+ * @param int $offset
+ * @param int $limit
+ * @param string $sort nr|title|composer|publisher|year|grade|''
+ * @param string $dir asc|desc
+ * @return array{html:string,nextCursor:string,hasMore:bool}
+ */
+function listChunkCompositions($offset, $limit, $sort = '', $dir = 'asc') {
+    $limit = listChunkLimit($limit);
+    $offset = max(0, (int)$offset);
+    $dirSql = (strtolower((string)$dir) === 'desc') ? 'DESC' : 'ASC';
+    $sort = strtolower(trim((string)$sort));
+    $p = $GLOBALS['dbprefix'];
+
+    $needComposer = ($sort === 'composer');
+    $needPublisher = ($sort === 'publisher');
+    $composerJoin = sprintf(
+        'LEFT JOIN `%sComposer` `cmp` ON `cmp`.`Index` = `%sComposition`.`Composer`',
+        $p,
+        $p
+    );
+    $publisherJoin = sprintf(
+        'LEFT JOIN `%sPublisher` `pub` ON `pub`.`Index` = `%sComposition`.`Publisher`',
+        $p,
+        $p
+    );
+
+    switch($sort) {
+    case 'nr':
+    case 'regnumber':
+        $orderBy = '`RegistrationNumber` '.$dirSql.', `Title` ASC, `%sComposition`.`Index` ASC';
+        break;
+    case 'title':
+        $orderBy = '`Title` '.$dirSql.', `RegistrationNumber` DESC, `%sComposition`.`Index` ASC';
+        break;
+    case 'composer':
+        $orderBy = 'CONCAT(COALESCE(`cmp`.`LastName`, \'\'), \' \', COALESCE(`cmp`.`FirstName`, \'\')) '.$dirSql
+            .', `Title` ASC, `%sComposition`.`Index` ASC';
+        break;
+    case 'publisher':
+        $orderBy = 'COALESCE(`pub`.`Name`, \'\') '.$dirSql.', `Title` ASC, `%sComposition`.`Index` ASC';
+        break;
+    case 'year':
+        $orderBy = '`Year` '.$dirSql.', `Title` ASC, `%sComposition`.`Index` ASC';
+        break;
+    case 'grade':
+        $orderBy = '`Grade` '.$dirSql.', `Title` ASC, `%sComposition`.`Index` ASC';
+        break;
+    default:
+        $orderBy = '`RegistrationNumber` DESC, `Title` ASC, `%sComposition`.`Index` ASC';
+        break;
+    }
+    $orderBy = sprintf($orderBy, $p);
+
+    $sql = sprintf(
+        'SELECT `%sComposition`.`Index` FROM `%sComposition`
+         %s
+         %s
+         ORDER BY %s
+         LIMIT %d OFFSET %d;',
+        $p,
+        $p,
+        $needComposer ? $composerJoin : '',
+        $needPublisher ? $publisherJoin : '',
+        $orderBy,
+        $limit + 1,
+        $offset
+    );
+    $dbr = mysqli_query($GLOBALS['conn'], $sql);
+    sqlerror();
+    $ids = array();
+    if($dbr) {
+        while($row = mysqli_fetch_array($dbr)) {
+            $ids[] = (int)$row['Index'];
+        }
+    }
+    $hasMore = count($ids) > $limit;
+    if($hasMore) {
+        $ids = array_slice($ids, 0, $limit);
+    }
+    $html = '';
+    foreach($ids as $id) {
+        $M = new Composition();
+        $M->load_by_id($id);
+        $html .= $M->printLine();
+    }
+    return array(
+        'html' => $html,
+        'nextCursor' => (string)($offset + count($ids)),
+        'hasMore' => $hasMore,
+    );
+}
+
+/**
+ * @param int $offset
+ * @param int $limit
+ * @param string $sort name|index|''
+ * @param string $dir asc|desc
+ * @return array{html:string,nextCursor:string,hasMore:bool}
+ */
+function listChunkComposers($offset, $limit, $sort = '', $dir = 'asc') {
+    $limit = listChunkLimit($limit);
+    $offset = max(0, (int)$offset);
+    $dirSql = (strtolower((string)$dir) === 'desc') ? 'DESC' : 'ASC';
+    $sort = strtolower(trim((string)$sort));
+    $p = $GLOBALS['dbprefix'];
+
+    switch($sort) {
+    case 'index':
+        $orderBy = '`Index` '.$dirSql;
+        break;
+    case 'name':
+    default:
+        $orderBy = '`LastName` '.$dirSql.', `FirstName` ASC, `Index` ASC';
+        break;
+    }
+
+    $sql = sprintf(
+        'SELECT `Index` FROM `%sComposer` ORDER BY %s LIMIT %d OFFSET %d;',
+        $p,
+        $orderBy,
+        $limit + 1,
+        $offset
+    );
+    $dbr = mysqli_query($GLOBALS['conn'], $sql);
+    sqlerror();
+    $ids = array();
+    if($dbr) {
+        while($row = mysqli_fetch_array($dbr)) {
+            $ids[] = (int)$row['Index'];
+        }
+    }
+    $hasMore = count($ids) > $limit;
+    if($hasMore) {
+        $ids = array_slice($ids, 0, $limit);
+    }
+    $html = '';
+    foreach($ids as $id) {
+        $M = new Composer();
+        $M->load_by_id($id);
+        $html .= $M->printLine();
+    }
+    return array(
+        'html' => $html,
+        'nextCursor' => (string)($offset + count($ids)),
+        'hasMore' => $hasMore,
+    );
+}
+
+/**
+ * @param int $offset
+ * @param int $limit
+ * @param string $sort name|index|''
+ * @param string $dir asc|desc
+ * @return array{html:string,nextCursor:string,hasMore:bool}
+ */
+function listChunkPublishers($offset, $limit, $sort = '', $dir = 'asc') {
+    $limit = listChunkLimit($limit);
+    $offset = max(0, (int)$offset);
+    $dirSql = (strtolower((string)$dir) === 'desc') ? 'DESC' : 'ASC';
+    $sort = strtolower(trim((string)$sort));
+    $p = $GLOBALS['dbprefix'];
+
+    switch($sort) {
+    case 'index':
+        $orderBy = '`Index` '.$dirSql;
+        break;
+    case 'name':
+    default:
+        $orderBy = '`Name` '.$dirSql.', `Index` ASC';
+        break;
+    }
+
+    $sql = sprintf(
+        'SELECT `Index` FROM `%sPublisher` ORDER BY %s LIMIT %d OFFSET %d;',
+        $p,
+        $orderBy,
+        $limit + 1,
+        $offset
+    );
+    $dbr = mysqli_query($GLOBALS['conn'], $sql);
+    sqlerror();
+    $ids = array();
+    if($dbr) {
+        while($row = mysqli_fetch_array($dbr)) {
+            $ids[] = (int)$row['Index'];
+        }
+    }
+    $hasMore = count($ids) > $limit;
+    if($hasMore) {
+        $ids = array_slice($ids, 0, $limit);
+    }
+    $html = '';
+    foreach($ids as $id) {
+        $M = new Publisher();
+        $M->load_by_id($id);
+        $html .= $M->printLine();
+    }
+    return array(
+        'html' => $html,
+        'nextCursor' => (string)($offset + count($ids)),
+        'hasMore' => $hasMore,
+    );
+}
+
+/**
+ * @param int $offset
+ * @param int $limit
+ * @param string $sort name|index|''
+ * @param string $dir asc|desc
+ * @return array{html:string,nextCursor:string,hasMore:bool}
+ */
+function listChunkCollections($offset, $limit, $sort = '', $dir = 'asc') {
+    $limit = listChunkLimit($limit);
+    $offset = max(0, (int)$offset);
+    $dirSql = (strtolower((string)$dir) === 'desc') ? 'DESC' : 'ASC';
+    $sort = strtolower(trim((string)$sort));
+    $p = $GLOBALS['dbprefix'];
+
+    switch($sort) {
+    case 'index':
+        $orderBy = '`Index` '.$dirSql;
+        break;
+    case 'name':
+    default:
+        $orderBy = '`Name` '.$dirSql.', `Index` ASC';
+        break;
+    }
+
+    $sql = sprintf(
+        'SELECT `Index` FROM `%sCollection` ORDER BY %s LIMIT %d OFFSET %d;',
+        $p,
+        $orderBy,
+        $limit + 1,
+        $offset
+    );
+    $dbr = mysqli_query($GLOBALS['conn'], $sql);
+    sqlerror();
+    $ids = array();
+    if($dbr) {
+        while($row = mysqli_fetch_array($dbr)) {
+            $ids[] = (int)$row['Index'];
+        }
+    }
+    $hasMore = count($ids) > $limit;
+    if($hasMore) {
+        $ids = array_slice($ids, 0, $limit);
+    }
+    $html = '';
+    foreach($ids as $id) {
+        $M = new Collections();
+        $M->load_by_id($id);
+        $html .= $M->printContent();
+    }
+    return array(
+        'html' => $html,
+        'nextCursor' => (string)($offset + count($ids)),
+        'hasMore' => $hasMore,
+    );
+}
+
 function listChunkRenderSentinelAttrs($type, $cursor, $hasMore, $filterFn = '') {
     $attrs = ' id="listSentinel" data-list-type="'.htmlspecialchars($type, ENT_QUOTES, 'UTF-8').'"'
         .' data-cursor="'.htmlspecialchars((string)$cursor, ENT_QUOTES, 'UTF-8').'"'

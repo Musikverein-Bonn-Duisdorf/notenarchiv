@@ -45,7 +45,7 @@ $sections[] = array(
     'id' => 'stuecke',
     'title' => 'Stücke',
     'body' => '
-<p>Unter <b>Stücke</b> siehst du den Katalog. Über die Suchzeile filterst du nach Titel, Komponist oder weiteren Feldern; lange Listen werden beim Scrollen nachgeladen.</p>
+<p>Unter <b>Stücke</b> siehst du den Katalog. Über die Suchzeile filterst du nach Titel, Komponist oder weiteren Feldern; Sortier-Chips und Nachladen beim Scrollen wie in der Meldeliste.</p>
 <p>Ein Klick öffnet zuerst ein Detail-Modal; von dort gelangst du mit <b>Öffnen</b> zur Stückseite (Cover, Stimmsatz, Sammlungen)'.($showAdmin ? ' bzw. mit <b>Bearbeiten</b> zur Anlege-/Edit-Seite' : '').'.</p>
 '.($showAdmin ? '<p>Admins legen neue Stücke über <b>Admin → Stück</b> bzw. Plus auf der Stückliste an. Beim Bearbeiten eines Stücks kannst du die Sammlungszuordnung per Chips mit Speichern übernehmen. Sammlungen, Komponisten und Verlage haben jeweils eigene Anlege-Seiten.</p>' : '').'
 '
@@ -55,7 +55,7 @@ $sections[] = array(
     'id' => 'sammlungen',
     'title' => 'Sammlungen',
     'body' => '
-<p>Unter <b>Sammlungen</b> verwaltest du Zusammenstellungen (z.&nbsp;B. Ordner im Schrank oder thematische Listen). Stücke können einer oder mehreren Sammlungen zugeordnet sein. Ein Klick auf den Sammlungstitel öffnet ein Detail-Modal'.($showAdmin ? '; <b>Bearbeiten</b> führt zur Anlege-Seite. Dort, auf der Stück-Bearbeiten-Seite und im Sammlungen-Dialog am Stück pflegst du die Zuordnung per Chips (Nr = Reihenfolge). Anlegen über Plus bzw. <b>Admin → Sammlung</b>' : '').'.</p>
+<p>Unter <b>Sammlungen</b> verwaltest du Zusammenstellungen (z.&nbsp;B. Ordner im Schrank oder thematische Listen). Stücke können einer oder mehreren Sammlungen zugeordnet sein. Sortier-Chips und Nachladen beim Scrollen wie bei den Stücken. Ein Klick auf den Sammlungstitel öffnet ein Detail-Modal'.($showAdmin ? '; <b>Bearbeiten</b> führt zur Anlege-Seite. Dort, auf der Stück-Bearbeiten-Seite und im Sammlungen-Dialog am Stück pflegst du die Zuordnung per Chips (Nr = Reihenfolge). Anlegen über Plus bzw. <b>Admin → Sammlung</b>' : '').'.</p>
 '
 );
 
@@ -63,7 +63,7 @@ $sections[] = array(
     'id' => 'komponisten-verlage',
     'title' => 'Komponisten &amp; Verlage',
     'body' => '
-<p><b>Komponisten</b> und <b>Verlage</b> sind Stammdaten für den Katalog. Anlegen geht über die jeweiligen Anlege-Seiten (<b>Admin → Komponist</b> / <b>Verlag</b> oder Plus in der Liste). Ein Klick in der Liste öffnet ein Detail-Modal; <b>Bearbeiten</b> führt auf die Anlege-Seite (dort auch Löschen und Foto). Stücke verweisen auf diese Einträge.</p>
+<p><b>Komponisten</b> und <b>Verlage</b> sind Stammdaten für den Katalog (Sortierung und Nachladen wie bei den Stücken). Anlegen geht über die jeweiligen Anlege-Seiten (<b>Admin → Komponist</b> / <b>Verlag</b> oder Plus in der Liste). Ein Klick in der Liste öffnet ein Detail-Modal; <b>Bearbeiten</b> führt auf die Anlege-Seite (dort auch Löschen und Foto). Stücke verweisen auf diese Einträge.</p>
 '
 );
 

@@ -15,6 +15,8 @@ if(!isset($_SESSION['userid']) || !(int)$_SESSION['userid']) {
 $type = isset($_GET['type']) ? (string)$_GET['type'] : '';
 $cursor = isset($_GET['cursor']) ? (string)$_GET['cursor'] : '';
 $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 50;
+$sort = isset($_GET['sort']) ? (string)$_GET['sort'] : '';
+$dir = isset($_GET['dir']) ? (string)$_GET['dir'] : 'asc';
 
 $result = array('html' => '', 'nextCursor' => $cursor, 'hasMore' => false);
 
@@ -30,6 +32,32 @@ case 'log':
     }
     $q = isset($_GET['q']) ? (string)$_GET['q'] : '';
     $result = listChunkLog($cursor !== '' ? (int)$cursor : 0, $limit, $q);
+    break;
+
+case 'compositions':
+    $result = listChunkCompositions($cursor !== '' ? (int)$cursor : 0, $limit, $sort, $dir);
+    break;
+
+case 'composers':
+    if(empty($_SESSION['admin'])) {
+        http_response_code(403);
+        header('X-Has-More: 0');
+        exit;
+    }
+    $result = listChunkComposers($cursor !== '' ? (int)$cursor : 0, $limit, $sort, $dir);
+    break;
+
+case 'publishers':
+    if(empty($_SESSION['admin'])) {
+        http_response_code(403);
+        header('X-Has-More: 0');
+        exit;
+    }
+    $result = listChunkPublishers($cursor !== '' ? (int)$cursor : 0, $limit, $sort, $dir);
+    break;
+
+case 'collections':
+    $result = listChunkCollections($cursor !== '' ? (int)$cursor : 0, $limit, $sort, $dir);
     break;
 
 default:

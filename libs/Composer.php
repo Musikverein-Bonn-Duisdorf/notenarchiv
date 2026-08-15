@@ -169,6 +169,7 @@ class Composer
         $openJs = 'openModal(\'composer\', '.$id.')';
 
         $str = '<div class="'.archivEscHtml(implode(' ', $classes)).'"'
+            .' id="composerID'.$id.'"'
             .' data-search="'.archivEscHtml($search).'"'
             .' data-sort-name="'.archivEscHtml($name).'"'
             .' data-sort-index="'.archivEscHtml((string)$id).'"'

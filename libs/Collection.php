@@ -54,20 +54,26 @@ class Collection
         $this->fillJoins();
         $parts = array();
         $parts[] = sprintf('CollectionItem-ID: %d', (int)$this->Index);
-        logAppendFilled(
-            $parts,
-            'Collection',
-            $this->CollectionName,
-            htmlspecialchars(archivPlainText($this->CollectionName), ENT_QUOTES, 'UTF-8'),
-            true
-        );
-        logAppendFilled(
-            $parts,
-            'Composition',
-            $this->Title,
-            htmlspecialchars(archivPlainText($this->Title), ENT_QUOTES, 'UTF-8'),
-            true
-        );
+        $colId = (int)$this->Collections;
+        $colName = archivPlainText($this->CollectionName);
+        if($colId > 0) {
+            $label = $colName !== '' ? $colName : ('Sammlung #'.$colId);
+            $parts[] = sprintf(
+                'Collection: (%d) <b>%s</b>',
+                $colId,
+                htmlspecialchars($label, ENT_QUOTES, 'UTF-8')
+            );
+        }
+        $compId = (int)$this->Composition;
+        $title = archivPlainText($this->Title);
+        if($compId > 0) {
+            $label = $title !== '' ? $title : ('Stück #'.$compId);
+            $parts[] = sprintf(
+                'Composition: (%d) <b>%s</b>',
+                $compId,
+                htmlspecialchars($label, ENT_QUOTES, 'UTF-8')
+            );
+        }
         logAppendFilled($parts, 'Number', $this->CollectionNumber, (string)(int)$this->CollectionNumber, true);
         return implode(', ', $parts);
     }
@@ -75,9 +81,43 @@ class Collection
     public function getChanges() {
         $old = new Collection;
         $old->load_by_id($this->Index);
+        $old->fillJoins();
+        $this->fillJoins();
         $parts = array();
-        logAppendChange($parts, 'Collections', $old->Collections, $this->Collections);
-        logAppendChange($parts, 'Composition', $old->Composition, $this->Composition);
+        if((int)$old->Collections !== (int)$this->Collections) {
+            $oldLabel = archivPlainText($old->CollectionName);
+            $newLabel = archivPlainText($this->CollectionName);
+            if($oldLabel === '') {
+                $oldLabel = '#'.(int)$old->Collections;
+            }
+            if($newLabel === '') {
+                $newLabel = '#'.(int)$this->Collections;
+            }
+            $parts[] = sprintf(
+                'Collection: (%d) %s &rArr; (%d) <b>%s</b>',
+                (int)$old->Collections,
+                htmlspecialchars($oldLabel, ENT_QUOTES, 'UTF-8'),
+                (int)$this->Collections,
+                htmlspecialchars($newLabel, ENT_QUOTES, 'UTF-8')
+            );
+        }
+        if((int)$old->Composition !== (int)$this->Composition) {
+            $oldLabel = archivPlainText($old->Title);
+            $newLabel = archivPlainText($this->Title);
+            if($oldLabel === '') {
+                $oldLabel = '#'.(int)$old->Composition;
+            }
+            if($newLabel === '') {
+                $newLabel = '#'.(int)$this->Composition;
+            }
+            $parts[] = sprintf(
+                'Composition: (%d) %s &rArr; (%d) <b>%s</b>',
+                (int)$old->Composition,
+                htmlspecialchars($oldLabel, ENT_QUOTES, 'UTF-8'),
+                (int)$this->Composition,
+                htmlspecialchars($newLabel, ENT_QUOTES, 'UTF-8')
+            );
+        }
         logAppendChange($parts, 'Number', $old->CollectionNumber, $this->CollectionNumber);
         if(!$parts) {
             return '';
