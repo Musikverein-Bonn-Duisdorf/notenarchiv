@@ -72,7 +72,11 @@ function savePara(Parameter, Value, reload) {
 	            if(reload) window.location.reload();
 	        }
 	        else if(reload) {
-	            alert('Farbschema konnte nicht übernommen werden: ' + xmlhttp.responseText);
+	            if(typeof appAlert === 'function') {
+	                appAlert('Farbschema konnte nicht übernommen werden: ' + xmlhttp.responseText);
+	            } else {
+	                alert('Farbschema konnte nicht übernommen werden: ' + xmlhttp.responseText);
+	            }
 	        }
 	    }
 	};
@@ -104,22 +108,31 @@ function renameColorScheme(name) {
 	xmlhttp.send(body);
 }
 function resetColorScheme() {
+    var run = function() {
+        if (window.XMLHttpRequest) {
+            xmlhttp=new XMLHttpRequest();
+        }
+        else {
+            xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+        }
+        xmlhttp.onreadystatechange = function() {
+            if(xmlhttp.readyState === 4) {
+                window.location.reload();
+            }
+        };
+        var body = "cmd=schemeReset";
+        xmlhttp.open("POST", "savePara.php", true);
+        xmlhttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        xmlhttp.send(body);
+    };
+    if(typeof appConfirm === 'function') {
+        appConfirm('Aktives Farbschema auf Werkseinstellung zurücksetzen?').then(function(ok) {
+            if(ok) run();
+        });
+        return;
+    }
     if(!confirm('Aktives Farbschema auf Werkseinstellung zurücksetzen?')) return;
-    if (window.XMLHttpRequest) {
-	    xmlhttp=new XMLHttpRequest();
-	}
-	else {
-	    xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
-	}
-	xmlhttp.onreadystatechange = function() {
-	    if(xmlhttp.readyState === 4) {
-	        window.location.reload();
-	    }
-	};
-	var body = "cmd=schemeReset";
-	xmlhttp.open("POST", "savePara.php", true);
-	xmlhttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-	xmlhttp.send(body);
+    run();
 }
 </script>
 <?php

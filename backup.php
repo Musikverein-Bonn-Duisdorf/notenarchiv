@@ -98,7 +98,7 @@ adminListPageBegin('System', 'Backup', array('permKey' => 'perm_editConfig'));
 
   <div class="w3-card w3-padding w3-margin-bottom w3-pale-red">
     <h3>Restore</h3>
-    <form method="post" enctype="multipart/form-data" action="backup.php" onsubmit="return confirm('Restore ausführen? Archiv-Tabellen werden überschrieben.');">
+    <form method="post" enctype="multipart/form-data" action="backup.php" data-app-confirm="Restore ausführen? Archiv-Tabellen werden überschrieben.">
       <?php echo csrf_field(); ?>
       <input type="hidden" name="restore_confirm" value="1">
       <label>ZIP</label>

@@ -76,6 +76,20 @@ case 'collection':
     echo $col->getModalHtml($isAdmin);
     break;
 
+case 'user':
+    $u = new User;
+    $u->load_by_id($id);
+    if(!(int)$u->Index) {
+        http_response_code(404);
+        echo '<div class="w3-container w3-padding"><p>Benutzer nicht gefunden.</p></div>';
+        exit;
+    }
+    echo render('user/modal', array(
+        'user' => $u,
+        'showAdminBadge' => true,
+    ));
+    break;
+
 default:
     http_response_code(400);
     echo '<div class="w3-container w3-padding"><p>Unbekannter Typ.</p><button class="w3-button" onclick="closeModal()">Schließen</button></div>';

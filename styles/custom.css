@@ -2522,6 +2522,38 @@ a.app-titlebar-logo {
   border-color: #7f9dc1;
 }
 
+.mail-recipient-chip--instrument {
+  background: #e8f5e9;
+  border-color: #81c784;
+}
+
+.mail-recipient-chip--member {
+  background: #e8f5e9;
+  border-color: #66bb6a;
+}
+
+.mail-recipient-chip--nomember {
+  background: #eceff1;
+  border-color: #90a4ae;
+}
+
+.mail-recipient-chip--mailGroup {
+  background: #e3f2fd;
+  border-color: #64b5f6;
+}
+
+/* UI-SHELL: clickable entity chips → async openModal */
+.entity-open {
+  cursor: pointer;
+  text-decoration: none;
+}
+.entity-open:hover,
+.entity-open:focus-visible {
+  filter: brightness(0.97);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(52, 90, 149, 0.35);
+}
+
 .collection-chip-row {
   display: inline-flex;
   align-items: center;
@@ -3690,7 +3722,8 @@ body.meld-cal-print {
 
 /* Page-local profile-shell modals (outside .app-main): same chrome as #ajaxModalContent */
 #calSubscribeModal .w3-modal-content,
-#delmodal .w3-modal-content {
+#delmodal .w3-modal-content,
+#appConfirmModal .w3-modal-content {
   background: transparent;
   box-shadow: none;
   width: auto !important;
@@ -3698,13 +3731,15 @@ body.meld-cal-print {
   margin: 4vh auto;
 }
 
-#delmodal .w3-modal-content {
+#delmodal .w3-modal-content,
+#appConfirmModal .w3-modal-content {
   max-width: min(32rem, calc(100vw - 1.5rem));
   margin: 8vh auto;
 }
 
 #calSubscribeModal .calendar-subscribe-modal,
-#delmodal .confirm-delete-modal {
+#delmodal .confirm-delete-modal,
+#appConfirmModal .confirm-delete-modal {
   margin: 0.75rem;
   background: #fff;
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);

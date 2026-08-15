@@ -160,12 +160,180 @@ function getColorConfigParameters() {
     return $params;
 }
 
-/** Cache-busting URL for static assets. */
+/** Cache-busting URL for static assets (Melde UI-SHELL: ?v=&h=). */
 function assetUrl($rel) {
     $rel = ltrim(str_replace('\\', '/', (string)$rel), '/');
+    $ver = isset($GLOBALS['version']['String']) ? (string)$GLOBALS['version']['String'] : '0';
     $hash = isset($GLOBALS['version']['Hash']) ? (string)$GLOBALS['version']['Hash'] : '0';
     $mtime = @filemtime(dirname(__DIR__).'/'.$rel);
-    return htmlspecialchars($rel.'?'.$hash.'-'.$mtime, ENT_QUOTES, 'UTF-8');
+    if($mtime === false) {
+        $mtime = 0;
+    }
+    return htmlspecialchars($rel.'?v='.rawurlencode($ver).'&h='.$hash.'-'.$mtime, ENT_QUOTES, 'UTF-8');
+}
+
+/**
+ * Clickable entity chip for AJAX modals (UI-SHELL).
+ * @param string $type user|composition|composer|publisher|collection
+ * @param int $id
+ * @param string $label
+ * @param string $chipMod Optional visual modifier
+ * @return string HTML
+ */
+function entityOpenHtml($type, $id, $label, $chipMod = '') {
+    $type = strtolower(trim((string)$type));
+    $id = (int)$id;
+    $label = trim((string)$label);
+    $h = function ($s) {
+        return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
+    };
+    if($label === '') {
+        return '';
+    }
+    $chipMods = array(
+        'user' => 'user',
+        'composition' => 'composition',
+        'composer' => 'user',
+        'publisher' => 'mailGroup',
+        'collection' => 'collection',
+    );
+    if($id < 1 || !isset($chipMods[$type])) {
+        return $h($label);
+    }
+    $mod = trim((string)$chipMod);
+    if($mod === '' || !preg_match('/^[a-zA-Z][a-zA-Z0-9_-]*$/', $mod)) {
+        $mod = $chipMods[$type];
+    }
+    return '<span class="mail-recipient-chip mail-recipient-chip--'.$mod.' entity-open"'
+        .' role="button" tabindex="0"'
+        .' data-entity-type="'.$h($type).'"'
+        .' data-entity-id="'.$id.'">'
+        .$h($label)
+        .'</span>';
+}
+
+/**
+ * Enrich log message HTML with entity chips (display only).
+ * @param string $html
+ * @return string
+ */
+function logMessageLinkEntities($html) {
+    $html = (string)$html;
+    if($html === '' || !function_exists('entityOpenHtml')) {
+        return $html;
+    }
+    if(strpos($html, 'entity-open') !== false && strpos($html, 'data-entity-type') !== false) {
+        return $html;
+    }
+
+    $source = $html;
+    $plainLabel = function ($raw) {
+        $t = trim(html_entity_decode(strip_tags((string)$raw), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+        return preg_replace('/\s+/u', ' ', $t);
+    };
+    $chip = function ($type, $id, $labelRaw) use ($plainLabel) {
+        $label = $plainLabel($labelRaw);
+        if($label === '') {
+            $label = '#'.(int)$id;
+        }
+        return entityOpenHtml($type, (int)$id, $label);
+    };
+
+    // Composition-ID: N → Composition chip (Title from message when present)
+    $html = preg_replace_callback(
+        '/\bComposition-ID:\s*(\d+)/si',
+        function ($m) use ($chip, $plainLabel, $source) {
+            $label = '';
+            if(preg_match('/\bTitle:\s*<b>(.*?)<\/b>/si', $source, $t)) {
+                $label = $plainLabel($t[1]);
+            }
+            if($label === '') {
+                $label = 'Stück #'.$m[1];
+            }
+            return 'Composition: '.$chip('composition', $m[1], $label);
+        },
+        $html
+    );
+    $html = preg_replace('/,?\s*Title:\s*<b>.*?<\/b>/si', '', $html, 1);
+
+    // Composer-ID: N → Composer chip
+    $html = preg_replace_callback(
+        '/\bComposer-ID:\s*(\d+)/si',
+        function ($m) use ($chip, $plainLabel, $source) {
+            $fn = '';
+            $ln = '';
+            if(preg_match('/\bFirstName:\s*<b>(.*?)<\/b>/si', $source, $v)) {
+                $fn = $plainLabel($v[1]);
+            }
+            if(preg_match('/\bLastName:\s*<b>(.*?)<\/b>/si', $source, $n)) {
+                $ln = $plainLabel($n[1]);
+            }
+            $label = trim($fn.' '.$ln);
+            if($label === '') {
+                $label = 'Komponist #'.$m[1];
+            }
+            return 'Composer: '.$chip('composer', $m[1], $label);
+        },
+        $html
+    );
+
+    // Publisher-ID: N → Publisher chip
+    $html = preg_replace_callback(
+        '/\bPublisher-ID:\s*(\d+)/si',
+        function ($m) use ($chip, $plainLabel, $source) {
+            $label = '';
+            if(preg_match('/\bName:\s*<b>(.*?)<\/b>/si', $source, $t)) {
+                $label = $plainLabel($t[1]);
+            }
+            if($label === '') {
+                $label = 'Verlag #'.$m[1];
+            }
+            return 'Publisher: '.$chip('publisher', $m[1], $label);
+        },
+        $html
+    );
+
+    // Collection-ID: N → Collection chip
+    $html = preg_replace_callback(
+        '/\bCollection-ID:\s*(\d+)/si',
+        function ($m) use ($chip, $plainLabel, $source) {
+            $label = '';
+            if(preg_match('/\bName:\s*<b>(.*?)<\/b>/si', $source, $t)) {
+                $label = $plainLabel($t[1]);
+            }
+            if($label === '') {
+                $label = 'Sammlung #'.$m[1];
+            }
+            return 'Collection: '.$chip('collection', $m[1], $label);
+        },
+        $html
+    );
+
+    // User: (5) <b>Name</b>
+    $html = preg_replace_callback(
+        '/\bUser:\s*\((\d+)\)\s*<b>(.*?)<\/b>/si',
+        function ($m) use ($chip) {
+            return 'User: '.$chip('user', $m[1], $m[2]);
+        },
+        $html
+    );
+    $html = preg_replace('/\bUser-ID:\s*\d+\s*,\s*(?=User:)/i', '', $html);
+    $html = preg_replace_callback(
+        '/\bUser-ID:\s*(\d+)\s*,?\s*<b>(.*?)<\/b>/si',
+        function ($m) use ($chip) {
+            return 'User: '.$chip('user', $m[1], $m[2]);
+        },
+        $html
+    );
+    $html = preg_replace_callback(
+        '/\bUser-ID:\s*<b>(\d+)<\/b>/si',
+        function ($m) use ($chip) {
+            return 'User: '.$chip('user', $m[1], '#'.$m[1]);
+        },
+        $html
+    );
+
+    return $html;
 }
 
 /** Queue modal HTML outside .app-main (overflow/z-index). */

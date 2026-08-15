@@ -167,6 +167,12 @@ function getConfigDefaults() {
             'Type' => 'string',
             'Description' => 'Favicon-URL oder Pfad (Archiv)',
         ),
+        array(
+            'Parameter' => 'logListChunkSize',
+            'Value' => '100',
+            'Type' => 'uint',
+            'Description' => 'Log: Einträge pro Scroll-/Poll-Seite (1–500)',
+        ),
     );
 }
 ?>
