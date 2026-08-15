@@ -2,6 +2,11 @@
 
 Automatisch aus Git-Release-Commits erzeugt.
 
+## 2026-08-15-83593 (2026-08-15)
+
+- ARCHIV-36: data/.htaccess ohne php_flag (Medien HTTP 500)
+- ARCHIV-36: data/.htaccess Medien-500 Fix
+
 ## 2026-08-15-db9ab (2026-08-15)
 
 - ARCHIV-35: Authorization-Header für API Bearer-Auth durchreichen
