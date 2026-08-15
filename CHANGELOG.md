@@ -2,6 +2,13 @@
 
 Automatisch aus Git-Release-Commits erzeugt.
 
+## 2026-08-15-7c3f5 (2026-08-15)
+
+- ARCHIV-32: Sammlungen archivierbar mit Listenfilter
+- ARCHIV-28: Config-Änderungen beim Speichern loggen (Melde-Parität)
+- ARCHIV-27: Sammlung speichern mit Anführungszeichen und Chip-Sync absichern
+- ARCHIV-28: Config-Änderungen beim Speichern loggen
+
 ## 2026-08-15-464e2 (2026-08-15)
 
 - ARCHIV-3: Katalog-Sortierung/Nachladen und CollectionItem-Log-Chips
