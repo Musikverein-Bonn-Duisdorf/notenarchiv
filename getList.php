@@ -57,7 +57,14 @@ case 'publishers':
     break;
 
 case 'collections':
-    $result = listChunkCollections($cursor !== '' ? (int)$cursor : 0, $limit, $sort, $dir);
+    $includeArchived = isset($_GET['archived']) && (string)$_GET['archived'] === '1';
+    $result = listChunkCollections(
+        $cursor !== '' ? (int)$cursor : 0,
+        $limit,
+        $sort,
+        $dir,
+        $includeArchived
+    );
     break;
 
 default:

@@ -422,12 +422,17 @@ class Composition
         $str = '<form class="profile-grid collection-chips-form" action="" method="POST">';
         $str .= '<input type="hidden" name="Composition" value="'.(int)$this->Index.'">';
         $str .= '<div class="profile-field">';
+        $spec = $this->getCollectionsChipSpec();
+        $includeIds = array();
+        foreach($spec as $row) {
+            $includeIds[] = (int)$row['id'];
+        }
         $str .= archivCollectionChipsEditorHtml(
             'piece-coll',
             'mail-recipient-chip--collection',
             'collectionsSpec',
-            archivCollectionsCatalog(),
-            $this->getCollectionsChipSpec(),
+            archivCollectionsCatalog($includeIds),
+            $spec,
             'Sammlung…'
         );
         $str .= '</div>';

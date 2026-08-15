@@ -1,11 +1,12 @@
 <?php
 class Collections
 {
-    private $_data = array('Index' => null, 'Name' => null);
+    private $_data = array('Index' => null, 'Name' => null, 'Archived' => 0);
     public function __get($key) {
         switch($key) {
 	    case 'Index':
 	    case 'Name':
+	    case 'Archived':
             return $this->_data[$key];
             break;
         default:
@@ -17,6 +18,9 @@ class Collections
 	    case 'Index':
 	    case 'Name':
             $this->_data[$key] = $val;
+            break;
+	    case 'Archived':
+            $this->_data[$key] = ((int)$val) ? 1 : 0;
             break;
         default:
             break;
@@ -44,6 +48,9 @@ class Collections
         $parts = array();
         $parts[] = sprintf('Collection-ID: %d', (int)$this->Index);
         logAppendFilled($parts, 'Name', $this->Name);
+        if((int)$this->Archived) {
+            logAppendFilled($parts, 'Archived', bool2string($this->Archived));
+        }
         return implode(', ', $parts);
     }
 
@@ -52,6 +59,12 @@ class Collections
         $old->load_by_id($this->Index);
         $parts = array();
         logAppendChange($parts, 'Name', $old->Name, $this->Name);
+        logAppendChange(
+            $parts,
+            'Archived',
+            bool2string((int)$old->Archived),
+            bool2string((int)$this->Archived)
+        );
         if(!$parts) {
             return '';
         }
@@ -95,15 +108,20 @@ class Collections
         if(array_key_exists('Name', $row)) {
             $this->Name = $row['Name'];
         }
+        if(array_key_exists('Archived', $row)) {
+            $this->Archived = $row['Archived'];
+        }
     }
     public function is_valid() {
         if(!$this->Name) return false;
         return true;
     }
     protected function insert() {
-        $sql = sprintf('INSERT INTO `%sCollection` (`Name`) VALUES ("%s");',
-        $GLOBALS['dbprefix'],
-        mysqli_real_escape_string($GLOBALS['conn'], (string)$this->Name)
+        $sql = sprintf(
+            'INSERT INTO `%sCollection` (`Name`, `Archived`) VALUES ("%s", %d);',
+            $GLOBALS['dbprefix'],
+            mysqli_real_escape_string($GLOBALS['conn'], (string)$this->Name),
+            (int)$this->Archived ? 1 : 0
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
         sqlerror();
@@ -112,10 +130,12 @@ class Collections
         return true;
     }
     protected function update() {
-        $sql = sprintf('UPDATE `%sCollection` SET `Name` = "%s" WHERE `Index` = "%d";',
-        $GLOBALS['dbprefix'],
-        mysqli_real_escape_string($GLOBALS['conn'], (string)$this->Name),
-        (int)$this->Index
+        $sql = sprintf(
+            'UPDATE `%sCollection` SET `Name` = "%s", `Archived` = %d WHERE `Index` = "%d";',
+            $GLOBALS['dbprefix'],
+            mysqli_real_escape_string($GLOBALS['conn'], (string)$this->Name),
+            (int)$this->Archived ? 1 : 0,
+            (int)$this->Index
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
         sqlerror();
@@ -139,24 +159,30 @@ class Collections
     public function printContent() {
         $id = (int)$this->Index;
         $name = archivPlainText($this->Name);
+        $archived = (int)$this->Archived ? 1 : 0;
         $canEdit = !empty($_SESSION['admin']);
         $openJs = 'openModal(\'collection\', '.$id.')';
+        $titleText = archivEscHtml($name !== '' ? $name : '—');
+        if($archived) {
+            $titleText .= ' <span class="mail-recipient-chip mail-recipient-chip--collection">Archiviert</span>';
+        }
 
         $str = '<section class="collection-section" id="collectionID'.$id.'"'
             .' data-search="'.archivEscHtml($name).'"'
             .' data-sort-name="'.archivEscHtml($name).'"'
-            .' data-sort-index="'.archivEscHtml((string)$id).'">';
+            .' data-sort-index="'.archivEscHtml((string)$id).'"'
+            .' data-archived="'.$archived.'">';
         if($canEdit) {
             $str .= '<h3 class="collection-section-title collection-section-title--editable" role="button" tabindex="0"'
                 .' onclick="'.$openJs.'"'
                 .' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();'.$openJs.';}">'
-                .archivEscHtml($name !== '' ? $name : '—')
+                .$titleText
                 .'</h3>';
         } else {
             $str .= '<h3 class="collection-section-title collection-section-title--openable" role="button" tabindex="0"'
                 .' onclick="'.$openJs.'"'
                 .' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();'.$openJs.';}">'
-                .archivEscHtml($name !== '' ? $name : '—')
+                .$titleText
                 .'</h3>';
         }
         $str .= '<div class="collection-section-list">';

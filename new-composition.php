@@ -105,12 +105,17 @@ $backLink = '<a class="w3-button w3-border '.htmlspecialchars($inputBg, ENT_QUOT
     <section class="profile-col" aria-labelledby="edit-col-collections">
       <h3 id="edit-col-collections" class="profile-col-title">Sammlungen</h3>
       <?php
+        $collSpec = $piece->getCollectionsChipSpec();
+        $collIncludeIds = array();
+        foreach($collSpec as $row) {
+            $collIncludeIds[] = (int)$row['id'];
+        }
         echo archivCollectionChipsEditorHtml(
             'piece-edit-coll',
             'mail-recipient-chip--collection',
             'collectionsSpec',
-            archivCollectionsCatalog(),
-            $piece->getCollectionsChipSpec(),
+            archivCollectionsCatalog($collIncludeIds),
+            $collSpec,
             'Sammlung…'
         );
       ?>

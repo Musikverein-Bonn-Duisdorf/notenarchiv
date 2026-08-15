@@ -5309,11 +5309,19 @@ select.profile-control {
   margin: 0 0 1.25rem;
 }
 
+.collection-section[data-archived="1"] .collection-section-title {
+  opacity: 0.85;
+}
+
 .collection-section-title {
   margin: 0 0 0.55rem;
   font-size: 1.05rem;
   font-weight: 700;
   line-height: 1.3;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .collection-section-title--editable,
