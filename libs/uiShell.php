@@ -223,7 +223,7 @@ function logMessageLinkEntities($html) {
         return $html;
     }
     if(strpos($html, 'entity-open') !== false && strpos($html, 'data-entity-type') !== false) {
-        return $html;
+        return logMessageLinkUrls($html);
     }
 
     $source = $html;
@@ -500,7 +500,65 @@ function logMessageLinkEntities($html) {
         $html
     );
 
-    return $html;
+    return logMessageLinkUrls($html);
+}
+
+/**
+ * Turn bare http(s) URLs in log message HTML into links (text nodes only).
+ * @param string $html
+ * @return string
+ */
+function logMessageLinkUrls($html) {
+    $html = (string)$html;
+    if($html === '') {
+        return $html;
+    }
+
+    $parts = preg_split('/(<[^>]+>)/', $html, -1, PREG_SPLIT_DELIM_CAPTURE);
+    if($parts === false) {
+        return $html;
+    }
+
+    $out = '';
+    $inAnchor = 0;
+    foreach($parts as $part) {
+        if($part === '') {
+            continue;
+        }
+        if(isset($part[0]) && $part[0] === '<') {
+            if(preg_match('/^<\s*a\b/i', $part)) {
+                $inAnchor++;
+            } elseif(preg_match('/^<\s*\/\s*a\b/i', $part)) {
+                $inAnchor = max(0, $inAnchor - 1);
+            }
+            $out .= $part;
+            continue;
+        }
+        if($inAnchor > 0) {
+            $out .= $part;
+            continue;
+        }
+        $out .= preg_replace_callback(
+            '#\bhttps?://[^\s<>"\']+#iu',
+            function ($m) {
+                $raw = $m[0];
+                $trail = '';
+                while($raw !== '' && preg_match('/[.,;:!?)\]]$/', $raw)) {
+                    $trail = substr($raw, -1).$trail;
+                    $raw = substr($raw, 0, -1);
+                }
+                $decoded = html_entity_decode($raw, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                if($decoded === '' || !preg_match('#^https?://#i', $decoded)) {
+                    return $m[0];
+                }
+                $safe = htmlspecialchars($decoded, ENT_QUOTES, 'UTF-8');
+                return '<a class="log-msg-url" href="'.$safe.'" target="_blank" rel="noopener noreferrer">'.$safe.'</a>'.$trail;
+            },
+            $part
+        );
+    }
+
+    return $out;
 }
 
 /** Queue modal HTML outside .app-main (overflow/z-index). */
