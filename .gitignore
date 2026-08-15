@@ -2,3 +2,5 @@
 data/*
 !data/.htaccess
 common/config.php
+mcp/archiv-api/node_modules/
+__pycache__/

@@ -40,6 +40,7 @@ Sibling-App: **eigene** Config- und Update-Fläche; **kein** Melde-Admin-Host.
 | Config-Slim | Keine Melde-RSVP-Farben (`BtnYes`/`Maybe`/`No`) und keine ungenutzten Log-Chip-Farben in `{dbprefix}config` — Log-UI nutzt CSS-Chips |
 | Backup | Eigene Backup-UI (`backup.php` / `cron.php`) — nur `{dbprefix}%` (`archiv_*`). **Nie** Melde-Identity. Kein Include/Iframe von Melde-`backup.php`. |
 | Backup praktisch | ZIP (`manifest.json` + `database.sql`) via UI/CLI/`$backupToken`; Dateien unter `data/` weiterhin Hosting/rsync |
+| JSON-API (ARCHIV-31) | `api/` + Bearer-`AppTokens` (Admin); Medien/Noten/Mappen — siehe [`docs/api.md`](api.md); MCP `mcp/archiv-api/` |
 
 Siehe Melde Ownership-Matrix Abschnitte A/B (MELD-157).
 

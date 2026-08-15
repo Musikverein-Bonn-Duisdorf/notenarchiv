@@ -1,7 +1,23 @@
 <?php
 class Composition
 {
-    private $_data = array('Index' => null, 'RegistrationNumber' => null, 'Title' => null, 'Composer' => null, 'Arranger' => null, 'Publisher' => null, 'Year' => null, 'PerformanceTime' => null, 'Grade' => null, 'FilePath' => null, 'ComposerName' => null, 'ArrangerName' => null, 'PublisherName' => null);
+    private $_data = array(
+        'Index' => null,
+        'RegistrationNumber' => null,
+        'Title' => null,
+        'Composer' => null,
+        'Arranger' => null,
+        'Publisher' => null,
+        'Year' => null,
+        'PerformanceTime' => null,
+        'Grade' => null,
+        'FilePath' => null,
+        'Website' => null,
+        'ComposerName' => null,
+        'ArrangerName' => null,
+        'PublisherName' => null,
+        'PublisherWebsite' => null,
+    );
     public function __get($key) {
         switch($key) {
 	    case 'Index':
@@ -13,10 +29,12 @@ class Composition
         case 'ArrangerName':
 	    case 'Publisher':
 	    case 'PublisherName':
+	    case 'PublisherWebsite':
 	    case 'Year':
 	    case 'Grade':
 	    case 'PerformanceTime':
         case 'FilePath':
+        case 'Website':
             return $this->_data[$key];
             break;
         default:
@@ -44,7 +62,9 @@ class Composition
             break;
 	    case 'PerformanceTime':
 	    case 'FilePath':
-            $this->_data[$key] = $val;
+	    case 'Website':
+	    case 'PublisherWebsite':
+            $this->_data[$key] = is_string($val) ? trim($val) : $val;
             break;
         default:
             break;
@@ -80,7 +100,21 @@ class Composition
             $dbr = mysqli_query($GLOBALS['conn'], $sql);
             sqlerror();
             $row = mysqli_fetch_array($dbr);
-            if($row) $this->PublisherName = $row['Name'];
+            if($row) {
+                $this->PublisherName = $row['Name'];
+                $this->PublisherWebsite = isset($row['Website']) ? (string)$row['Website'] : '';
+            }
+        } elseif($this->PublisherWebsite === null || $this->PublisherWebsite === '') {
+            $sql = sprintf('SELECT `Website` FROM `%sPublisher` WHERE `Index` = %d;',
+            $GLOBALS['dbprefix'],
+            (int)$this->Publisher
+            );
+            $dbr = mysqli_query($GLOBALS['conn'], $sql);
+            sqlerror();
+            $row = $dbr ? mysqli_fetch_array($dbr) : null;
+            if($row) {
+                $this->PublisherWebsite = isset($row['Website']) ? (string)$row['Website'] : '';
+            }
         }
     }
     
@@ -108,12 +142,31 @@ class Composition
         $parts[] = sprintf('Composition-ID: %d', (int)$this->Index);
         logAppendFilled($parts, 'RegistrationNumber', $this->RegistrationNumber, (string)(int)$this->RegistrationNumber, true);
         logAppendFilled($parts, 'Title', archivPlainText($this->Title));
-        logAppendFilled($parts, 'Composer', $this->ComposerName, htmlspecialchars(archivPlainText($this->ComposerName), ENT_QUOTES, 'UTF-8'), true);
-        logAppendFilled($parts, 'Arranger', $this->ArrangerName, htmlspecialchars(archivPlainText($this->ArrangerName), ENT_QUOTES, 'UTF-8'), true);
-        logAppendFilled($parts, 'Publisher', $this->PublisherName, htmlspecialchars(archivPlainText($this->PublisherName), ENT_QUOTES, 'UTF-8'), true);
+        if((int)$this->Composer > 0) {
+            $parts[] = sprintf(
+                'Composer: (%d) <b>%s</b>',
+                (int)$this->Composer,
+                htmlspecialchars(archivPlainText($this->ComposerName), ENT_QUOTES, 'UTF-8')
+            );
+        }
+        if((int)$this->Arranger > 0) {
+            $parts[] = sprintf(
+                'Arranger: (%d) <b>%s</b>',
+                (int)$this->Arranger,
+                htmlspecialchars(archivPlainText($this->ArrangerName), ENT_QUOTES, 'UTF-8')
+            );
+        }
+        if((int)$this->Publisher > 0) {
+            $parts[] = sprintf(
+                'Publisher: (%d) <b>%s</b>',
+                (int)$this->Publisher,
+                htmlspecialchars(archivPlainText($this->PublisherName), ENT_QUOTES, 'UTF-8')
+            );
+        }
         logAppendFilled($parts, 'Year', $this->Year, (string)(int)$this->Year, true);
         logAppendFilled($parts, 'Grade', $this->Grade, (string)$this->Grade, true);
         logAppendFilled($parts, 'PerformanceTime', $this->PerformanceTime);
+        logAppendFilled($parts, 'Website', $this->Website);
         return implode(', ', $parts);
     }
 
@@ -126,21 +179,49 @@ class Composition
         logAppendChange($parts, 'RegistrationNumber', $old->RegistrationNumber, $this->RegistrationNumber);
         logAppendChange($parts, 'Title', archivPlainText($old->Title), archivPlainText($this->Title));
         if((int)$old->Composer !== (int)$this->Composer) {
-            $parts[] = 'Composer: '.htmlspecialchars(archivPlainText($old->ComposerName), ENT_QUOTES, 'UTF-8')
-                .' &rArr; <b>'.htmlspecialchars(archivPlainText($this->ComposerName), ENT_QUOTES, 'UTF-8').'</b>';
+            $parts[] = sprintf(
+                'Composer: (%d) %s &rArr; (%d) <b>%s</b>',
+                (int)$old->Composer,
+                ((int)$old->Composer > 0)
+                    ? htmlspecialchars(archivPlainText($old->ComposerName), ENT_QUOTES, 'UTF-8')
+                    : '(leer)',
+                (int)$this->Composer,
+                ((int)$this->Composer > 0)
+                    ? htmlspecialchars(archivPlainText($this->ComposerName), ENT_QUOTES, 'UTF-8')
+                    : '(leer)'
+            );
         }
         if((int)$old->Arranger !== (int)$this->Arranger) {
-            $parts[] = 'Arranger: '.htmlspecialchars(archivPlainText($old->ArrangerName), ENT_QUOTES, 'UTF-8')
-                .' &rArr; <b>'.htmlspecialchars(archivPlainText($this->ArrangerName), ENT_QUOTES, 'UTF-8').'</b>';
+            $parts[] = sprintf(
+                'Arranger: (%d) %s &rArr; (%d) <b>%s</b>',
+                (int)$old->Arranger,
+                ((int)$old->Arranger > 0)
+                    ? htmlspecialchars(archivPlainText($old->ArrangerName), ENT_QUOTES, 'UTF-8')
+                    : '(leer)',
+                (int)$this->Arranger,
+                ((int)$this->Arranger > 0)
+                    ? htmlspecialchars(archivPlainText($this->ArrangerName), ENT_QUOTES, 'UTF-8')
+                    : '(leer)'
+            );
         }
         if((int)$old->Publisher !== (int)$this->Publisher) {
-            $parts[] = 'Publisher: '.htmlspecialchars(archivPlainText($old->PublisherName), ENT_QUOTES, 'UTF-8')
-                .' &rArr; <b>'.htmlspecialchars(archivPlainText($this->PublisherName), ENT_QUOTES, 'UTF-8').'</b>';
+            $parts[] = sprintf(
+                'Publisher: (%d) %s &rArr; (%d) <b>%s</b>',
+                (int)$old->Publisher,
+                ((int)$old->Publisher > 0)
+                    ? htmlspecialchars(archivPlainText($old->PublisherName), ENT_QUOTES, 'UTF-8')
+                    : '(leer)',
+                (int)$this->Publisher,
+                ((int)$this->Publisher > 0)
+                    ? htmlspecialchars(archivPlainText($this->PublisherName), ENT_QUOTES, 'UTF-8')
+                    : '(leer)'
+            );
         }
         logAppendChange($parts, 'Year', $old->Year, $this->Year);
         logAppendChange($parts, 'Grade', $old->Grade, $this->Grade);
         logAppendChange($parts, 'PerformanceTime', $old->PerformanceTime, $this->PerformanceTime);
         logAppendChange($parts, 'FilePath', $old->FilePath, $this->FilePath);
+        logAppendChange($parts, 'Website', $old->Website, $this->Website);
         if(!$parts) {
             return '';
         }
@@ -177,7 +258,7 @@ class Composition
     }
     
     protected function insert() {
-        $sql = sprintf('INSERT INTO `%sComposition` (`RegistrationNumber`, `Title`, `Composer`, `Arranger`, `Publisher`, `Year`, `Grade`, `PerformanceTime`, `FilePath`) VALUES (%s, "%s", %s, %s, %s, %s, "%f", "%s", "%s");',
+        $sql = sprintf('INSERT INTO `%sComposition` (`RegistrationNumber`, `Title`, `Composer`, `Arranger`, `Publisher`, `Year`, `Grade`, `PerformanceTime`, `FilePath`, `Website`) VALUES (%s, "%s", %s, %s, %s, %s, "%f", "%s", "%s", "%s");',
         $GLOBALS['dbprefix'],
         mkNULLonNull($this->RegistrationNumber),
         mysqli_real_escape_string($GLOBALS['conn'], $this->Title),
@@ -186,8 +267,9 @@ class Composition
         mkNULLonNull($this->Publisher),
         mkNULLonNull($this->Year),
         $this->Grade,
-        $this->PerformanceTime,
-        $this->FilePath
+        mysqli_real_escape_string($GLOBALS['conn'], (string)$this->PerformanceTime),
+        mysqli_real_escape_string($GLOBALS['conn'], (string)$this->FilePath),
+        mysqli_real_escape_string($GLOBALS['conn'], (string)$this->Website)
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
         sqlerror();
@@ -203,7 +285,7 @@ class Composition
         return true;
     }
     protected function update() {
-        $sql = sprintf('UPDATE `%sComposition` SET `RegistrationNumber` = %s, `Title` = "%s", `Composer` = %s, `Arranger` = %s, `Publisher` = %s, `Year` = %s, `Grade` = "%.1f", `PerformanceTime` = "%s", `FilePath` = "%s" WHERE `Index` = "%d";',
+        $sql = sprintf('UPDATE `%sComposition` SET `RegistrationNumber` = %s, `Title` = "%s", `Composer` = %s, `Arranger` = %s, `Publisher` = %s, `Year` = %s, `Grade` = "%.1f", `PerformanceTime` = "%s", `FilePath` = "%s", `Website` = "%s" WHERE `Index` = "%d";',
         $GLOBALS['dbprefix'],
         mkNULLonNull($this->RegistrationNumber),
         mysqli_real_escape_string($GLOBALS['conn'], $this->Title),
@@ -212,8 +294,9 @@ class Composition
         mkNULLonNull($this->Publisher),
         mkNULLonNull($this->Year),
         $this->Grade,
-        $this->PerformanceTime,
-        $this->FilePath,
+        mysqli_real_escape_string($GLOBALS['conn'], (string)$this->PerformanceTime),
+        mysqli_real_escape_string($GLOBALS['conn'], (string)$this->FilePath),
+        mysqli_real_escape_string($GLOBALS['conn'], (string)$this->Website),
         $this->Index
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
@@ -307,6 +390,8 @@ class Composition
         $str .= '</div>';
         $str .= '<div class="piece-rail" aria-hidden="true"></div>';
         $str .= '<div class="piece-main">';
+        $str .= $this->coverHtml('archiv-thumb piece-cover');
+        $str .= '<div class="piece-text">';
         $str .= '<div class="piece-title">'.archivEscHtml($title).'</div>';
         $str .= '<div class="piece-meta-line">';
         if($composer !== '') {
@@ -316,15 +401,63 @@ class Composition
             $str .= '<span class="piece-meta-item"><span class="piece-meta-k">Arrangeur</span> '.archivEscHtml($arranger).'</span>';
         }
         if($publisher !== '') {
-            $str .= '<span class="piece-meta-item"><span class="piece-meta-k">Verlag</span> '.archivEscHtml($publisher).'</span>';
+            $str .= '<span class="piece-meta-item"><span class="piece-meta-k">Verlag</span> '.$this->publisherLinkHtml(true).'</span>';
         }
         if($year !== '') {
             $str .= '<span class="piece-meta-item"><span class="piece-meta-k">Jahr</span> '.archivEscHtml($year).'</span>';
         }
         $str .= '</div>';
-        $str .= '</div>';
+        $str .= '</div></div>';
         $str .= '</div>';
         return $str;
+    }
+
+    /**
+     * Absolute http(s) URL for a stored website value, or empty string.
+     */
+    public static function normalizeWebsiteUrl($url) {
+        $url = trim(archivPlainText($url));
+        if($url === '') {
+            return '';
+        }
+        if(!preg_match('#^https?://#i', $url)) {
+            $url = 'https://'.$url;
+        }
+        return $url;
+    }
+
+    /**
+     * Best external publisher URL: piece product page, else publisher homepage.
+     */
+    public function publisherExternalUrl() {
+        $product = self::normalizeWebsiteUrl($this->Website);
+        if($product !== '') {
+            return $product;
+        }
+        $this->fillJoins();
+        return self::normalizeWebsiteUrl($this->PublisherWebsite);
+    }
+
+    /**
+     * Linked publisher name (product page preferred), or plain text / em dash.
+     *
+     * @param bool $stopPropagation for links inside clickable list rows
+     */
+    public function publisherLinkHtml($stopPropagation = false) {
+        $this->fillJoins();
+        $name = archivPlainText($this->PublisherName);
+        $href = $this->publisherExternalUrl();
+        if($name === '' && $href === '') {
+            return '—';
+        }
+        $label = $name !== '' ? $name : $href;
+        if($href === '') {
+            return archivEscHtml($label);
+        }
+        $extra = $stopPropagation
+            ? ' onclick="event.stopPropagation();" onkeydown="event.stopPropagation();"'
+            : '';
+        return '<a href="'.archivEscHtml($href).'" target="_blank" rel="noopener noreferrer"'.$extra.'>'.archivEscHtml($label).'</a>';
     }
 
     public function getModalHtml($showEditButton = false) {
@@ -332,6 +465,91 @@ class Composition
             'piece' => $this,
             'showEditButton' => (bool)$showEditButton,
         ));
+    }
+
+    /**
+     * True when a piece-specific cover file exists (not the global default).
+     */
+    public function hasOwnCover() {
+        $cover = $this->getCover();
+        $default = isset($GLOBALS['optionsDB']['defaultCompositionCover'])
+            ? (string)$GLOBALS['optionsDB']['defaultCompositionCover']
+            : '';
+        return $cover !== '' && $cover !== $default;
+    }
+
+    /**
+     * Up to two initials from the title (skips common articles).
+     */
+    public function coverInitials() {
+        $title = trim(archivPlainText($this->Title));
+        if($title === '') {
+            return '—';
+        }
+        $skip = array(
+            'der', 'die', 'das', 'den', 'dem', 'des',
+            'ein', 'eine', 'einen', 'einem', 'einer',
+            'the', 'a', 'an', 'le', 'la', 'les',
+            'of', 'und', 'and', 'im', 'in', 'am', 'zu', 'zur', 'zum',
+        );
+        $words = preg_split('/[\s\-–—]+/u', $title, -1, PREG_SPLIT_NO_EMPTY);
+        if(!is_array($words)) {
+            $words = array($title);
+        }
+        $letters = array();
+        $firstWord = '';
+        foreach($words as $w) {
+            $plain = preg_replace('/[^\p{L}\p{N}]+/u', '', (string)$w);
+            if($plain === null || $plain === '') {
+                continue;
+            }
+            if(in_array(mb_strtolower($plain, 'UTF-8'), $skip, true)) {
+                continue;
+            }
+            if($firstWord === '') {
+                $firstWord = $plain;
+            }
+            $letters[] = mb_strtoupper(mb_substr($plain, 0, 1, 'UTF-8'), 'UTF-8');
+            if(count($letters) >= 2) {
+                break;
+            }
+        }
+        if(count($letters) >= 2) {
+            return implode('', $letters);
+        }
+        if($firstWord !== '') {
+            return mb_strtoupper(mb_substr($firstWord, 0, 2, 'UTF-8'), 'UTF-8');
+        }
+        $compact = preg_replace('/\s+/u', '', $title);
+        return mb_strtoupper(mb_substr((string)$compact, 0, 2, 'UTF-8'), 'UTF-8');
+    }
+
+    /**
+     * Cover thumbnail HTML for lists/modals (image, or initials placeholder if none).
+     */
+    public function coverHtml($cssClass = 'piece-cover') {
+        $cls = trim((string)$cssClass);
+        if($cls === '') {
+            $cls = 'piece-cover';
+        }
+        $clsEsc = archivEscHtml($cls);
+        if(!$this->hasOwnCover()) {
+            $ini = archivEscHtml($this->coverInitials());
+            $seed = (string)(int)$this->Index.'|'.archivPlainText($this->Title);
+            $hue = (int)(sprintf('%u', crc32($seed)) % 360);
+            return '<span class="'.$clsEsc.' piece-cover--placeholder" style="background-color:hsl('.$hue.',42%,38%)" aria-hidden="true">'
+                .'<span class="piece-cover-initials">'.($ini !== '' ? $ini : '—').'</span></span>';
+        }
+        $src = (string)$this->getCover();
+        $fs = $src;
+        $root = isset($GLOBALS['optionsDB']['dataDirectory']) ? (string)$GLOBALS['optionsDB']['dataDirectory'] : '';
+        if($root !== '' && strpos($src, 'data/') === 0) {
+            $fs = $root.$src;
+        } elseif($this->FilePath && is_file($this->getFilePathPHP().basename($src))) {
+            $fs = $this->getFilePathPHP().basename($src);
+        }
+        $mtime = is_file($fs) ? (string)@filemtime($fs) : (string)time();
+        return '<span class="'.$clsEsc.'" aria-hidden="true"><img src="'.archivEscHtml($src).'?'.rawurlencode($mtime).'" alt=""></span>';
     }
 
     public function getCover() {

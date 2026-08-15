@@ -239,13 +239,23 @@ function logMessageLinkEntities($html) {
         return entityOpenHtml($type, (int)$id, $label);
     };
 
-    // Composition-ID: N → Composition chip (Title from message when present)
+    // Composition-ID: N → Composition chip (Title from message or DB)
     $html = preg_replace_callback(
         '/\bComposition-ID:\s*(\d+)/si',
         function ($m) use ($chip, $plainLabel, $source) {
             $label = '';
             if(preg_match('/\bTitle:\s*<b>(.*?)<\/b>/si', $source, $t)) {
                 $label = $plainLabel($t[1]);
+            } elseif(preg_match('/\bTitle:\s*[^,<]*?&rArr;\s*<b>(.*?)<\/b>/si', $source, $t)) {
+                $label = $plainLabel($t[1]);
+            }
+            if($label === '') {
+                $cid = (int)$m[1];
+                if($cid > 0 && class_exists('Composition') && !empty($GLOBALS['conn'])) {
+                    $piece = new Composition;
+                    $piece->load_by_id($cid);
+                    $label = archivPlainText($piece->Title);
+                }
             }
             if($label === '') {
                 $label = 'Stück #'.$m[1];
@@ -255,8 +265,9 @@ function logMessageLinkEntities($html) {
         $html
     );
     $html = preg_replace('/,?\s*Title:\s*<b>.*?<\/b>/si', '', $html, 1);
+    $html = preg_replace('/,?\s*Title:\s*[^,<]*?&rArr;\s*<b>.*?<\/b>/si', '', $html, 1);
 
-    // Composer-ID: N → Composer chip
+    // Composer-ID: N → Composer chip (name from message or DB)
     $html = preg_replace_callback(
         '/\bComposer-ID:\s*(\d+)/si',
         function ($m) use ($chip, $plainLabel, $source) {
@@ -270,6 +281,14 @@ function logMessageLinkEntities($html) {
             }
             $label = trim($fn.' '.$ln);
             if($label === '') {
+                $cid = (int)$m[1];
+                if($cid > 0 && class_exists('Composer') && !empty($GLOBALS['conn'])) {
+                    $c = new Composer;
+                    $c->load_by_id($cid);
+                    $label = trim(archivPlainText($c->FirstName).' '.archivPlainText($c->LastName));
+                }
+            }
+            if($label === '') {
                 $label = 'Komponist #'.$m[1];
             }
             return 'Composer: '.$chip('composer', $m[1], $label);
@@ -277,13 +296,23 @@ function logMessageLinkEntities($html) {
         $html
     );
 
-    // Publisher-ID: N → Publisher chip
+    // Publisher-ID: N → Publisher chip (Name from message or DB)
     $html = preg_replace_callback(
         '/\bPublisher-ID:\s*(\d+)/si',
         function ($m) use ($chip, $plainLabel, $source) {
             $label = '';
             if(preg_match('/\bName:\s*<b>(.*?)<\/b>/si', $source, $t)) {
                 $label = $plainLabel($t[1]);
+            } elseif(preg_match('/\bName:\s*[^,<]*?&rArr;\s*<b>(.*?)<\/b>/si', $source, $t)) {
+                $label = $plainLabel($t[1]);
+            }
+            if($label === '') {
+                $pid = (int)$m[1];
+                if($pid > 0 && class_exists('Publisher') && !empty($GLOBALS['conn'])) {
+                    $pub = new Publisher;
+                    $pub->load_by_id($pid);
+                    $label = archivPlainText($pub->Name);
+                }
             }
             if($label === '') {
                 $label = 'Verlag #'.$m[1];
@@ -308,6 +337,68 @@ function logMessageLinkEntities($html) {
         },
         $html
     );
+
+    // Piece relations: Composer / Arranger / Publisher with ids
+    $linkNamedEntityChange = function ($field, $type) use (&$html, $chip, $plainLabel) {
+        $html = preg_replace_callback(
+            '/\b'.$field.':\s*\((\d+)\)\s*([^,<]*?)\s*&rArr;\s*\((\d+)\)\s*<b>(.*?)<\/b>/si',
+            function ($m) use ($chip, $plainLabel, $field, $type) {
+                $oldLabel = $plainLabel($m[2]);
+                if($oldLabel === '') {
+                    $oldLabel = ((int)$m[1] > 0) ? ('#'.$m[1]) : '(leer)';
+                }
+                $oldPart = ((int)$m[1] > 0)
+                    ? $chip($type, $m[1], $oldLabel)
+                    : $oldLabel;
+                $newPart = ((int)$m[3] > 0)
+                    ? $chip($type, $m[3], $m[4])
+                    : $plainLabel($m[4]);
+                return $field.': '.$oldPart.' &rArr; '.$newPart;
+            },
+            $html
+        );
+        $html = preg_replace_callback(
+            '/\b'.$field.':\s*\((\d+)\)\s*<b>(.*?)<\/b>/si',
+            function ($m) use ($chip, $field, $type) {
+                return $field.': '.$chip($type, $m[1], $m[2]);
+            },
+            $html
+        );
+    };
+    $linkNamedEntityChange('Composer', 'composer');
+    $linkNamedEntityChange('Arranger', 'composer');
+    $linkNamedEntityChange('Publisher', 'publisher');
+
+    // Legacy piece logs: Composer/Arranger/Publisher name only → resolve via Composition-ID
+    if(preg_match('/\bComposition-ID:\s*(\d+)/si', $source, $compRef)
+        || preg_match('/data-entity-type="composition"[^>]*data-entity-id="(\d+)"/si', $html, $compRef)) {
+        $pieceId = (int)$compRef[1];
+        if($pieceId > 0 && class_exists('Composition') && !empty($GLOBALS['conn'])) {
+            $piece = new Composition;
+            $piece->load_by_id($pieceId);
+            $piece->fillJoins();
+            $legacyMap = array(
+                'Composer' => array((int)$piece->Composer, archivPlainText($piece->ComposerName), 'composer'),
+                'Arranger' => array((int)$piece->Arranger, archivPlainText($piece->ArrangerName), 'composer'),
+                'Publisher' => array((int)$piece->Publisher, archivPlainText($piece->PublisherName), 'publisher'),
+            );
+            foreach($legacyMap as $field => $info) {
+                if($info[0] < 1 || $info[1] === '') {
+                    continue;
+                }
+                $html = preg_replace_callback(
+                    '/\b'.$field.':\s*<b>(.*?)<\/b>/si',
+                    function ($m) use ($chip, $plainLabel, $field, $info) {
+                        if($plainLabel($m[1]) !== $info[1]) {
+                            return $m[0];
+                        }
+                        return $field.': '.$chip($info[2], $info[0], $info[1]);
+                    },
+                    $html
+                );
+            }
+        }
+    }
 
     // CollectionItem change: Collection: (1) Alt &rArr; (2) <b>Neu</b>
     $html = preg_replace_callback(

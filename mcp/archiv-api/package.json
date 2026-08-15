@@ -1,0 +1,16 @@
+{
+  "name": "archiv-api-mcp",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "ARCHIV-31 MCP server wrapping the Notenarchiv JSON API",
+  "bin": {
+    "archiv-api-mcp": "./src/index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0"
+  }
+}

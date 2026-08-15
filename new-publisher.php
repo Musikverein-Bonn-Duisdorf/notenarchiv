@@ -139,10 +139,38 @@ $delName = archivPlainText($entity->Name);
         <input id="publisherName" name="Name" type="text" class="w3-input w3-border profile-control <?php echo htmlspecialchars($inputBg, ENT_QUOTES, 'UTF-8'); ?>" value="<?php echo $isEdit ? archivEscHtml($entity->Name) : ''; ?>" required>
       </div>
       <div class="profile-field">
+        <label class="profile-label" for="publisherWebsite">Website</label>
+        <input id="publisherWebsite" name="Website" type="url" class="w3-input w3-border profile-control <?php echo htmlspecialchars($inputBg, ENT_QUOTES, 'UTF-8'); ?>" value="<?php echo $isEdit ? archivEscHtml($entity->Website) : ''; ?>" placeholder="https://…">
+      </div>
+      <div class="profile-field">
         <label class="profile-label" for="publisherAddress">Adresse</label>
         <textarea id="publisherAddress" name="Address" class="w3-input w3-border profile-control <?php echo htmlspecialchars($inputBg, ENT_QUOTES, 'UTF-8'); ?>" rows="3"><?php echo $isEdit ? archivEscHtml($entity->Address) : ''; ?></textarea>
       </div>
     </section>
+<?php if($isEdit) {
+    $pubPieces = $entity->getCompositionSummaries(100);
+    $pubPieceCount = $entity->countCompositions();
+?>
+    <section class="profile-col" aria-labelledby="publisher-pieces">
+      <h3 id="publisher-pieces" class="profile-col-title">Stücke (<?php echo (int)$pubPieceCount; ?>)</h3>
+<?php if(!$pubPieces) { ?>
+      <div class="profile-field"><div class="profile-value">—</div></div>
+<?php } else {
+    foreach($pubPieces as $item) {
+        $compId = (int)$item['id'];
+        $reg = $item['registrationNumber'] !== null ? (string)$item['registrationNumber'] : '';
+        $title = (string)$item['title'];
+        echo '<div class="profile-field">';
+        echo '<span class="profile-label">'.archivEscHtml($reg !== '' ? $reg : '—').'</span>';
+        echo '<div class="profile-value"><a href="composition.php?id='.$compId.'">'.archivEscHtml($title !== '' ? $title : '—').'</a></div>';
+        echo '</div>';
+    }
+    if($pubPieceCount > count($pubPieces)) {
+        echo '<div class="profile-field"><div class="profile-value">… und '.(int)($pubPieceCount - count($pubPieces)).' weitere</div></div>';
+    }
+} ?>
+    </section>
+<?php } ?>
   </div>
 </form>
 </div>

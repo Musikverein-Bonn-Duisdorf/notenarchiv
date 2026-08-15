@@ -5,23 +5,6 @@ $_SESSION['page']='home';
 $_SESSION['adminpage']=false;
 include "common/header.php";
 
-if(isset($_POST['save'])) {
-    $piece = new Composition;
-    if($_POST['Index'] > 0) {
-        $piece->load_by_id($_POST['Index']);
-    }
-    $piece->fill_from_array($_POST);
-    $piece->save();
-    if((int)$piece->Index > 0 && isset($_POST['collectionsSpec'])) {
-        $items = archivParseCollectionChipSpec($_POST['collectionsSpec']);
-        if($items !== null) {
-            archivSyncCollectionItemsForComposition((int)$piece->Index, $items);
-        }
-    }
-    header('Location: composition.php?id='.(int)$piece->Index);
-    exit;
-}
-
 if(isset($_POST['Delete'])) {
     $piece = new Composition;
     if($_POST['Delete'] > 0) {
@@ -40,7 +23,7 @@ $nPieces = $row['Count'];
 
 $addBtn = '';
 if(!empty($_SESSION['admin'])) {
-    $addBtn = '<a class="w3-button '.htmlspecialchars($GLOBALS['optionsDB']['colorBtnSubmit'], ENT_QUOTES, 'UTF-8').'" href="new-composition.php" title="Anlegen"><i class="fas fa-plus"></i></a>';
+    $addBtn = '<a class="w3-button '.htmlspecialchars($GLOBALS['optionsDB']['colorBtnSubmit'], ENT_QUOTES, 'UTF-8').'" href="composition.php" title="Anlegen"><i class="fas fa-plus"></i></a>';
 }
 $chunk = listChunkCompositions(0, 50, 'nr', 'desc');
 adminListPageBegin('Archiv', 'Stückliste ('.$nPieces.')', array('actionsHtml' => $addBtn));

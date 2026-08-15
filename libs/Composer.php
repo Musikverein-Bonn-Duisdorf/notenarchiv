@@ -179,16 +179,96 @@ class Composer
         $str .= '<div class="composer-id"><div class="composer-id-num">'.archivEscHtml((string)$id).'</div></div>';
         $str .= '<div class="composer-rail" aria-hidden="true"></div>';
         $str .= '<div class="composer-main">';
-        $str .= archivEntityAvatarHtml('Composers', $id, $this->avatarInitials(), 'entity-avatar entity-avatar--row');
+        $str .= archivEntityAvatarHtml('Composers', $id, $this->avatarInitials(), 'archiv-thumb entity-avatar');
+        $str .= '<div class="composer-text">';
         $str .= '<div class="composer-name">'.archivEscHtml($name !== '' ? $name : '—').'</div>';
-        $str .= '</div></div>';
+        $asComposer = $this->countCompositionsAsComposer();
+        $asArranger = $this->countCompositionsAsArranger();
+        if($asComposer > 0 || $asArranger > 0) {
+            $bits = array();
+            if($asComposer > 0) {
+                $bits[] = $asComposer.' Stück'.($asComposer === 1 ? '' : 'e');
+            }
+            if($asArranger > 0) {
+                $bits[] = $asArranger.' Arr.';
+            }
+            $str .= '<div class="composer-piece-count">'.archivEscHtml(implode(' · ', $bits)).'</div>';
+        }
+        $str .= '</div></div></div>';
         return $str;
     }
 
+    public function countCompositionsAsComposer() {
+        return $this->countCompositionsForRole('Composer');
+    }
+
+    public function countCompositionsAsArranger() {
+        return $this->countCompositionsForRole('Arranger');
+    }
+
+    private function countCompositionsForRole($column) {
+        $id = (int)$this->Index;
+        if($id < 1 || ($column !== 'Composer' && $column !== 'Arranger')) {
+            return 0;
+        }
+        $sql = sprintf(
+            'SELECT COUNT(`Index`) AS `Count` FROM `%sComposition` WHERE `%s` = %d;',
+            $GLOBALS['dbprefix'],
+            $column,
+            $id
+        );
+        $dbr = mysqli_query($GLOBALS['conn'], $sql);
+        sqlerror();
+        $row = $dbr ? mysqli_fetch_assoc($dbr) : null;
+        return $row ? (int)$row['Count'] : 0;
+    }
+
+    /**
+     * @param 'Composer'|'Arranger' $column
+     * @return list<array{id:int,registrationNumber:?int,title:string}>
+     */
+    public function getCompositionSummariesForRole($column, $limit = 100) {
+        $id = (int)$this->Index;
+        $items = array();
+        if($id < 1 || ($column !== 'Composer' && $column !== 'Arranger')) {
+            return $items;
+        }
+        $limit = max(1, min(500, (int)$limit));
+        $sql = sprintf(
+            'SELECT `Index`, `Title`, `RegistrationNumber`
+             FROM `%sComposition`
+             WHERE `%s` = %d
+             ORDER BY `RegistrationNumber` DESC, `Title` ASC
+             LIMIT %d;',
+            $GLOBALS['dbprefix'],
+            $column,
+            $id,
+            $limit
+        );
+        $dbr = mysqli_query($GLOBALS['conn'], $sql);
+        sqlerror();
+        while($dbr && ($row = mysqli_fetch_assoc($dbr))) {
+            $items[] = array(
+                'id' => (int)$row['Index'],
+                'registrationNumber' => $row['RegistrationNumber'] !== null && $row['RegistrationNumber'] !== ''
+                    ? (int)$row['RegistrationNumber']
+                    : null,
+                'title' => archivPlainText($row['Title']),
+            );
+        }
+        return $items;
+    }
+
     public function getModalHtml($showEditButton = false) {
+        $asComposer = $this->getCompositionSummariesForRole('Composer', 50);
+        $asArranger = $this->getCompositionSummariesForRole('Arranger', 50);
         return render('composer/modal', array(
             'composer' => $this,
             'showEditButton' => (bool)$showEditButton,
+            'composerPieceCount' => $this->countCompositionsAsComposer(),
+            'arrangerPieceCount' => $this->countCompositionsAsArranger(),
+            'composerPieces' => $asComposer,
+            'arrangerPieces' => $asArranger,
         ));
     }
 };

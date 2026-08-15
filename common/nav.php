@@ -116,10 +116,10 @@ if(hasPermission('perm_editConfig')) {
         <div class="admin-nav app-nav-admin">
           <div class="app-nav-admin-title"><i class="fas fa-wrench" aria-hidden="true"></i><span class="nav-label">Admin</span></div>
           <div class="w3-bar-block <?php echo $navAdminColor; ?>">
-            <div class="w3-dropdown-hover w3-mobile admin-nav-group<?php echo adminNavGroupActiveClass(array('newcomposition', 'newcomposer', 'newpublisher', 'newcollection', 'config', 'backup', 'log', 'update', 'updater')); ?>">
+            <div class="w3-dropdown-hover w3-mobile admin-nav-group<?php echo adminNavGroupActiveClass(array('composition', 'newcomposer', 'newpublisher', 'newcollection', 'config', 'backup', 'log', 'update', 'updater')); ?>">
               <button type="button" class="w3-button w3-mobile w3-block w3-left-align <?php echo htmlspecialchars(navGroupClass('system'), ENT_QUOTES, 'UTF-8'); ?>">Verwaltung <i class="fas fa-caret-right admin-nav-caret"></i></button>
               <div class="w3-dropdown-content w3-bar-block w3-card-4 <?php echo $navAdminColor; ?> w3-mobile">
-                <a title="Stück anlegen" href="new-composition.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('newcomposition'); ?>"><i class="fas fa-plus-circle"></i> Stück</a>
+                <a title="Stück anlegen" href="composition.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('composition'); ?>"><i class="fas fa-plus-circle"></i> Stück</a>
                 <a title="Sammlung anlegen" href="new-collection.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('newcollection'); ?>"><i class="fas fa-folder-plus"></i> Sammlung</a>
                 <a title="Komponist anlegen" href="new-composer.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('newcomposer'); ?>"><i class="fas fa-feather"></i> Komponist</a>
                 <a title="Verlag anlegen" href="new-publisher.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('newpublisher'); ?>"><i class="fas fa-industry"></i> Verlag</a>

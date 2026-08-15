@@ -1,0 +1,59 @@
+---
+description: Katalog-Qualität für Komponisten, Verlage und Stücke (Felder, Recherche, API/Seeds)
+alwaysApply: true
+---
+
+# Katalog: Komponisten, Verlage, Stücke
+
+Beim Anlegen/Anreichern von Stammdaten (UI, API, Seed-Skripte) **recherchieren und befüllen** — keine leeren Shell-Einträge, wenn Daten öffentlich auffindbar sind.
+
+## Ablage
+
+- Bevorzugt **Archiv-JSON-API** (`api/…`, Bearer-Admin) oder UI; lokal: Seed-/Refresh-Skripte unter `scripts/` mit `--local`.
+- Naming/Commits weiter über Ticket-Workflow (`ARCHIV-n`).
+- Keine erfundenen Biografien oder URLs; unsichere Treffer weglassen statt raten.
+
+## Verlag (`Publisher`)
+
+Pflichtziele, soweit verfügbar:
+
+| Feld | Inhalt |
+|------|--------|
+| `Name` | Offizieller Verlagsname |
+| `Website` | Startseite `https://…` |
+| `Address` | Post-/Impressumsadresse (kurz) |
+| Avatar | Logo/Icon (siehe Regel `catalog-media`) |
+
+Seed/Refresh: `scripts/seedWindPublishersApi.php`, `scripts/refreshPublisherLogosApi.php`.
+
+## Komponist (`Composer`)
+
+- `FirstName` / `LastName` korrekt getrennt (z. B. „Ralph“ / „Vaughan Williams“).
+- Avatar/Porträt setzen, wenn ein freies/offizielles Foto existiert (`catalog-media`).
+- Kein Platzhalter-Avatar überschreiben, sobald ein echtes Bild da ist — außer der User will Refresh.
+
+## Stück (`Composition`)
+
+| Feld | Regel |
+|------|--------|
+| `Title` | Werktitel wie beim Verlag / gebräuchlich |
+| `Composer` / `Arranger` / `Publisher` | IDs verknüpfen, keine orphan titles |
+| `Year` | Entstehungs-/Publikationsjahr wenn bekannt |
+| `Grade` | **Blasorchester-Skala 1–6** (halbe Schritte ok, z. B. `3.5`); recherchieren (Verlag, Rundel, HeBu, …), nicht raten |
+| `PerformanceTime` | Spieldauer recherchieren, Format **`M:SS` oder `MM:SS`** (z. B. `8:30`) |
+| `Website` | **Produktseite** des Verlags/Katalogs wenn auffindbar; sonst leer lassen (UI fällt auf Verlags-`Website` zurück) |
+| Cover | Echte Ausgabe-Cover, keine GD-Platzhalter wenn vermeidbar |
+
+Refresh Produkt-URLs: `scripts/refreshCompositionProductUrlsApi.php --local`.  
+Cover: `scripts/refreshCompositionCoversApi.php --local`.
+
+## Recherche-Reihenfolge (Stück)
+
+1. Verlags-Website / Katalog der verknüpften `Publisher.Website`
+2. Wind-Band-Kataloge mit Produktseiten (z. B. Rundel-Suche) — nur bei **hohem Titel-Match** (≥ ~90 %)
+3. Verlagsangaben zu Grade/Dauer auf der Produktseite oder zuverlässigen Sekundärquellen
+4. Kein Match → Feld leer lassen; nicht mit falsch positivem Titel verknüpfen
+
+## Qualität vor Masse
+
+Lieber wenige vollständige Einträge (Verlag mit Adresse+URL+Logo, Stück mit Grade+Dauer+Cover+Produktlink) als viele Lücken. Nach Seed: fehlende Pflichtziele nachziehen, nicht als „fertig“ markieren.
