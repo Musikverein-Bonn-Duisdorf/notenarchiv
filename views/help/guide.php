@@ -55,7 +55,7 @@ $sections[] = array(
     'id' => 'sammlungen',
     'title' => 'Sammlungen',
     'body' => '
-<p>Unter <b>Sammlungen</b> verwaltest du Zusammenstellungen (z.&nbsp;B. Ordner im Schrank oder thematische Listen). Stücke können einer oder mehreren Sammlungen zugeordnet sein. Sortier-Chips und Nachladen beim Scrollen wie bei den Stücken. Archivierte Sammlungen sind standardmäßig ausgeblendet; der Filter <b>Archivierte</b> zeigt sie wieder. Ein Klick auf den Sammlungstitel öffnet ein Detail-Modal'.($showAdmin ? '; <b>Bearbeiten</b> führt zur Anlege-Seite (dort auch das Flag <b>Archiviert</b>). Dort, auf der Stück-Bearbeiten-Seite und im Sammlungen-Dialog am Stück pflegst du die Zuordnung per Chips (Nr = Reihenfolge). Anlegen über Plus bzw. <b>Admin → Sammlung</b>' : '').'.</p>
+<p>Unter <b>Sammlungen</b> verwaltest du Zusammenstellungen (z.&nbsp;B. Ordner im Schrank oder thematische Listen). Stücke können einer oder mehreren Sammlungen zugeordnet sein. Die Liste startet zugeklappt (Stückzahl am Titel); Aufklappen zeigt den Inhalt. Standard-Sortierung: neueste zuerst (ID). Archivierte Sammlungen sind standardmäßig ausgeblendet; der Filter <b>Archivierte</b> zeigt sie wieder. <b>Details</b> öffnet das Modal'.($showAdmin ? '; <b>Bearbeiten</b> führt zur Anlege-Seite (dort auch das Flag <b>Archiviert</b>). Dort, auf der Stück-Bearbeiten-Seite und im Sammlungen-Dialog am Stück pflegst du die Zuordnung per Chips (Nr = Reihenfolge). Anlegen über Plus bzw. <b>Admin → Sammlung</b>' : '').'.</p>
 '
 );
 
