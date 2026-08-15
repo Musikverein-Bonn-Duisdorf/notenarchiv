@@ -5245,7 +5245,7 @@ select.profile-control {
   flex: 1 1 8rem;
 }
 
-/* Shared list/modal thumbs: large, rectangular (covers + entity avatars) */
+/* Shared list/modal thumbs: one 3:4 schema for covers, composers, publishers */
 .archiv-thumb,
 .piece-cover,
 .entity-avatar {
@@ -5272,45 +5272,9 @@ select.profile-control {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center center;
   display: block;
-}
-
-/* Portraits: keep subject visible (landscape sources must not crop the face away) */
-.entity-avatar img {
-  object-fit: contain;
-  object-position: center center;
-}
-
-/* Publisher logos: square frame (not portrait), contain + padding */
-.entity-avatar.entity-avatar--logo {
-  width: 2.75rem;
-  height: 2.75rem;
-}
-
-.archiv-thumb--lg.entity-avatar--logo,
-.entity-avatar--lg.entity-avatar--logo {
-  width: 4.5rem;
-  height: 4.5rem;
-}
-
-.archiv-thumb--detail.entity-avatar--logo,
-.entity-avatar--detail.entity-avatar--logo {
-  width: 8.5rem;
-  height: 8.5rem;
-}
-
-@media (max-width: 600px) {
-  .archiv-thumb--detail.entity-avatar--logo,
-  .entity-avatar--detail.entity-avatar--logo {
-    width: 6.5rem;
-    height: 6.5rem;
-  }
-}
-
-.entity-avatar--logo img {
-  object-fit: contain;
-  object-position: center center;
-  padding: 0.2rem;
+  padding: 0;
   box-sizing: border-box;
 }
 

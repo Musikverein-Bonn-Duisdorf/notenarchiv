@@ -267,7 +267,7 @@ function archivLogoDownloadPng($url, $minPx = 48) {
         $img = $dst;
     }
     if(function_exists('archivLogoNormalizeGd')) {
-        $img = archivLogoNormalizeGd($img, 512, 0.1);
+        $img = archivLogoNormalizeGd($img, 512, 0.02);
     }
     $path = tempnam(sys_get_temp_dir(), 'plogo').'.png';
     imagesavealpha($img, true);
@@ -306,7 +306,7 @@ function archivResolvePublisherLogo($website) {
         'kind' => 'icon-horse',
     );
     $candidates[] = array(
-        'url' => 'https://www.google.com/s2/favicons?sz=128&domain_url='.rawurlencode('https://'.$host),
+        'url' => 'https://www.google.com/s2/favicons?sz=256&domain_url='.rawurlencode('https://'.$host),
         'score' => 20,
         'kind' => 'google-favicon',
     );
