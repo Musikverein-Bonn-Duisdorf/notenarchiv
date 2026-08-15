@@ -2,6 +2,11 @@
 
 Automatisch aus Git-Release-Commits erzeugt.
 
+## 2026-08-15-aaf50 (2026-08-15)
+
+- ARCHIV-33: Sammlungen zugeklappt; Default-Sortierung neueste zuerst
+- ARCHIV-33: Sammlungen aufklappbar; neueste zuerst
+
 ## 2026-08-15-5cbab (2026-08-15)
 
 - ARCHIV-32: Schema-Version auf 9 für Collection.Archived
