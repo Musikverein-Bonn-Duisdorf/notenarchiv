@@ -2,6 +2,10 @@
 
 Automatisch aus Git-Release-Commits erzeugt.
 
+## 2026-08-15-d321a (2026-08-15)
+
+- ARCHIV-39: Stück-Speichern vor Header-Ausgabe redirecten
+
 ## 2026-08-15-0af39 (2026-08-15)
 
 - ARCHIV-37: einheitliches 3:4-Schema für Verlags-Logos
