@@ -1,5 +1,5 @@
-# Disable PHP execution under data/ (covers, score files)
-php_flag engine off
+# Disable PHP execution under data/ (covers, score files, avatars).
+# Avoid Apache php_* flags here — on some hosts they make the whole directory return HTTP 500.
 <FilesMatch "\.php$">
     Require all denied
 </FilesMatch>

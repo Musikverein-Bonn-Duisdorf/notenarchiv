@@ -266,26 +266,22 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         data = await api('GET', '/publishers.php?' + qs.toString());
         break;
       }
-      case 'upsert_publisher':
+      case 'upsert_publisher': {
         if (args.id) {
-          data = await api('PATCH', '/publishers.php', {
-            json: {
-              id: args.id,
-              name: args.name,
-              website: args.website,
-              address: args.address,
-            },
-          });
+          const patch = { id: args.id };
+          if (args.name !== undefined) patch.name = args.name;
+          if (args.website !== undefined) patch.website = args.website;
+          if (args.address !== undefined) patch.address = args.address;
+          data = await api('PATCH', '/publishers.php', { json: patch });
         } else {
-          data = await api('POST', '/publishers.php', {
-            json: {
-              name: args.name,
-              website: args.website,
-              address: args.address,
-            },
-          });
+          const create = { name: args.name };
+          if (args.website !== undefined) create.website = args.website;
+          if (args.address !== undefined) create.address = args.address;
+          data = await api('POST', '/publishers.php', { json: create });
         }
         break;
+      }
+
       case 'set_publisher_avatar': {
         const buf = readFileSync(args.filePath);
         const form = new FormData();
