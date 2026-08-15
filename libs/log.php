@@ -223,7 +223,8 @@ class Log
             $timePart = substr($tsRaw, 11, 5);
         }
 
-        echo '<div id="'.(int)$this->Index.'" class="'.htmlspecialchars($classes, ENT_QUOTES, 'UTF-8').'">';
+        echo '<div id="'.(int)$this->Index.'" class="'.htmlspecialchars($classes, ENT_QUOTES, 'UTF-8').'"'
+            .' data-timestamp="'.htmlspecialchars($tsRaw, ENT_QUOTES, 'UTF-8').'">';
         echo '<div class="log-id">';
         echo '<div class="log-time">';
         echo '<span class="log-date">'.htmlspecialchars($datePart, ENT_QUOTES, 'UTF-8').'</span>';
@@ -238,10 +239,80 @@ class Log
         echo '</div>';
         echo '<div class="log-rail" aria-hidden="true"></div>';
         echo '<div class="log-main">';
-        echo '<div class="log-user">'.htmlspecialchars($userLabel, ENT_QUOTES, 'UTF-8').'</div>';
-        echo '<div class="log-message">'.$this->Message.'</div>';
+        if((int)$this->User > 0 && function_exists('entityOpenHtml')) {
+            echo '<div class="log-user">'.entityOpenHtml('user', (int)$this->User, $userLabel).'</div>';
+        }
+        else {
+            echo '<div class="log-user">'.htmlspecialchars($userLabel, ENT_QUOTES, 'UTF-8').'</div>';
+        }
+        $msg = (string)$this->Message;
+        if(function_exists('logMessageLinkEntities')) {
+            $msg = logMessageLinkEntities($msg);
+        }
+        echo '<div class="log-message">'.$msg.'</div>';
         echo '</div>';
         echo '</div>';
     }
 };
+
+/**
+ * Live-Poll HTML for the log page (Melde UI-SHELL parity).
+ * Returns newer rows (Index > $maxIndex) in batches (newest first),
+ * or the same top row when its Timestamp was bumped by Log dedupe.
+ *
+ * @param int $limit 0 = configured logListChunkSize
+ * @return string HTML of one or more log rows, or empty string
+ */
+function logPollNextHtml($maxIndex, $topTimestamp = '', $limit = 0) {
+    $maxIndex = (int)$maxIndex;
+    if($maxIndex < 1) {
+        return '';
+    }
+    $limit = listChunkLogLimit($limit);
+    $sql = sprintf(
+        'SELECT `Index` FROM `%sLog` WHERE `Index` > %d ORDER BY `Index` ASC LIMIT %d;',
+        $GLOBALS['dbprefix'],
+        $maxIndex,
+        $limit
+    );
+    $dbr = mysqli_query($GLOBALS['conn'], $sql);
+    sqlerror();
+    $ids = array();
+    if($dbr) {
+        while($row = mysqli_fetch_array($dbr)) {
+            $ids[] = (int)$row['Index'];
+        }
+    }
+    if(count($ids) > 0) {
+        $ids = array_reverse($ids);
+        ob_start();
+        foreach($ids as $id) {
+            $M = new Log;
+            $M->load_by_id($id);
+            if($M->Index > 0) {
+                $M->printTableLine();
+            }
+        }
+        $html = ob_get_clean();
+        return $html === false ? '' : $html;
+    }
+
+    $topTimestamp = trim((string)$topTimestamp);
+    if($topTimestamp === '') {
+        return '';
+    }
+    $M = new Log;
+    $M->load_by_id($maxIndex);
+    if($M->Index < 1) {
+        return '';
+    }
+    $serverTs = (string)$M->Timestamp;
+    if($serverTs === '' || strcmp($serverTs, $topTimestamp) <= 0) {
+        return '';
+    }
+    ob_start();
+    $M->printTableLine();
+    $html = ob_get_clean();
+    return $html === false ? '' : $html;
+}
 ?>

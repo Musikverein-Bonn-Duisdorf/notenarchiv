@@ -99,7 +99,7 @@ $sections[] = array(
 <li><b>Updater</b> – Software-Update vom Remote und Datenbank-Prüfung/Reparatur; der Bericht listet nur Änderungen und Probleme</li>
 ' : '').'
 '.($canShowLog ? '
-<li><b>Log</b> – Anwendungsprotokoll (Suche, Live-Aktualisierung, Nachladen beim Scrollen)</li>
+<li><b>Log</b> – Anwendungsprotokoll (Server-Suche, Live-Aktualisierung, Nachladen beim Scrollen; Einträge können zu Stücken/Personen verlinken)</li>
 ' : '').'
 </ul>
 '

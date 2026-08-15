@@ -1,20 +1,21 @@
 function filterLog() {
-    var input, filter, table, tr, i, txtValue;
+    var input, filter, table, i, row, txtValue;
     input = document.getElementById("filterString");
-    filter = input.value.toUpperCase();
+    filter = input ? input.value : '';
     table = document.getElementById("Liste");
-    tr = table.getElementsByTagName("div");
-    for (i = 0; i < tr.length; i++) {
-	if(tr[i].id === "listSentinel") continue;
-	if(tr[i].className=="w3-modal" || tr[i].className=="w3-modal-content") continue;
-	if(tr[i].parentNode !== table) continue;
-	txtValue = (typeof listRowSearchText === 'function' ? listRowSearchText(tr[i]) : (tr[i].textContent || tr[i].innerText));
-	if (txtValue.toUpperCase().indexOf(filter) > -1) {
-	    tr[i].style.display = "";
-	    tr[i].classList.remove("list-filtered-out");
+    // Only direct list rows (not nested log-time / log-message divs) — O(rows), not O(descendants)
+    for (i = 0; i < table.children.length; i++) {
+	row = table.children[i];
+	if(row.nodeType !== 1) continue;
+	if(row.id === "listSentinel") continue;
+	if(row.className=="w3-modal" || row.className=="w3-modal-content") continue;
+	txtValue = (typeof listRowSearchText === 'function' ? listRowSearchText(row) : (row.textContent || row.innerText));
+	if (typeof listRowMatchesQuery === 'function' ? listRowMatchesQuery(txtValue, filter) : String(txtValue).toUpperCase().indexOf(String(filter).toUpperCase()) > -1) {
+	    row.style.display = "";
+	    row.classList.remove("list-filtered-out");
 	} else {
-	    tr[i].style.display = "none";
-	    tr[i].classList.add("list-filtered-out");
+	    row.style.display = "none";
+	    row.classList.add("list-filtered-out");
 	}
     }
 }

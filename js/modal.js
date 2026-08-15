@@ -1,5 +1,5 @@
 /**
- * Shared modal host helpers (Melde modal.js core, without Melde-domain handlers).
+ * Shared modal host helpers (Melde modal.js core + entity-open, Archiv types).
  */
 var modalCache = {};
 var modalLoadingKey = null;
@@ -49,6 +49,29 @@ function openModal(type, id, register) {
 
 document.addEventListener('keydown', function(e) {
     if(e.key === 'Escape') closeModal();
+});
+
+/** Entity chips (.entity-open) → async openModal (UI-SHELL / Melde MELD-167). */
+document.addEventListener('click', function(e) {
+    var ent = e.target.closest ? e.target.closest('.entity-open') : null;
+    if(!ent) return;
+    e.preventDefault();
+    e.stopPropagation();
+    var type = ent.getAttribute('data-entity-type') || '';
+    var id = parseInt(ent.getAttribute('data-entity-id') || '0', 10);
+    if(!type || !(id > 0)) return;
+    openModal(type, id);
+}, true);
+
+document.addEventListener('keydown', function(e) {
+    if(e.key !== 'Enter' && e.key !== ' ') return;
+    var ent = e.target.closest ? e.target.closest('.entity-open') : null;
+    if(!ent) return;
+    e.preventDefault();
+    var type = ent.getAttribute('data-entity-type') || '';
+    var id = parseInt(ent.getAttribute('data-entity-id') || '0', 10);
+    if(!type || !(id > 0)) return;
+    openModal(type, id);
 });
 
 /** Safety-net: page-local .w3-modal must sit outside .app-main. */
