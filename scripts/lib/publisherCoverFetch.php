@@ -5,7 +5,19 @@
  * Many publisher frontends are SPAs or bot-blocked. Rundel’s public catalog
  * (rundel.de) exposes searchable HTML with official edition covers (incl.
  * De Haske, Anglo, Amstel, Mitropa, Barnhouse, …) via Cloudinary og:image.
+ *
+ * Library for CLI scripts only (see scripts/.htaccess + root RedirectMatch).
  */
+if(PHP_SAPI !== 'cli') {
+    // Direct HTTP hit must not run even if directory deny is misconfigured.
+    if(!empty($_SERVER['SCRIPT_FILENAME'])
+        && realpath((string)$_SERVER['SCRIPT_FILENAME']) === realpath(__FILE__)) {
+        http_response_code(403);
+        header('Content-Type: text/plain; charset=UTF-8');
+        echo "Forbidden\n";
+        exit;
+    }
+}
 
 if(!function_exists('archivCoverFetchHttp')) {
 
@@ -245,19 +257,124 @@ function archivCoverFromPublisherSite($website, $title, $minScore = 90.0) {
 }
 
 /**
- * Resolve a cover URL for a piece: publisher site first, then Rundel wind catalog.
+ * Search HeBu catalog (fallback when Rundel is unreachable).
+ *
+ * @return array{url:string,title:string,score:float,source:string,page:string}|null
+ */
+function archivCoverFromHebu($title, $minScore = 90.0) {
+    $title = trim((string)$title);
+    if($title === '') {
+        return null;
+    }
+    $queries = array($title);
+    if(preg_match('/^(.+?)\s+[–—-]\s+/u', $title, $m)) {
+        $queries[] = trim($m[1]);
+    }
+    if(preg_match('/^(.+?)\s*\/\s*/u', $title, $m)) {
+        $queries[] = trim($m[1]);
+    }
+    if(preg_match('/^(.+?)\s*\[/u', $title, $m)) {
+        $queries[] = trim($m[1]);
+    }
+    $queries = array_values(array_unique(array_filter($queries)));
+
+    $best = null;
+    $bestScore = 0.0;
+    foreach($queries as $q) {
+        $url = 'https://www.hebu-music.com/de/suche/?s='.rawurlencode($q);
+        list($code, $html) = archivCoverFetchHttp($url, 25);
+        if($code !== 200 || $html === '') {
+            continue;
+        }
+        if(!preg_match_all(
+            '#<img[^>]+src="(https://www\.hebu-music\.com/thumb\.php\?[^"]+)"[^>]*title="([^"]+)"#i',
+            $html,
+            $imgs,
+            PREG_SET_ORDER
+        )) {
+            continue;
+        }
+        foreach($imgs as $row) {
+            $thumb = html_entity_decode($row[1], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $hitTitle = html_entity_decode($row[2], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            // Drop bare composer suffix " - Name / Arr. …" for scoring when present
+            $scoreTitle = $hitTitle;
+            if(preg_match('/^(.+?)\s+-\s+[A-ZÄÖÜ]/i', $hitTitle, $tm)) {
+                $scoreTitle = $tm[1];
+            }
+            if(preg_match('/name=00000000/i', $thumb)) {
+                continue;
+            }
+            $score = max(
+                archivCoverTitleScore($title, $hitTitle),
+                archivCoverTitleScore($title, $scoreTitle),
+                archivCoverTitleScore($q, $scoreTitle)
+            );
+            if($score < $minScore || $score <= $bestScore) {
+                continue;
+            }
+            $page = '';
+            $escThumb = preg_quote($row[1], '#');
+            if(preg_match('#href="(https://www\.hebu-music\.com/de/artikel/[^"]+)"[^>]*>\s*<img[^>]+src="'.$escThumb.'"#is', $html, $pm)
+                || preg_match('#src="'.$escThumb.'"[^>]*>\s*</a>.*?href="(https://www\.hebu-music\.com/de/artikel/[^"]+)"#is', $html, $pm)) {
+                $page = $pm[1];
+            } elseif(preg_match('#href="(https://www\.hebu-music\.com/de/artikel/[^/]+/[^/]+/[^"]+\.\d+/)"#i', $html, $pm)) {
+                $page = $pm[1];
+            }
+            $thumb = str_replace('&amp;', '&', $thumb);
+            $thumb = preg_replace('/([?&]width=)\d+/i', '${1}800', $thumb);
+            $thumb = preg_replace('/([?&]height=)\d+/i', '${1}800', $thumb);
+            $bestScore = $score;
+            $best = array(
+                'url' => $thumb,
+                'title' => $hitTitle,
+                'score' => $score,
+                'source' => 'hebu-music.com',
+                'page' => $page !== '' ? $page : $url,
+            );
+        }
+        if($best !== null && $bestScore >= 98.0) {
+            break;
+        }
+    }
+    return $best;
+}
+
+/**
+ * Resolve a cover URL for a piece: publisher site first, then Rundel, then HeBu.
  *
  * @return array{url:string,title:string,score:float,source:string,page?:string}|null
  */
 function archivResolvePublisherCover($title, $publisherWebsite = '') {
-    $hit = null;
-    if(trim((string)$publisherWebsite) !== '') {
-        $hit = archivCoverFromPublisherSite($publisherWebsite, $title, 90.0);
+    $variants = array(trim((string)$title));
+    if(preg_match('/^(.+?)\s+[–—-]\s+/u', $title, $m)) {
+        $variants[] = trim($m[1]);
     }
-    if($hit === null) {
-        $hit = archivCoverFromRundel($title, 90.0);
+    if(preg_match('/^(.+?)\s*\/\s*/u', $title, $m)) {
+        $variants[] = trim($m[1]);
     }
-    return $hit;
+    if(preg_match('/^(.+?)\s*\[/u', $title, $m)) {
+        $variants[] = trim($m[1]);
+    }
+    $variants = array_values(array_unique(array_filter($variants)));
+
+    foreach($variants as $i => $variant) {
+        $minScore = $i === 0 ? 90.0 : 88.0;
+        $hit = null;
+        if(trim((string)$publisherWebsite) !== '') {
+            $hit = archivCoverFromPublisherSite($publisherWebsite, $variant, $minScore);
+        }
+        if($hit === null) {
+            $hit = archivCoverFromRundel($variant, $minScore);
+        }
+        if($hit === null) {
+            $hit = archivCoverFromHebu($variant, $minScore);
+        }
+        if($hit !== null) {
+            return $hit;
+        }
+    }
+    return null;
 }
 
 /**
@@ -283,6 +400,196 @@ function archivDownloadCoverFile($url) {
     imagejpeg($img, $path, 90);
     imagedestroy($img);
     return is_file($path) ? $path : null;
+}
+
+/**
+ * Parse Komponist / Arrangeur / Verlag from a HeBu product HTML page.
+ *
+ * @return array{composer:?string,arranger:?string,publisher:?string}
+ */
+function archivParseHebuProductMeta($html) {
+    $out = array('composer' => null, 'arranger' => null, 'publisher' => null);
+    $html = (string)$html;
+    if($html === '') {
+        return $out;
+    }
+    if(preg_match('#Komponist:\s*<a[^>]*>([^<]+)</a>#ui', $html, $m)) {
+        $cmp = trim(html_entity_decode($m[1], ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+        if($cmp !== '' && $cmp !== '-') {
+            $out['composer'] = $cmp;
+        }
+    }
+    if(preg_match('#Arrangeur:\s*<a[^>]*>([^<]+)</a>#ui', $html, $m)) {
+        $arr = trim(html_entity_decode($m[1], ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+        if($arr !== '' && $arr !== '-' && !preg_match('/^arr\.?$/iu', $arr)) {
+            $out['arranger'] = $arr;
+        }
+    }
+    if(preg_match('#Verlag:\s*<a[^>]*>([^<]+)</a>#ui', $html, $m)) {
+        $out['publisher'] = trim(html_entity_decode($m[1], ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+    }
+    if(($out['composer'] === null || $out['arranger'] === null || $out['publisher'] === null)
+        && preg_match('#<script type="application/ld\+json">(.+?)</script>#si', $html, $jm)
+    ) {
+        $j = json_decode($jm[1], true);
+        if(is_array($j)) {
+            foreach(($j['additionalProperty'] ?? array()) as $prop) {
+                $name = isset($prop['name']) ? (string)$prop['name'] : '';
+                $val = isset($prop['value']) ? trim((string)$prop['value']) : '';
+                if($val === '') {
+                    continue;
+                }
+                if($out['composer'] === null && strcasecmp($name, 'Komponist') === 0
+                    && $val !== '' && $val !== '-'
+                ) {
+                    $out['composer'] = $val;
+                }
+                if($out['arranger'] === null && strcasecmp($name, 'Arrangeur') === 0
+                    && $val !== '' && $val !== '-'
+                ) {
+                    $out['arranger'] = $val;
+                }
+                if($out['publisher'] === null && strcasecmp($name, 'Verlag') === 0) {
+                    $out['publisher'] = $val;
+                }
+            }
+        }
+    }
+    return $out;
+}
+
+/**
+ * Map HeBu / catalog publisher labels (and URL slugs) to a canonical Archiv name key.
+ */
+function archivNormalizePublisherLabel($label) {
+    $s = mb_strtolower(trim((string)$label), 'UTF-8');
+    $s = str_replace(array('–', '—'), '-', $s);
+    $s = preg_replace('/[^\p{L}\p{N}\s\-]+/u', ' ', $s);
+    $s = preg_replace('/\s+/u', ' ', trim((string)$s));
+    $aliases = array(
+        'mitropa music' => 'mitropa',
+        'mitropa' => 'mitropa',
+        'musikverlag rundel gmbh' => 'rundel',
+        'musikverlag rundel' => 'rundel',
+        'rundel' => 'rundel',
+        'hebu musikverlag gmbh' => 'hebu',
+        'hebu musikverlag' => 'hebu',
+        'hebu' => 'hebu',
+        'de haske bv' => 'dehaske',
+        'de haske' => 'dehaske',
+        'de haske publications bv' => 'dehaske',
+        'de haske publications' => 'dehaske',
+        'anglo music' => 'anglo',
+        'anglo music press' => 'anglo',
+        'beriato' => 'beriato',
+        'beriato music' => 'beriato',
+        'molenaar' => 'molenaar',
+        'molenaar edition' => 'molenaar',
+        'molenaar edition bv' => 'molenaar',
+        'c l barnhouse company' => 'barnhouse',
+        'barnhouse' => 'barnhouse',
+        'hal leonard' => 'halleonard',
+        'hal leonard publishing co' => 'halleonard',
+        'hal leonard europe' => 'halleonard',
+        'musikverlag halter gmbh' => 'halter',
+        'musikverlag halter' => 'halter',
+        'halter' => 'halter',
+        'auren' => 'auren',
+        'auren musik' => 'auren',
+        'amstel music' => 'dehaske', // Amstel often under De Haske group — skip? safer leave unmapped
+    );
+    // Do not map Amstel to De Haske — remove that mistaken alias
+    unset($aliases['amstel music']);
+    if(isset($aliases[$s])) {
+        return $aliases[$s];
+    }
+    $slug = str_replace(' ', '-', $s);
+    $slugAliases = array(
+        'mitropa-music' => 'mitropa',
+        'musikverlag-rundel' => 'rundel',
+        'hebu-musikverlag-gmbh' => 'hebu',
+        'de-haske-publications-bv' => 'dehaske',
+        'de-haske' => 'dehaske',
+        'anglo-music-press' => 'anglo',
+        'beriato-music' => 'beriato',
+        'molenaar-edition-bv' => 'molenaar',
+        'c-l-barnhouse-company' => 'barnhouse',
+        'hal-leonard-publishing-co' => 'halleonard',
+        'musikverlag-halter-gmbh' => 'halter',
+    );
+    return $slugAliases[$slug] ?? $s;
+}
+
+/**
+ * Publisher key from HeBu artikel URL path segment.
+ */
+function archivHebuPublisherKeyFromUrl($url) {
+    if(preg_match('#/de/artikel/[^/]+/([^/]+)/#i', (string)$url, $m)) {
+        return archivNormalizePublisherLabel(str_replace('-', ' ', $m[1]));
+    }
+    return '';
+}
+
+/**
+ * Split "First Middle Last" / "Last, First" into firstName + lastName.
+ *
+ * @return array{first:string,last:string}|null
+ */
+function archivSplitPersonName($full) {
+    $full = trim(preg_replace('/\s+/u', ' ', (string)$full));
+    if($full === '' || $full === '-'
+        || preg_match('/^(traditional|trad\.?|anon\.?|anonymous|various|diverse)$/iu', $full)
+    ) {
+        return null;
+    }
+    // Compound credits are not a single person
+    if(preg_match('/[&;\/]|\\band\\b|\\bund\\b/iu', $full) || str_contains($full, '(')) {
+        return null;
+    }
+    if(str_contains($full, ',')) {
+        $parts = array_map('trim', explode(',', $full, 2));
+        $last = $parts[0];
+        $first = $parts[1] ?? '';
+        if($last === '') {
+            return null;
+        }
+        return array('first' => $first, 'last' => $last);
+    }
+    $parts = preg_split('/\s+/u', $full);
+    if(!$parts || count($parts) < 1) {
+        return null;
+    }
+    if(count($parts) === 1) {
+        // Single token: only usable for matching existing last names, not for create
+        return array('first' => '', 'last' => $parts[0], 'single' => true);
+    }
+    $last = array_pop($parts);
+    return array('first' => implode(' ', $parts), 'last' => $last, 'single' => false);
+}
+
+/**
+ * Fetch HeBu product meta for a page URL (must be hebu-music.com artikel).
+ *
+ * @return array{composer:?string,arranger:?string,publisher:?string,page:string}|null
+ */
+function archivFetchHebuProductMeta($pageUrl) {
+    $pageUrl = trim((string)$pageUrl);
+    if($pageUrl === '' || stripos($pageUrl, 'hebu-music.com') === false) {
+        return null;
+    }
+    list($code, $html) = archivCoverFetchHttp($pageUrl, 25);
+    if($code !== 200 || $html === '') {
+        return null;
+    }
+    $meta = archivParseHebuProductMeta($html);
+    if($meta['publisher'] === null) {
+        $key = archivHebuPublisherKeyFromUrl($pageUrl);
+        if($key !== '') {
+            $meta['publisher'] = $key; // normalized key; mapper resolves
+        }
+    }
+    $meta['page'] = $pageUrl;
+    return $meta;
 }
 
 } // function_exists guard
