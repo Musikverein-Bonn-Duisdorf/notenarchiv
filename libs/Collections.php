@@ -136,7 +136,10 @@ class Collections
         $canEdit = !empty($_SESSION['admin']);
         $openJs = 'openModal(\'collection\', '.$id.')';
 
-        $str = '<section class="collection-section" data-search="'.archivEscHtml($name).'">';
+        $str = '<section class="collection-section" id="collectionID'.$id.'"'
+            .' data-search="'.archivEscHtml($name).'"'
+            .' data-sort-name="'.archivEscHtml($name).'"'
+            .' data-sort-index="'.archivEscHtml((string)$id).'">';
         if($canEdit) {
             $str .= '<h3 class="collection-section-title collection-section-title--editable" role="button" tabindex="0"'
                 .' onclick="'.$openJs.'"'

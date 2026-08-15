@@ -309,6 +309,82 @@ function logMessageLinkEntities($html) {
         $html
     );
 
+    // CollectionItem change: Collection: (1) Alt &rArr; (2) <b>Neu</b>
+    $html = preg_replace_callback(
+        '/\bCollection:\s*\((\d+)\)\s*([^,<]*?)\s*&rArr;\s*\((\d+)\)\s*<b>(.*?)<\/b>/si',
+        function ($m) use ($chip, $plainLabel) {
+            $oldLabel = $plainLabel($m[2]);
+            if($oldLabel === '') {
+                $oldLabel = '#'.$m[1];
+            }
+            return 'Collection: ('.$m[1].') '.$oldLabel.' &rArr; '.$chip('collection', $m[3], $m[4]);
+        },
+        $html
+    );
+
+    // Melde-style: Collection: (12) <b>Name</b>
+    $html = preg_replace_callback(
+        '/\bCollection:\s*\((\d+)\)\s*<b>(.*?)<\/b>/si',
+        function ($m) use ($chip) {
+            return 'Collection: '.$chip('collection', $m[1], $m[2]);
+        },
+        $html
+    );
+
+    // CollectionItem change: Composition: (1) Alt &rArr; (2) <b>Neu</b>
+    $html = preg_replace_callback(
+        '/\bComposition:\s*\((\d+)\)\s*([^,<]*?)\s*&rArr;\s*\((\d+)\)\s*<b>(.*?)<\/b>/si',
+        function ($m) use ($chip, $plainLabel) {
+            $oldLabel = $plainLabel($m[2]);
+            if($oldLabel === '') {
+                $oldLabel = '#'.$m[1];
+            }
+            return 'Composition: ('.$m[1].') '.$oldLabel.' &rArr; '.$chip('composition', $m[3], $m[4]);
+        },
+        $html
+    );
+
+    // Melde-style: Composition: (9) <b>Title</b>
+    $html = preg_replace_callback(
+        '/\bComposition:\s*\((\d+)\)\s*<b>(.*?)<\/b>/si',
+        function ($m) use ($chip) {
+            return 'Composition: '.$chip('composition', $m[1], $m[2]);
+        },
+        $html
+    );
+
+    // Legacy CollectionItem logs: Collection: <b>…</b> / Composition: <b>…</b> without ids
+    // Resolve via CollectionItem-ID when the row still exists.
+    if(preg_match('/\bCollectionItem-ID:\s*(\d+)/i', $source, $cim)
+        && class_exists('Collection')
+        && strpos($html, 'data-entity-type="collection"') === false
+    ) {
+        $item = new Collection();
+        $item->load_by_id((int)$cim[1]);
+        $colId = (int)$item->Collections;
+        $compId = (int)$item->Composition;
+        if($colId > 0) {
+            $html = preg_replace_callback(
+                '/\bCollection:\s*<b>(.*?)<\/b>/si',
+                function ($m) use ($chip, $colId) {
+                    return 'Collection: '.$chip('collection', $colId, $m[1]);
+                },
+                $html,
+                1
+            );
+        }
+        if($compId > 0 && strpos($html, 'data-entity-type="composition"') === false) {
+            $html = preg_replace_callback(
+                '/\bComposition:\s*<b>(.*?)<\/b>/si',
+                function ($m) use ($chip, $compId) {
+                    return 'Composition: '.$chip('composition', $compId, $m[1]);
+                },
+                $html,
+                1
+            );
+        }
+    }
+
     // User: (5) <b>Name</b>
     $html = preg_replace_callback(
         '/\bUser:\s*\((\d+)\)\s*<b>(.*?)<\/b>/si',

@@ -169,6 +169,7 @@ class Publisher
         $openJs = 'openModal(\'publisher\', '.$id.')';
 
         $str = '<div class="'.archivEscHtml(implode(' ', $classes)).'"'
+            .' id="publisherID'.$id.'"'
             .' data-search="'.archivEscHtml($search).'"'
             .' data-sort-name="'.archivEscHtml($name).'"'
             .' data-sort-index="'.archivEscHtml((string)$id).'"'
