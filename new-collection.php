@@ -15,6 +15,7 @@ if(empty($_SESSION['admin'])) {
 }
 
 if(isset($_POST['insert'])) {
+    $_POST['Archived'] = !empty($_POST['Archived']) ? 1 : 0;
     $n = new Collections;
     $n->fill_from_array($_POST);
     $n->save();
@@ -23,6 +24,7 @@ if(isset($_POST['insert'])) {
 }
 
 if(isset($_POST['update']) && isset($_POST['Index']) && (int)$_POST['Index'] > 0) {
+    $_POST['Archived'] = !empty($_POST['Archived']) ? 1 : 0;
     $n = new Collections;
     $n->load_by_id((int)$_POST['Index']);
     if((int)$n->Index > 0) {
@@ -109,6 +111,10 @@ $delName = archivPlainText($entity->Name);
       <div class="profile-field">
         <label class="profile-label" for="collectionName">Name</label>
         <input id="collectionName" name="Name" type="text" class="w3-input w3-border profile-control <?php echo htmlspecialchars($inputBg, ENT_QUOTES, 'UTF-8'); ?>" value="<?php echo $isEdit ? archivEscHtml($entity->Name) : ''; ?>" required>
+      </div>
+      <div class="profile-field">
+        <label class="profile-label" for="collectionArchived">Archiviert</label>
+        <input id="collectionArchived" name="Archived" type="checkbox" class="w3-check" value="1"<?php echo ($isEdit && (int)$entity->Archived) ? ' checked' : ''; ?>>
       </div>
     </section>
 <?php if($isEdit) { ?>

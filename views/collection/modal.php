@@ -35,6 +35,10 @@ $items = isset($items) && is_array($items) ? $items : array();
         <div class="profile-value"><?php echo archivEscHtml($name !== '' ? $name : '—'); ?></div>
       </div>
       <div class="profile-field">
+        <span class="profile-label">Archiviert</span>
+        <div class="profile-value"><?php echo (int)$collection->Archived ? 'ja' : 'nein'; ?></div>
+      </div>
+      <div class="profile-field">
         <span class="profile-label">Stücke</span>
         <div class="profile-value"><?php echo $itemCount; ?></div>
       </div>

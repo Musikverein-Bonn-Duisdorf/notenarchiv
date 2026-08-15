@@ -436,9 +436,10 @@ function listChunkPublishers($offset, $limit, $sort = '', $dir = 'asc') {
  * @param int $limit
  * @param string $sort name|index|''
  * @param string $dir asc|desc
+ * @param bool $includeArchived when false (default), hide Archived=1
  * @return array{html:string,nextCursor:string,hasMore:bool}
  */
-function listChunkCollections($offset, $limit, $sort = '', $dir = 'asc') {
+function listChunkCollections($offset, $limit, $sort = '', $dir = 'asc', $includeArchived = false) {
     $limit = listChunkLimit($limit);
     $offset = max(0, (int)$offset);
     $dirSql = (strtolower((string)$dir) === 'desc') ? 'DESC' : 'ASC';
@@ -455,9 +456,11 @@ function listChunkCollections($offset, $limit, $sort = '', $dir = 'asc') {
         break;
     }
 
+    $where = $includeArchived ? '' : ' WHERE COALESCE(`Archived`, 0) = 0';
     $sql = sprintf(
-        'SELECT `Index` FROM `%sCollection` ORDER BY %s LIMIT %d OFFSET %d;',
+        'SELECT `Index` FROM `%sCollection`%s ORDER BY %s LIMIT %d OFFSET %d;',
         $p,
+        $where,
         $orderBy,
         $limit + 1,
         $offset

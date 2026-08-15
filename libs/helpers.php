@@ -469,8 +469,9 @@ function instrumentsOption() {
 
 function collectionsOption() {
     $str='';
-    $sql = sprintf('SELECT * FROM `%sCollection` ORDER BY `Name`;',
-    $GLOBALS['dbprefix']
+    $sql = sprintf(
+        'SELECT * FROM `%sCollection` WHERE COALESCE(`Archived`, 0) = 0 ORDER BY `Name`;',
+        $GLOBALS['dbprefix']
     );
     $dbr = mysqli_query($GLOBALS['conn'], $sql);
     sqlerror();
@@ -1176,23 +1177,38 @@ function archivCompositionsCatalog() {
 }
 
 /**
- * Catalog entries for collection typeahead: [{id, label}, ...]
+ * Catalog entries for collection typeahead: [{id, label, meta}, ...]
+ * Archived collections are omitted unless listed in $includeIds (e.g. already assigned).
+ *
+ * @param array $includeIds collection ids always included even when archived
  * @return array
  */
-function archivCollectionsCatalog() {
+function archivCollectionsCatalog(array $includeIds = array()) {
     $out = array();
+    $keep = array();
+    foreach($includeIds as $id) {
+        $id = (int)$id;
+        if($id > 0) {
+            $keep[$id] = true;
+        }
+    }
     $sql = sprintf(
-        'SELECT `Index`, `Name` FROM `%sCollection` ORDER BY `Name`;',
+        'SELECT `Index`, `Name`, `Archived` FROM `%sCollection` ORDER BY `Name`;',
         $GLOBALS['dbprefix']
     );
     $dbr = mysqli_query($GLOBALS['conn'], $sql);
     sqlerror();
     while($row = mysqli_fetch_array($dbr)) {
+        $id = (int)$row['Index'];
+        $archived = !empty($row['Archived']);
+        if($archived && empty($keep[$id])) {
+            continue;
+        }
         $name = archivPlainText($row['Name']);
         $out[] = array(
-            'id' => (int)$row['Index'],
-            'label' => $name !== '' ? $name : ('Sammlung #'.(int)$row['Index']),
-            'meta' => '',
+            'id' => $id,
+            'label' => $name !== '' ? $name : ('Sammlung #'.$id),
+            'meta' => $archived ? 'archiviert' : '',
         );
     }
     return $out;
