@@ -2,6 +2,11 @@
 
 Automatisch aus Git-Release-Commits erzeugt.
 
+## 2026-08-15-5cbab (2026-08-15)
+
+- ARCHIV-32: Schema-Version auf 9 für Collection.Archived
+- ARCHIV-32: Schema-Version 9 (Collection.Archived)
+
 ## 2026-08-15-7c3f5 (2026-08-15)
 
 - ARCHIV-32: Sammlungen archivierbar mit Listenfilter
