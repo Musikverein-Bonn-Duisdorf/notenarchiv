@@ -86,8 +86,14 @@ class Collections
     }
         
     public function fill_from_array($row) {
-        foreach($row as $key => $val) {
-                $this->_data[$key] = $val;
+        if(!is_array($row)) {
+            return;
+        }
+        if(array_key_exists('Index', $row)) {
+            $this->Index = $row['Index'];
+        }
+        if(array_key_exists('Name', $row)) {
+            $this->Name = $row['Name'];
         }
     }
     public function is_valid() {
@@ -97,7 +103,7 @@ class Collections
     protected function insert() {
         $sql = sprintf('INSERT INTO `%sCollection` (`Name`) VALUES ("%s");',
         $GLOBALS['dbprefix'],
-        $this->Name
+        mysqli_real_escape_string($GLOBALS['conn'], (string)$this->Name)
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
         sqlerror();
@@ -108,8 +114,8 @@ class Collections
     protected function update() {
         $sql = sprintf('UPDATE `%sCollection` SET `Name` = "%s" WHERE `Index` = "%d";',
         $GLOBALS['dbprefix'],
-        $this->Name,
-        $this->Index
+        mysqli_real_escape_string($GLOBALS['conn'], (string)$this->Name),
+        (int)$this->Index
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
         sqlerror();

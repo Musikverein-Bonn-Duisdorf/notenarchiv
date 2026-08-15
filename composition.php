@@ -14,10 +14,10 @@ if(isset($_POST['syncCollections']) && isset($_POST['Composition'])) {
     $piece = new Composition;
     $piece->load_by_id((int)$_POST['Composition']);
     if((int)$piece->Index > 0 && isset($_POST['collectionsSpec'])) {
-        archivSyncCollectionItemsForComposition(
-            (int)$piece->Index,
-            archivParseCollectionChipSpec($_POST['collectionsSpec'])
-        );
+        $items = archivParseCollectionChipSpec($_POST['collectionsSpec']);
+        if($items !== null) {
+            archivSyncCollectionItemsForComposition((int)$piece->Index, $items);
+        }
     }
 }
 if(isset($_POST['partupload'])) {
