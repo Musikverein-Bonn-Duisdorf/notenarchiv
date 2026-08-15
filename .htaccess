@@ -14,3 +14,11 @@ RedirectMatch 403 /scripts/
 ErrorDocument 403 /errors/403.php
 ErrorDocument 404 /errors/404.php
 ErrorDocument 500 /errors/500.php
+
+# ARCHIV-35: CGI/FastCGI often strips Authorization — pass through for API Bearer auth
+CGIPassAuth On
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteCond %{HTTP:Authorization} .
+RewriteRule ^ - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+</IfModule>

@@ -24,6 +24,8 @@ php scripts/issueApiToken.php <login> [deviceLabel]
 
 ```bash
 curl -sS "$BASE/api/me.php" -H "Authorization: Bearer $TOKEN"
+# Fallback if the host strips Authorization (ARCHIV-35):
+curl -sS "$BASE/api/me.php" -H "X-Archiv-Token: $TOKEN"
 ```
 
 4. **Revoke**:

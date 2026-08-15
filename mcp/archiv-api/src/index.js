@@ -20,7 +20,10 @@ async function api(method, path, { json, form } = {}) {
     throw new Error('Set ARCHIV_API_BASE and ARCHIV_API_TOKEN');
   }
   const url = base + path;
-  const headers = { Authorization: 'Bearer ' + token };
+  const headers = {
+    Authorization: 'Bearer ' + token,
+    'X-Archiv-Token': token,
+  };
   let body;
   if (form) {
     body = form;

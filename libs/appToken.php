@@ -165,9 +165,9 @@ function archivRevokeAppToken($rawToken) {
 
 function archivExtractBearerToken() {
     $header = '';
-    if(isset($_SERVER['HTTP_AUTHORIZATION'])) {
+    if(isset($_SERVER['HTTP_AUTHORIZATION']) && (string)$_SERVER['HTTP_AUTHORIZATION'] !== '') {
         $header = (string)$_SERVER['HTTP_AUTHORIZATION'];
-    } elseif(isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+    } elseif(isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION']) && (string)$_SERVER['REDIRECT_HTTP_AUTHORIZATION'] !== '') {
         $header = (string)$_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
     } elseif(function_exists('apache_request_headers')) {
         $headers = apache_request_headers();
@@ -182,6 +182,13 @@ function archivExtractBearerToken() {
     }
     if(preg_match('/^\s*Bearer\s+(\S+)\s*$/i', $header, $m)) {
         return $m[1];
+    }
+    // Fallback when hosts strip Authorization (ARCHIV-35); raw token, not Bearer-prefixed.
+    if(isset($_SERVER['HTTP_X_ARCHIV_TOKEN'])) {
+        $alt = trim((string)$_SERVER['HTTP_X_ARCHIV_TOKEN']);
+        if($alt !== '' && strlen($alt) >= 32) {
+            return $alt;
+        }
     }
     return '';
 }
