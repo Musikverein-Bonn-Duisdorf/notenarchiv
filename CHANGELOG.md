@@ -2,6 +2,11 @@
 
 Automatisch aus Git-Release-Commits erzeugt.
 
+## 2026-08-15-cb2cb (2026-08-15)
+
+- ARCHIV-34: Tablet/Phone-Nav wie Meldeliste (≤992px)
+- ARCHIV-34: kleine Bildschirme (Melde-Parität)
+
 ## 2026-08-15-daa3b (2026-08-15)
 
 - ARCHIV-31: Remote-API, Medien-Refresh und Katalog-UI
