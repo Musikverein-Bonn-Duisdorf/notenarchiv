@@ -2,6 +2,10 @@
 
 Automatisch aus Git-Release-Commits erzeugt.
 
+## 2026-08-15-53f9e (2026-08-15)
+
+- ARCHIV-40: Media-CLI-Scripts behalten und /scripts/ HTTP-sperren
+
 ## 2026-08-15-d321a (2026-08-15)
 
 - ARCHIV-39: Stück-Speichern vor Header-Ausgabe redirecten
