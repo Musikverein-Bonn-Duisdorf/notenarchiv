@@ -2,6 +2,10 @@
 
 Automatisch aus Git-Release-Commits erzeugt.
 
+## 2026-08-15-c6ba0 (2026-08-15)
+
+- ARCHIV-38: URLs im Log klickbar machen
+
 ## 2026-08-15-83593 (2026-08-15)
 
 - ARCHIV-36: data/.htaccess ohne php_flag (Medien HTTP 500)
