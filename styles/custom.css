@@ -5306,34 +5306,80 @@ select.profile-control {
 }
 
 .collection-section {
-  margin: 0 0 1.25rem;
+  margin: 0 0 0.75rem;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 0.35rem;
+  background: rgba(255, 255, 255, 0.55);
+  padding: 0.15rem 0.75rem 0.35rem;
 }
 
-.collection-section[data-archived="1"] .collection-section-title {
+.collection-section[data-archived="1"] .collection-section-name {
   opacity: 0.85;
 }
 
-.collection-section-title {
-  margin: 0 0 0.55rem;
+.collection-section-summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.15rem;
   font-size: 1.05rem;
   font-weight: 700;
   line-height: 1.3;
+}
+
+.collection-section-summary::-webkit-details-marker {
+  display: none;
+}
+
+.collection-section-summary::before {
+  content: '▸';
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 1.1rem;
+  color: rgba(0, 0, 0, 0.55);
+  font-weight: 600;
+}
+
+.collection-section[open] > .collection-section-summary::before {
+  content: '▾';
+}
+
+.collection-section-summary-main {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.35rem;
+  flex: 1 1 12rem;
+  min-width: 0;
 }
 
-.collection-section-title--editable,
-.collection-section-title--openable {
-  cursor: pointer;
+.collection-section-name {
+  min-width: 0;
 }
 
-.collection-section-title--editable:hover,
-.collection-section-title--editable:focus,
-.collection-section-title--openable:hover,
-.collection-section-title--openable:focus {
-  text-decoration: underline;
+.collection-section-count {
+  display: inline-block;
+  min-width: 1.4rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.08);
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: center;
+}
+
+.collection-section-detail {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.collection-section-list {
+  margin: 0 0 0.35rem;
+  padding: 0 0 0.25rem 1.1rem;
 }
 
 .collection-item-row {
@@ -5348,10 +5394,6 @@ select.profile-control {
 .collection-item-row .w3-button {
   flex: 1 1 6rem;
   min-width: 0;
-}
-
-.collection-section-list {
-  margin: 0;
 }
 
 @media (max-width: 600px) {

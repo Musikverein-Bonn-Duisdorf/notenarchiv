@@ -10,7 +10,7 @@ if(!empty($_SESSION['admin'])) {
     $addBtn = '<a class="w3-button '.htmlspecialchars($GLOBALS['optionsDB']['colorBtnSubmit'], ENT_QUOTES, 'UTF-8').'" href="new-collection.php" title="Anlegen"><i class="fas fa-plus"></i></a>';
 }
 $showArchived = isset($_GET['archived']) && (string)$_GET['archived'] === '1';
-$chunk = listChunkCollections(0, 50, 'name', 'asc', $showArchived);
+$chunk = listChunkCollections(0, 50, 'index', 'desc', $showArchived);
 $extra = $showArchived ? ' data-extra="archived=1"' : '';
 adminListPageBegin('Archiv', 'Sammlungen', array('actionsHtml' => $addBtn));
 adminListSearchField('Sammlung, Stück…', array('onkeyup' => 'filterPieces()'));
@@ -20,13 +20,13 @@ adminListSearchField('Sammlung, Stück…', array('onkeyup' => 'filterPieces()')
     <button type="button" id="filterArchived" class="inv-sort-chip inv-filter-chip<?php echo $showArchived ? ' is-active' : ''; ?>" aria-pressed="<?php echo $showArchived ? 'true' : 'false'; ?>">Archivierte</button>
   </div>
   <div class="inv-sort-bar-sorts" role="toolbar" aria-label="Sortierung">
-    <button type="button" class="inv-sort-chip list-sort" data-sort="name" data-type="string">Name</button>
     <button type="button" class="inv-sort-chip list-sort" data-sort="index" data-type="number">ID</button>
+    <button type="button" class="inv-sort-chip list-sort" data-sort="name" data-type="string">Name</button>
   </div>
 </div>
 <div id="Liste">
 <?php echo $chunk['html']; ?>
-<?php echo listChunkRenderSentinel('collections', $chunk['nextCursor'], $chunk['hasMore'], 'filterPieces', ' data-sort="name" data-dir="asc"'.$extra); ?>
+<?php echo listChunkRenderSentinel('collections', $chunk['nextCursor'], $chunk['hasMore'], 'filterPieces', ' data-sort="index" data-dir="desc"'.$extra); ?>
 </div>
 <?php
 adminListPageEnd();
@@ -35,7 +35,7 @@ adminListPageEnd();
 <script src="<?php echo assetUrl('js/sortList.js'); ?>"></script>
 <script src="<?php echo assetUrl('js/infiniteScroll.js'); ?>"></script>
 <script>
-bindListSort({ headerId: 'listHeader', listId: 'Liste', mode: 'server', defaultKey: 'name', defaultDir: 'asc', defaultType: 'string' });
+bindListSort({ headerId: 'listHeader', listId: 'Liste', mode: 'server', defaultKey: 'index', defaultDir: 'desc', defaultType: 'number' });
 (function () {
   var chip = document.getElementById('filterArchived');
   if (!chip) return;
@@ -63,8 +63,8 @@ bindListSort({ headerId: 'listHeader', listId: 'Liste', mode: 'server', defaultK
     }
     window.history.replaceState({}, '', url.pathname + url.search);
     var sentinel = document.getElementById('listSentinel');
-    var sort = sentinel ? (sentinel.getAttribute('data-sort') || 'name') : 'name';
-    var dir = sentinel ? (sentinel.getAttribute('data-dir') || 'asc') : 'asc';
+    var sort = sentinel ? (sentinel.getAttribute('data-sort') || 'index') : 'index';
+    var dir = sentinel ? (sentinel.getAttribute('data-dir') || 'desc') : 'desc';
     if (typeof listInfiniteReload === 'function') {
       listInfiniteReload(sort, dir);
     }

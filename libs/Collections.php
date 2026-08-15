@@ -160,32 +160,7 @@ class Collections
         $id = (int)$this->Index;
         $name = archivPlainText($this->Name);
         $archived = (int)$this->Archived ? 1 : 0;
-        $canEdit = !empty($_SESSION['admin']);
         $openJs = 'openModal(\'collection\', '.$id.')';
-        $titleText = archivEscHtml($name !== '' ? $name : '—');
-        if($archived) {
-            $titleText .= ' <span class="mail-recipient-chip mail-recipient-chip--collection">Archiviert</span>';
-        }
-
-        $str = '<section class="collection-section" id="collectionID'.$id.'"'
-            .' data-search="'.archivEscHtml($name).'"'
-            .' data-sort-name="'.archivEscHtml($name).'"'
-            .' data-sort-index="'.archivEscHtml((string)$id).'"'
-            .' data-archived="'.$archived.'">';
-        if($canEdit) {
-            $str .= '<h3 class="collection-section-title collection-section-title--editable" role="button" tabindex="0"'
-                .' onclick="'.$openJs.'"'
-                .' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();'.$openJs.';}">'
-                .$titleText
-                .'</h3>';
-        } else {
-            $str .= '<h3 class="collection-section-title collection-section-title--openable" role="button" tabindex="0"'
-                .' onclick="'.$openJs.'"'
-                .' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();'.$openJs.';}">'
-                .$titleText
-                .'</h3>';
-        }
-        $str .= '<div class="collection-section-list">';
 
         $sql = sprintf(
             'SELECT `Index` FROM `%sCollectionItem` WHERE `Collections` = "%d" ORDER BY `CollectionNumber` ASC;',
@@ -194,13 +169,37 @@ class Collections
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
         sqlerror();
-        while($row = mysqli_fetch_array($dbr)) {
-            $content = new Collection;
-            $content->load_by_id($row['Index']);
-            $str .= $content->printLine();
+        $lines = '';
+        $itemCount = 0;
+        if($dbr) {
+            while($row = mysqli_fetch_array($dbr)) {
+                $content = new Collection;
+                $content->load_by_id($row['Index']);
+                $lines .= $content->printLine();
+                $itemCount++;
+            }
         }
 
-        $str .= '</div></section>';
+        $str = '<details class="collection-section" id="collectionID'.$id.'"'
+            .' data-search="'.archivEscHtml($name).'"'
+            .' data-sort-name="'.archivEscHtml($name).'"'
+            .' data-sort-index="'.archivEscHtml((string)$id).'"'
+            .' data-archived="'.$archived.'"'
+            .' data-item-count="'.$itemCount.'">';
+        $str .= '<summary class="collection-section-summary">';
+        $str .= '<span class="collection-section-summary-main">';
+        $str .= '<span class="collection-section-name">'.archivEscHtml($name !== '' ? $name : '—').'</span>';
+        $str .= ' <span class="collection-section-count" title="Stücke">'.$itemCount.'</span>';
+        if($archived) {
+            $str .= ' <span class="mail-recipient-chip mail-recipient-chip--collection">Archiviert</span>';
+        }
+        $str .= '</span>';
+        $str .= '<button type="button" class="collection-section-detail w3-button w3-small w3-border"'
+            .' onclick="event.preventDefault();event.stopPropagation();'.$openJs.';"'
+            .' aria-label="Details">Details</button>';
+        $str .= '</summary>';
+        $str .= '<div class="collection-section-list">'.$lines.'</div>';
+        $str .= '</details>';
         return $str;
     }
 
