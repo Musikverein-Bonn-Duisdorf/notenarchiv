@@ -4,6 +4,7 @@ archivConfigureSession();
 $_SESSION['page']='collections';
 $_SESSION['adminpage']=false;
 include "common/header.php";
+requirePermission('perm_read');
 
 $addBtn = '';
 if(!empty($_SESSION['admin'])) {

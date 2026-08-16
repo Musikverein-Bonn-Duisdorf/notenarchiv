@@ -4,20 +4,23 @@ archivConfigureSession();
 $_SESSION['page']='publishers';
 $_SESSION['adminpage']=false;
 include "common/header.php";
+requirePermission('perm_read');
 
-if($_SESSION['admin']) {
-    $sql = sprintf('SELECT COUNT(`Index`) AS `Count` FROM `%sPublisher`;',
-    $GLOBALS['dbprefix']
-    );
-    $dbr = mysqli_query($conn, $sql);
-    sqlerror();
-    $row = mysqli_fetch_array($dbr);
-    $nPublishers = $row['Count'];
+$sql = sprintf('SELECT COUNT(`Index`) AS `Count` FROM `%sPublisher`;',
+$GLOBALS['dbprefix']
+);
+$dbr = mysqli_query($conn, $sql);
+sqlerror();
+$row = mysqli_fetch_array($dbr);
+$nPublishers = $row['Count'];
 
+$addBtn = '';
+if(!empty($_SESSION['admin'])) {
     $addBtn = '<a class="w3-button '.htmlspecialchars($GLOBALS['optionsDB']['colorBtnSubmit'], ENT_QUOTES, 'UTF-8').'" href="new-publisher.php" title="Anlegen"><i class="fas fa-plus"></i></a>';
-    $chunk = listChunkPublishers(0, 50, 'name', 'asc');
-    adminListPageBegin('Verlage', 'Verlage ('.$nPublishers.')', array('actionsHtml' => $addBtn));
-    adminListSearchField('Verlag…', array('onkeyup' => 'filterPieces()'));
+}
+$chunk = listChunkPublishers(0, 50, 'name', 'asc');
+adminListPageBegin('Verlage', 'Verlage ('.$nPublishers.')', array('actionsHtml' => $addBtn));
+adminListSearchField('Verlag…', array('onkeyup' => 'filterPieces()'));
 ?>
 <div id="listHeader" class="inv-sort-bar">
   <div class="inv-sort-bar-sorts" role="toolbar" aria-label="Sortierung">
@@ -30,7 +33,7 @@ if($_SESSION['admin']) {
 <?php echo listChunkRenderSentinel('publishers', $chunk['nextCursor'], $chunk['hasMore'], 'filterPieces', ' data-sort="name" data-dir="asc"'); ?>
 </div>
 <?php
-    adminListPageEnd();
+adminListPageEnd();
 ?>
 <script src="<?php echo assetUrl('js/filterPieces.js'); ?>"></script>
 <script src="<?php echo assetUrl('js/sortList.js'); ?>"></script>
@@ -39,12 +42,5 @@ if($_SESSION['admin']) {
 bindListSort({ headerId: 'listHeader', listId: 'Liste', mode: 'server', defaultKey: 'name', defaultDir: 'asc', defaultType: 'string' });
 </script>
 <?php
-}
-else {
- ?>
-<meta http-equiv="refresh" content="0; URL=index.php" />
-<?php
-}
-
- include "common/footer.php";
+include "common/footer.php";
 ?>

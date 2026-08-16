@@ -80,5 +80,12 @@
         "LastUsed": {"Type": "timestamp", "Null": "YES", "Default": null},
         "Expires": {"Type": "timestamp", "Null": "YES", "Default": null},
         "Revoked": {"Type": "tinyint", "Default": 0}
+    },
+    "Permissions": {
+        "Index": {"Type": "int", "Extra": "AUTO_INCREMENT"},
+        "User": {"Type": "int"},
+        "perm_read": {"Type": "int", "Default": 0},
+        "perm_write": {"Type": "int", "Default": 0},
+        "perm_editPermissions": {"Type": "int", "Default": 0}
     }
 }

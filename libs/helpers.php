@@ -330,9 +330,10 @@ function logConfigChange($parameter, $oldValue, $newValue, $type = '') {
 }
 
 /**
- * Non-fatal permission check (Melde requirePermission semantics).
- * User.Admin always passes. Does not deny/exit.
- * @param string $perm e.g. perm_editConfig
+ * Non-fatal local Archiv permission check (ARCHIV-42).
+ * perm_read is also true when perm_write is set.
+ * Legacy Melde keys perm_editConfig / perm_showLog map to perm_write.
+ * @param string $perm e.g. perm_read, perm_write, perm_editPermissions
  * @return bool
  */
 function hasPermission($perm) {
@@ -340,23 +341,29 @@ function hasPermission($perm) {
     if($uid < 1) {
         return false;
     }
-    $sql = sprintf(
-        "SELECT `Admin` FROM `%sUser` WHERE `Index` = %d LIMIT 1;",
-        identityPrefix(),
-        $uid
-    );
-    $dbr = @mysqli_query($GLOBALS['conn'], $sql);
-    $row = ($dbr) ? mysqli_fetch_assoc($dbr) : null;
-    if($row && !empty($row['Admin'])) {
-        return true;
+    $perm = (string)$perm;
+    if($perm === 'perm_editConfig' || $perm === 'perm_showLog') {
+        $perm = 'perm_write';
+    }
+    return ArchivPermissions::loadForUser($uid)->getPermission($perm);
+}
+
+/**
+ * Melde platform flag (login gate / nav), not local Archiv rights.
+ * @param string $perm e.g. perm_accessNotenarchiv
+ * @return bool
+ */
+function hasMeldePlatformPermission($perm) {
+    $uid = isset($_SESSION['userid']) ? (int)$_SESSION['userid'] : 0;
+    if($uid < 1) {
+        return false;
     }
     return IdentityPermissions::loadForUser($uid)->getPermission($perm);
 }
 
 /**
- * Require a Melde permission (effective: personal row + group PermissionSpec).
- * User.Admin always passes.
- * @param string $perm e.g. perm_editConfig
+ * Require a local Archiv permission; denies and exits on failure.
+ * @param string $perm e.g. perm_read
  */
 function requirePermission($perm) {
     refreshSessionAdmin();
@@ -391,23 +398,21 @@ function denyAccess($message = 'Keine Berechtigung für diesen Bereich.') {
 }
 
 /**
- * Admin = Melde User.Admin OR any Melde Permissions flag (ARCHIV-6).
+ * Admin session flag = local Archiv perm_write (ARCHIV-42).
  * @param int $userId
- * @param bool $legacyAdmin User.Admin column
+ * @param bool $legacyAdmin ignored (Melde User.Admin no longer grants Archiv write)
  * @return bool
  */
 function computeAdminForUser($userId, $legacyAdmin = false) {
-    if($legacyAdmin) {
-        return true;
-    }
+    unset($legacyAdmin);
     $userId = (int)$userId;
     if($userId < 1) {
         return false;
     }
-    return IdentityPermissions::loadForUser($userId)->isAdmin();
+    return ArchivPermissions::loadForUser($userId)->getPermission('perm_write');
 }
 
-/** Refresh $_SESSION['admin'] from Melde User.Admin OR Permissions. */
+/** Refresh $_SESSION['admin'] from local Archiv perm_write. */
 function refreshSessionAdmin() {
     if(!isset($_SESSION['userid'])) {
         return;
@@ -416,15 +421,42 @@ function refreshSessionAdmin() {
     if($uid < 1) {
         return;
     }
-    $sql = sprintf(
-        "SELECT `Admin` FROM `%sUser` WHERE `Index` = %d LIMIT 1;",
-        identityPrefix(),
-        $uid
-    );
-    $dbr = @mysqli_query($GLOBALS['conn'], $sql);
-    $row = ($dbr) ? mysqli_fetch_assoc($dbr) : null;
-    $legacy = $row ? (bool)$row['Admin'] : false;
-    $_SESSION['admin'] = computeAdminForUser($uid, $legacy);
+    $_SESSION['admin'] = computeAdminForUser($uid);
+}
+
+/**
+ * Melde Notenarchiv access required before local session is kept.
+ * @param int $userId
+ * @return bool
+ */
+function userHasMeldeArchivAccess($userId) {
+    return IdentityPermissions::loadForUser((int)$userId)->getPermission('perm_accessNotenarchiv');
+}
+
+/**
+ * After password/SSO/link auth: gate Melde access, bootstrap first user, set session admin.
+ * Expects userid/username fields already set in $_SESSION.
+ * @return bool false if Melde access missing (session cleared)
+ */
+function finalizeArchivLogin() {
+    $uid = isset($_SESSION['userid']) ? (int)$_SESSION['userid'] : 0;
+    if($uid < 1) {
+        return false;
+    }
+    if(!userHasMeldeArchivAccess($uid)) {
+        $logentry = new Log;
+        $logentry->error(
+            'Login denied: no Melde perm_accessNotenarchiv for user #'.$uid.'.'
+        );
+        $_SESSION['userid'] = 0;
+        $_SESSION['admin'] = false;
+        unset($_SESSION['Vorname'], $_SESSION['Nachname'], $_SESSION['username'], $_SESSION['singleUsePW']);
+        return false;
+    }
+    ArchivPermissions::bootstrapFirstUserIfEmpty($uid);
+    ArchivPermissions::clearCache($uid);
+    $_SESSION['admin'] = computeAdminForUser($uid);
+    return true;
 }
 function bool2string($val) {
     if($val) return "ja";
@@ -701,11 +733,15 @@ function validateLink($hash) {
         $_SESSION['Vorname'] = $row['Vorname'];
         $_SESSION['Nachname'] = $row['Nachname'];
         $_SESSION['username'] = $row['Vorname'].' '.$row['Nachname'];
-        $_SESSION['admin'] = computeAdminForUser((int)$row['Index'], (bool)$row['Admin']);
         $_SESSION['singleUsePW'] = (bool)$row['singleUsePW'];
         $logentry = new Log;
         $logentry->info('Login via Link.');
         recordLogin();
+        if(!finalizeArchivLogin()) {
+            $logentry = new Log;
+            $logentry->error('Login via Link denied: no Melde Notenarchiv access.');
+            return false;
+        }
         return true;
     }
     $logentry = new Log;
@@ -737,11 +773,18 @@ function validateUser($login, $password) {
             $_SESSION['Vorname'] = $row['Vorname'];
             $_SESSION['Nachname'] = $row['Nachname'];
             $_SESSION['username'] = $row['Vorname'].' '.$row['Nachname'];
-            $_SESSION['admin'] = computeAdminForUser((int)$row['Index'], (bool)$row['Admin']);
             $_SESSION['singleUsePW'] = (bool)$row['singleUsePW'];
             $logentry = new Log;
             $logentry->info('Login via Password.');
             recordLogin();
+            if(!finalizeArchivLogin()) {
+                $logentry = new Log;
+                $logentry->error(
+                    'Login denied: no Melde Notenarchiv access for <b>'
+                    .htmlspecialchars($login, ENT_QUOTES, 'UTF-8').'</b>.'
+                );
+                return false;
+            }
             return true;
         }
     }
@@ -791,11 +834,15 @@ function loginUserBySsoId($userId) {
     $_SESSION['Vorname'] = $row['Vorname'];
     $_SESSION['Nachname'] = $row['Nachname'];
     $_SESSION['username'] = $row['Vorname'].' '.$row['Nachname'];
-    $_SESSION['admin'] = computeAdminForUser((int)$row['Index'], (bool)$row['Admin']);
     $_SESSION['singleUsePW'] = (bool)$row['singleUsePW'];
     $logentry = new Log();
     $logentry->info('Login via Melde-SSO ticket.');
     recordLogin();
+    if(!finalizeArchivLogin()) {
+        $logentry = new Log();
+        $logentry->error('SSO login denied: no Melde Notenarchiv access.');
+        return false;
+    }
     return true;
 }
 

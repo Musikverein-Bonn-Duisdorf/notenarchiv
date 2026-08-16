@@ -1,6 +1,8 @@
 <?php
 /**
- * Read-only Melde Permissions for Archiv admin gates (ARCHIV-6).
+ * Read-only Melde Permissions for Archiv platform gates (ARCHIV-42).
+ * Used for login (`perm_accessNotenarchiv`) and Nav (`perm_accessMitgliederverwaltung`).
+ * Local Katalog-/Ops-Rechte live in ArchivPermissions ({dbprefix}Permissions).
  * Personal Permissions row OR-merged with Group PermissionSpec when the user
  * matches a simplified MemberSpec (explicit users[] / role chips).
  * Does not create Melde rows.
@@ -17,11 +19,8 @@ class IdentityPermissions
      */
     public static function archivPermissionKeys() {
         return array(
-            'perm_showLog',
-            'perm_editConfig',
-            'perm_editPermissions',
-            'perm_showUsers',
-            'perm_editUsers',
+            'perm_accessNotenarchiv',
+            'perm_accessMitgliederverwaltung',
         );
     }
 

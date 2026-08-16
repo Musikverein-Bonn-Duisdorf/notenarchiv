@@ -30,6 +30,7 @@ include "libs/SchemaManager.php";
 include "libs/backup.php";
 include "libs/ssoTicket.php";
 include "libs/identityPermissions.php";
+include "libs/archivPermissions.php";
 include "libs/appToken.php";
 include "libs/apiHelpers.php";
 ?>
