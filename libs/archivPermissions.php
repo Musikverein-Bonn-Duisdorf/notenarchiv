@@ -16,6 +16,9 @@ class ArchivPermissions
     /** @var array<int,ArchivPermissions> */
     private static $cache = array();
 
+    /** @var bool|null */
+    private static $tableReady = null;
+
     public function __get($key) {
         return isset($this->_data[$key]) ? $this->_data[$key] : null;
     }
@@ -48,21 +51,65 @@ class ArchivPermissions
         return array(
             'perm_read' => array('short' => 'Lesen', 'label' => 'Lesen'),
             'perm_write' => array('short' => 'Schreiben', 'label' => 'Schreiben'),
-            'perm_editPermissions' => array('short' => 'Rechte', 'label' => 'Rechte'),
+            'perm_editPermissions' => array('short' => 'Rechte', 'label' => 'Berechtigungen bearbeiten'),
         );
     }
 
     /**
-     * @return array<int,array{id:string,title:string,keys:string[]}>
+     * Logical groups + Melde-parity accent colors for Nav/Hero/Matrix.
+     * `nutzer` / `system` mirror Melde ids so shared chrome matches.
+     * @return array<int,array{id:string,title:string,color:string,keys:string[]}>
      */
     public static function permissionGroups() {
         return array(
             array(
                 'id' => 'archiv',
                 'title' => 'Archiv',
-                'keys' => self::permissionKeys(),
+                'color' => '#8D6E63',
+                'keys' => array('perm_read', 'perm_write'),
+            ),
+            array(
+                'id' => 'nutzer',
+                'title' => 'Nutzer',
+                'color' => '#42A5F5',
+                'keys' => array('perm_editPermissions'),
+            ),
+            array(
+                'id' => 'system',
+                'title' => 'System',
+                'color' => '#78909C',
+                'keys' => array(),
             ),
         );
+    }
+
+    /**
+     * @param string $groupId
+     * @return string
+     */
+    public static function groupColor($groupId) {
+        $groupId = (string)$groupId;
+        foreach(self::permissionGroups() as $group) {
+            if(isset($group['id']) && (string)$group['id'] === $groupId) {
+                return isset($group['color']) ? (string)$group['color'] : '#78909C';
+            }
+        }
+        return '#78909C';
+    }
+
+    /**
+     * @param string $key
+     * @return string
+     */
+    public static function groupIdForPermission($key) {
+        $key = (string)$key;
+        foreach(self::permissionGroups() as $group) {
+            $keys = isset($group['keys']) && is_array($group['keys']) ? $group['keys'] : array();
+            if(in_array($key, $keys, true)) {
+                return isset($group['id']) ? (string)$group['id'] : 'system';
+            }
+        }
+        return 'system';
     }
 
     public static function clearCache($userId = null) {
@@ -76,14 +123,68 @@ class ArchivPermissions
     /** @return void */
     public static function clearCacheForTests() {
         self::$cache = array();
+        self::$tableReady = null;
+    }
+
+    /**
+     * Create {dbprefix}Permissions if missing (avoids white-screen before Schema repair).
+     * @return bool
+     */
+    public static function ensureTableExists() {
+        if(!isset($GLOBALS['conn'], $GLOBALS['dbprefix'])) {
+            return false;
+        }
+        if(self::$tableReady === true) {
+            return true;
+        }
+        $table = $GLOBALS['dbprefix'].'Permissions';
+        try {
+            $sql = sprintf(
+                'CREATE TABLE IF NOT EXISTS `%s` (
+                    `Index` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    `User` INT NOT NULL,
+                    `perm_read` INT NOT NULL DEFAULT 0,
+                    `perm_write` INT NOT NULL DEFAULT 0,
+                    `perm_editPermissions` INT NOT NULL DEFAULT 0,
+                    UNIQUE KEY `User` (`User`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;',
+                $table
+            );
+            $dbr = mysqli_query($GLOBALS['conn'], $sql);
+            self::$tableReady = (bool)$dbr;
+            return self::$tableReady;
+        }
+        catch(Throwable $e) {
+            self::$tableReady = false;
+            return false;
+        }
+    }
+
+    /**
+     * @param string $sql
+     * @return mysqli_result|bool|null
+     */
+    private static function querySafe($sql) {
+        if(!isset($GLOBALS['conn'])) {
+            return null;
+        }
+        try {
+            return mysqli_query($GLOBALS['conn'], $sql);
+        }
+        catch(Throwable $e) {
+            return null;
+        }
     }
 
     public static function isEmptyTable() {
         if(!isset($GLOBALS['conn'], $GLOBALS['dbprefix'])) {
             return true;
         }
+        if(!self::ensureTableExists()) {
+            return true;
+        }
         $sql = sprintf('SELECT COUNT(*) AS `c` FROM `%sPermissions`;', $GLOBALS['dbprefix']);
-        $dbr = @mysqli_query($GLOBALS['conn'], $sql);
+        $dbr = self::querySafe($sql);
         if(!$dbr) {
             return true;
         }
@@ -98,7 +199,13 @@ class ArchivPermissions
      */
     public static function bootstrapFirstUserIfEmpty($userId) {
         $userId = (int)$userId;
-        if($userId < 1 || !self::isEmptyTable()) {
+        if($userId < 1) {
+            return false;
+        }
+        if(!self::ensureTableExists()) {
+            return false;
+        }
+        if(!self::isEmptyTable()) {
             return false;
         }
         $p = new self();
@@ -106,9 +213,9 @@ class ArchivPermissions
         foreach(self::permissionKeys() as $key) {
             $p->$key = 1;
         }
-        $p->save();
+        $ok = $p->save();
         self::clearCache($userId);
-        return true;
+        return $ok;
     }
 
     /**
@@ -125,12 +232,13 @@ class ArchivPermissions
             self::$cache[$userId] = $p;
             return $p;
         }
+        self::ensureTableExists();
         $sql = sprintf(
             'SELECT * FROM `%sPermissions` WHERE `User` = %d LIMIT 1;',
             $GLOBALS['dbprefix'],
             $userId
         );
-        $dbr = @mysqli_query($GLOBALS['conn'], $sql);
+        $dbr = self::querySafe($sql);
         if($dbr && ($row = mysqli_fetch_assoc($dbr))) {
             $p->fill_from_array($row);
         } else {
@@ -205,6 +313,9 @@ class ArchivPermissions
     }
 
     protected function insert() {
+        if(!self::ensureTableExists()) {
+            return false;
+        }
         $sql = sprintf(
             'INSERT INTO `%sPermissions` (`User`, `perm_read`, `perm_write`, `perm_editPermissions`) VALUES (%d, %d, %d, %d);',
             $GLOBALS['dbprefix'],
@@ -213,9 +324,11 @@ class ArchivPermissions
             ((int)$this->perm_write) ? 1 : 0,
             ((int)$this->perm_editPermissions) ? 1 : 0
         );
-        $dbr = mysqli_query($GLOBALS['conn'], $sql);
-        sqlerror();
+        $dbr = self::querySafe($sql);
         if(!$dbr) {
+            if(function_exists('sqlerror')) {
+                sqlerror();
+            }
             return false;
         }
         $this->_data['Index'] = (int)mysqli_insert_id($GLOBALS['conn']);
@@ -223,6 +336,9 @@ class ArchivPermissions
     }
 
     protected function update() {
+        if(!self::ensureTableExists()) {
+            return false;
+        }
         $sql = sprintf(
             'UPDATE `%sPermissions` SET `perm_read` = %d, `perm_write` = %d, `perm_editPermissions` = %d WHERE `Index` = %d;',
             $GLOBALS['dbprefix'],
@@ -231,8 +347,10 @@ class ArchivPermissions
             ((int)$this->perm_editPermissions) ? 1 : 0,
             (int)$this->Index
         );
-        $dbr = mysqli_query($GLOBALS['conn'], $sql);
-        sqlerror();
+        $dbr = self::querySafe($sql);
+        if(!$dbr && function_exists('sqlerror')) {
+            sqlerror();
+        }
         return (bool)$dbr;
     }
 

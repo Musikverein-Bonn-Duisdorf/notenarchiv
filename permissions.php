@@ -75,11 +75,16 @@ adminListPageBegin('System', 'Berechtigungen', array(
             <th class="perm-user-col">Benutzer</th>
 <?php foreach($permKeys as $key) {
     $meta = $permLabels[$key];
+    $gid = ArchivPermissions::groupIdForPermission($key);
+    $gid = preg_replace('/[^a-z0-9_-]/i', '', (string)$gid);
+    if($gid === '') {
+        $gid = 'system';
+    }
     $labelParts = preg_split('/\s+/u', trim($meta['label']), -1, PREG_SPLIT_NO_EMPTY);
     $labelHtml = htmlspecialchars(implode("\n", $labelParts), ENT_QUOTES, 'UTF-8');
     $labelHtml = nl2br($labelHtml, false);
 ?>
-            <th class="perm-col perm-group perm-group--archiv">
+            <th class="perm-col perm-group perm-group--<?php echo htmlspecialchars($gid, ENT_QUOTES, 'UTF-8'); ?>">
               <span class="perm-col-label"><?php echo $labelHtml; ?></span>
             </th>
 <?php } ?>
@@ -101,12 +106,17 @@ adminListPageBegin('System', 'Berechtigungen', array(
 <?php foreach($permKeys as $key) {
     $on = !empty($entry['perm']->$key);
     $locked = ($uid === $sessionUserId && $key === 'perm_editPermissions');
+    $gid = ArchivPermissions::groupIdForPermission($key);
+    $gid = preg_replace('/[^a-z0-9_-]/i', '', (string)$gid);
+    if($gid === '') {
+        $gid = 'system';
+    }
     $title = htmlspecialchars($permLabels[$key]['label'], ENT_QUOTES, 'UTF-8');
     $disabledTitle = $locked
-        ? ' title="Eigenes Recht „Rechte“ kann nicht entfernt werden"'
+        ? ' title="Eigenes Recht „Berechtigungen bearbeiten“ kann nicht entfernt werden"'
         : '';
 ?>
-            <td class="perm-cell perm-group perm-group--archiv <?php echo $on ? 'perm-on' : 'perm-off'; ?>" title="<?php echo $title; ?>">
+            <td class="perm-cell perm-group perm-group--<?php echo htmlspecialchars($gid, ENT_QUOTES, 'UTF-8'); ?> <?php echo $on ? 'perm-on' : 'perm-off'; ?>" title="<?php echo $title; ?>">
               <input type="checkbox"
                      class="perm-toggle"
                      data-user="<?php echo $uid; ?>"
@@ -182,7 +192,7 @@ adminListPageBegin('System', 'Berechtigungen', array(
         var data = JSON.parse(xhr.responseText || '{}');
         ok = xhr.status >= 200 && xhr.status < 300 && data && data.ok;
         if(data && data.error === 'cannot_remove_own_edit') {
-          err = 'Eigenes Recht „Rechte“ kann nicht entfernt werden';
+          err = 'Eigenes Recht „Berechtigungen bearbeiten“ kann nicht entfernt werden';
         }
       } catch(e) {}
       if(!ok) {

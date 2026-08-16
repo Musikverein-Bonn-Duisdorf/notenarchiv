@@ -345,7 +345,12 @@ function hasPermission($perm) {
     if($perm === 'perm_editConfig' || $perm === 'perm_showLog') {
         $perm = 'perm_write';
     }
-    return ArchivPermissions::loadForUser($uid)->getPermission($perm);
+    try {
+        return ArchivPermissions::loadForUser($uid)->getPermission($perm);
+    }
+    catch(Throwable $e) {
+        return false;
+    }
 }
 
 /**
@@ -443,20 +448,30 @@ function finalizeArchivLogin() {
     if($uid < 1) {
         return false;
     }
-    if(!userHasMeldeArchivAccess($uid)) {
-        $logentry = new Log;
-        $logentry->error(
-            'Login denied: no Melde perm_accessNotenarchiv for user #'.$uid.'.'
-        );
-        $_SESSION['userid'] = 0;
+    try {
+        if(!userHasMeldeArchivAccess($uid)) {
+            $logentry = new Log;
+            $logentry->error(
+                'Login denied: no Melde perm_accessNotenarchiv for user #'.$uid.'.'
+            );
+            $_SESSION['userid'] = 0;
+            $_SESSION['admin'] = false;
+            unset($_SESSION['Vorname'], $_SESSION['Nachname'], $_SESSION['username'], $_SESSION['singleUsePW']);
+            return false;
+        }
+        ArchivPermissions::bootstrapFirstUserIfEmpty($uid);
+        ArchivPermissions::clearCache($uid);
+        $_SESSION['admin'] = computeAdminForUser($uid);
+        return true;
+    }
+    catch(Throwable $e) {
+        if(class_exists('Log', false)) {
+            $logentry = new Log;
+            $logentry->error('finalizeArchivLogin failed: '.$e->getMessage());
+        }
         $_SESSION['admin'] = false;
-        unset($_SESSION['Vorname'], $_SESSION['Nachname'], $_SESSION['username'], $_SESSION['singleUsePW']);
         return false;
     }
-    ArchivPermissions::bootstrapFirstUserIfEmpty($uid);
-    ArchivPermissions::clearCache($uid);
-    $_SESSION['admin'] = computeAdminForUser($uid);
-    return true;
 }
 function bool2string($val) {
     if($val) return "ja";

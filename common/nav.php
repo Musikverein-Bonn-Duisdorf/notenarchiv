@@ -148,7 +148,7 @@ if(hasPermission('perm_write')) {
                 <a title="Log" href="log.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('log'); ?>"><i class="fas fa-poll"></i> Log</a>
 <?php } ?>
 <?php if($canEditPermissions) { ?>
-                <a title="Berechtigungen" href="permissions.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('permissions'); ?>"><i class="fas fa-user-lock"></i> Rechte</a>
+                <a title="Berechtigungen" href="permissions.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('permissions'); ?>"><i class="fas fa-lock"></i> Berechtigungen</a>
 <?php } ?>
               </div>
             </div>
