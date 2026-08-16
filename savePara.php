@@ -8,20 +8,9 @@ if(!loggedIn()) {
     http_response_code(403);
     die('forbidden');
 }
-$uid = isset($_SESSION['userid']) ? (int)$_SESSION['userid'] : 0;
-$isUserAdmin = false;
-if($uid > 0) {
-    $sqlAd = sprintf("SELECT `Admin` FROM `%sUser` WHERE `Index` = %d LIMIT 1;", identityPrefix(), $uid);
-    $dbrAd = @mysqli_query($GLOBALS['conn'], $sqlAd);
-    $rowAd = ($dbrAd) ? mysqli_fetch_assoc($dbrAd) : null;
-    $isUserAdmin = $rowAd && !empty($rowAd['Admin']);
-}
-if(!$isUserAdmin) {
-    $perms = IdentityPermissions::loadForUser($uid);
-    if(!$perms->getPermission('perm_editConfig')) {
-        http_response_code(403);
-        die('forbidden');
-    }
+if(!hasPermission('perm_write')) {
+    http_response_code(403);
+    die('forbidden');
 }
 
 header('Content-Type: text/plain; charset=utf-8');

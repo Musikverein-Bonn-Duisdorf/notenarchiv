@@ -117,12 +117,15 @@ function archivEstablishApiSessionFromUserRow(array $row, $via = 'AppToken') {
     if($uid < 1) {
         return false;
     }
+    if(!userHasMeldeArchivAccess($uid)) {
+        return false;
+    }
     // Same user already bound via this API path — keep session, no re-log.
     if(!empty($_SESSION['userid'])
         && (int)$_SESSION['userid'] === $uid
         && !empty($_SESSION['apiAuthVia'])
         && (string)$_SESSION['apiAuthVia'] === (string)$via) {
-        $_SESSION['admin'] = computeAdminForUser($uid, !empty($row['Admin']));
+        $_SESSION['admin'] = computeAdminForUser($uid);
         return true;
     }
     $_SESSION['userid'] = $uid;
@@ -130,7 +133,7 @@ function archivEstablishApiSessionFromUserRow(array $row, $via = 'AppToken') {
     $_SESSION['Nachname'] = $row['Nachname'];
     $_SESSION['username'] = trim((string)$row['Vorname'].' '.(string)$row['Nachname']);
     $_SESSION['singleUsePW'] = !empty($row['singleUsePW']);
-    $_SESSION['admin'] = computeAdminForUser($uid, !empty($row['Admin']));
+    $_SESSION['admin'] = computeAdminForUser($uid);
     $_SESSION['apiAuthVia'] = (string)$via;
     return true;
 }

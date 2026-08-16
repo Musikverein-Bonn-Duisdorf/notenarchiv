@@ -132,6 +132,12 @@ function getConfigDefaults() {
             'Description' => 'Basis-URL Meldeliste (Nav-Rücklink; leer = ausgeblendet)',
         ),
         array(
+            'Parameter' => 'urlMitgliederverwaltung',
+            'Value' => '',
+            'Type' => 'string',
+            'Description' => 'Basis-URL Mitgliederverwaltung (Nav bei Melde-Recht; leer = ausgeblendet)',
+        ),
+        array(
             'Parameter' => 'ArchivShowBranchBannerAlways',
             'Value' => '0',
             'Type' => 'bool',

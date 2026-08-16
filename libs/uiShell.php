@@ -86,6 +86,77 @@ function hexContrastText($hex) {
     return ($luma > 0.55) ? '#000000' : '#FFFFFF';
 }
 
+/**
+ * @param string $hexA
+ * @param string $hexB
+ * @param float $t
+ * @return string
+ */
+function hexMix($hexA, $hexB, $t) {
+    $hexA = normalizeHexColor($hexA);
+    $hexB = normalizeHexColor($hexB);
+    if($hexA === '') {
+        return $hexB !== '' ? $hexB : '#808080';
+    }
+    if($hexB === '') {
+        return $hexA;
+    }
+    $t = max(0.0, min(1.0, (float)$t));
+    $ar = hexdec(substr($hexA, 1, 2));
+    $ag = hexdec(substr($hexA, 3, 2));
+    $ab = hexdec(substr($hexA, 5, 2));
+    $br = hexdec(substr($hexB, 1, 2));
+    $bg = hexdec(substr($hexB, 3, 2));
+    $bb = hexdec(substr($hexB, 5, 2));
+    $r = (int)round($ar + ($br - $ar) * $t);
+    $g = (int)round($ag + ($bg - $ag) * $t);
+    $b = (int)round($ab + ($bb - $ab) * $t);
+    return sprintf('#%02X%02X%02X', $r, $g, $b);
+}
+
+/**
+ * Soft / accent / strong / softOff from a group accent color (Melde-parity).
+ * @param string $accentHex
+ * @return array{accent:string,soft:string,strong:string,softOff:string,fg:string}
+ */
+function permissionGroupTonePalette($accentHex) {
+    $accent = normalizeHexColor($accentHex);
+    if($accent === '') {
+        $accent = '#78909C';
+    }
+    return array(
+        'accent' => $accent,
+        'soft' => hexMix($accent, '#FFFFFF', 0.82),
+        'strong' => hexMix($accent, '#FFFFFF', 0.38),
+        'softOff' => hexMix($accent, '#FFFFFF', 0.92),
+        'fg' => '#222222',
+    );
+}
+
+/**
+ * Palette for all Archiv permission groups (id → tones).
+ * @return array<string,array{accent:string,soft:string,strong:string,softOff:string,fg:string}>
+ */
+function permissionGroupPalettes() {
+    static $cache = null;
+    if($cache !== null) {
+        return $cache;
+    }
+    $cache = array();
+    if(!class_exists('ArchivPermissions')) {
+        return $cache;
+    }
+    foreach(ArchivPermissions::permissionGroups() as $group) {
+        $id = isset($group['id']) ? preg_replace('/[^a-z0-9_-]/i', '', (string)$group['id']) : '';
+        if($id === '') {
+            continue;
+        }
+        $accent = isset($group['color']) ? (string)$group['color'] : ArchivPermissions::groupColor($id);
+        $cache[$id] = permissionGroupTonePalette($accent);
+    }
+    return $cache;
+}
+
 function colorToCssClass($value) {
     $value = trim((string)$value);
     if($value === '') return '';
@@ -125,16 +196,54 @@ function renderConfigColorCss($wrapStyleTag = true) {
 }
 
 /**
- * Melde-parity hook for group chrome colors.
- * Archiv has no Groups UI yet — emit system accents only.
+ * CSS for Nav / Heroes / Rechte-Matrix from Archiv permission group colors (Melde-parity).
+ * @param bool $wrapStyleTag
+ * @return string
  */
 function renderPermissionGroupColorCss($wrapStyleTag = true) {
-    $accent = '#345A95';
-    $strong = '#7F9DC1';
+    $palettes = permissionGroupPalettes();
+    if(!$palettes) {
+        return '';
+    }
     $css = '';
-    $css .= '.admin-list-shell:has(.admin-list-hero--system){--page-title-accent:'.$accent.';}';
-    $css .= '.profile-shell .profile-hero.admin-list-hero--system,.w3-container.admin-list-hero--system{background:'.$strong.';border-left-color:'.$accent.';--page-title-accent:'.$accent.';}';
-    $css .= '.app-nav .admin-nav-perm--system{background:#E8EEF5 !important;border-color:'.$accent.';color:#222 !important;}';
+    foreach($palettes as $id => $tone) {
+        $soft = $tone['soft'];
+        $accent = $tone['accent'];
+        $strong = $tone['strong'];
+        $softOff = $tone['softOff'];
+        $fg = $tone['fg'];
+
+        $css .= '.app-nav .admin-nav-perm--'.$id
+            .',.profile-perm-tile--'.$id
+            .'{background:'.$soft.' !important;border-color:'.$accent.';color:'.$fg.' !important;}';
+
+        $css .= '.admin-list-shell:has(.admin-list-hero--'.$id.')'
+            .'{--page-title-accent:'.$accent.';}';
+
+        $css .= '.profile-shell .profile-hero.admin-list-hero--'.$id
+            .',.w3-container.admin-list-hero--'.$id
+            .'{background:'.$strong.';border-left-color:'.$accent.';--page-title-accent:'.$accent.';}';
+
+        $css .= '.perm-matrix thead th.perm-group--'.$id
+            .'{background:'.$soft.';box-shadow:inset 0 -3px 0 '.$accent.';}';
+
+        $css .= '.perm-matrix td.perm-group--'.$id.'.perm-off{background:'.$softOff.';}';
+        $css .= '.perm-matrix td.perm-group--'.$id.'.perm-on{background:'.$strong.';}';
+    }
+
+    $css .= '@media (max-width:992px){';
+    foreach($palettes as $id => $tone) {
+        $accent = $tone['accent'];
+        $css .= '.app-nav>.app-nav-primary>.app-nav-item.admin-nav-perm--'.$id
+            .',.app-nav>.app-nav-primary>.app-nav-form>.app-nav-item.admin-nav-perm--'.$id
+            .',.app-nav>.app-nav-more-wrap>.app-nav-more-toggle.admin-nav-perm--'.$id
+            .'{border-top-color:'.$accent.';}';
+    }
+    $css .= '}';
+
+    if($css === '') {
+        return '';
+    }
     return $wrapStyleTag ? '<style type="text/css" id="perm-group-colors">'.$css.'</style>' : $css;
 }
 

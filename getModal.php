@@ -10,6 +10,11 @@ if(!isset($_SESSION['userid']) || !(int)$_SESSION['userid']) {
     echo '<div class="w3-container w3-padding"><p>Nicht angemeldet.</p><button class="w3-button" onclick="closeModal()">Schließen</button></div>';
     exit;
 }
+if(!hasPermission('perm_read')) {
+    http_response_code(403);
+    echo '<div class="w3-container w3-padding"><p>Keine Berechtigung.</p><button class="w3-button" onclick="closeModal()">Schließen</button></div>';
+    exit;
+}
 
 $type = isset($_GET['type']) ? (string)$_GET['type'] : '';
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;

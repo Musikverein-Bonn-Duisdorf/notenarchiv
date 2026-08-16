@@ -27,6 +27,7 @@ if(isset($_POST['save']) && $isAdmin) {
 }
 
 include 'common/header.php';
+requirePermission('perm_read');
 
 $inputBg = isset($GLOBALS['optionsDB']['colorInputBackground'])
     ? (string)$GLOBALS['optionsDB']['colorInputBackground']

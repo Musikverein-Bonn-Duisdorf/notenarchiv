@@ -18,11 +18,18 @@ $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 50;
 $sort = isset($_GET['sort']) ? (string)$_GET['sort'] : '';
 $dir = isset($_GET['dir']) ? (string)$_GET['dir'] : 'asc';
 
+if($type !== 'log' && !hasPermission('perm_read')) {
+    http_response_code(403);
+    header('X-Has-More: 0');
+    echo '';
+    exit;
+}
+
 $result = array('html' => '', 'nextCursor' => $cursor, 'hasMore' => false);
 
 switch($type) {
 case 'log':
-    if(!hasPermission('perm_showLog')) {
+    if(!hasPermission('perm_write')) {
         http_response_code(403);
         header('X-Has-More: 0');
         exit;
@@ -39,20 +46,10 @@ case 'compositions':
     break;
 
 case 'composers':
-    if(empty($_SESSION['admin'])) {
-        http_response_code(403);
-        header('X-Has-More: 0');
-        exit;
-    }
     $result = listChunkComposers($cursor !== '' ? (int)$cursor : 0, $limit, $sort, $dir);
     break;
 
 case 'publishers':
-    if(empty($_SESSION['admin'])) {
-        http_response_code(403);
-        header('X-Has-More: 0');
-        exit;
-    }
     $result = listChunkPublishers($cursor !== '' ? (int)$cursor : 0, $limit, $sort, $dir);
     break;
 

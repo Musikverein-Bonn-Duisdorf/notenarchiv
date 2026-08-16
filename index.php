@@ -4,8 +4,9 @@ archivConfigureSession();
 $_SESSION['page']='home';
 $_SESSION['adminpage']=false;
 include "common/header.php";
+requirePermission('perm_read');
 
-if(isset($_POST['Delete'])) {
+if(isset($_POST['Delete']) && !empty($_SESSION['admin'])) {
     $piece = new Composition;
     if($_POST['Delete'] > 0) {
         $piece->load_by_id($_POST['Delete']);

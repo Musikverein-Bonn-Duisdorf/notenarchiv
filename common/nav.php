@@ -3,19 +3,25 @@ $navColor = htmlspecialchars((string)$optionsDB['colorNav'], ENT_QUOTES, 'UTF-8'
 $navAdminColor = htmlspecialchars((string)$optionsDB['colorNavAdmin'], ENT_QUOTES, 'UTF-8');
 $isAdminNav = !empty($_SESSION['admin']);
 $uidNav = isset($_SESSION['userid']) ? (int)$_SESSION['userid'] : 0;
-$canEditConfig = false;
-$canShowLog = false;
-if($uidNav > 0) {
-    $sqlAd = sprintf("SELECT `Admin` FROM `%sUser` WHERE `Index` = %d LIMIT 1;", identityPrefix(), $uidNav);
-    $dbrAd = @mysqli_query($GLOBALS['conn'], $sqlAd);
-    $rowAd = ($dbrAd) ? mysqli_fetch_assoc($dbrAd) : null;
-    $isUserAdmin = $rowAd && !empty($rowAd['Admin']);
-    $permsNav = IdentityPermissions::loadForUser($uidNav);
-    $canEditConfig = $isUserAdmin || $permsNav->getPermission('perm_editConfig');
-    $canShowLog = $isUserAdmin || $permsNav->getPermission('perm_showLog');
-}
-$showAdminNav = $isAdminNav || $canEditConfig || $canShowLog;
+$canRead = $uidNav > 0 && hasPermission('perm_read');
+$canWrite = $isAdminNav;
+$canEditPermissions = $uidNav > 0 && hasPermission('perm_editPermissions');
+$canEditConfig = $canWrite;
+$canShowLog = $canWrite;
+$showAdminNav = $canWrite || $canEditPermissions;
 $meldeUrl = isset($optionsDB['urlMeldeliste']) ? trim((string)$optionsDB['urlMeldeliste']) : '';
+$mitUrl = isset($optionsDB['urlMitgliederverwaltung']) ? trim((string)$optionsDB['urlMitgliederverwaltung']) : '';
+$showMeldeNav = ($meldeUrl !== '');
+$showMitNav = false;
+$mitHref = '';
+if($mitUrl !== '' && $uidNav > 0 && hasMeldePlatformPermission('perm_accessMitgliederverwaltung')) {
+    $showMitNav = true;
+    if($meldeUrl !== '') {
+        $mitHref = rtrim($meldeUrl, '/').'/sso.php?redirect='.rawurlencode($mitUrl);
+    } else {
+        $mitHref = $mitUrl;
+    }
+}
 $masterPage = isset($optionsDB['MasterPage']) ? trim((string)$optionsDB['MasterPage']) : '';
 $homeUrl = isset($GLOBALS['optionsDB']['WebSiteURL']) && trim((string)$GLOBALS['optionsDB']['WebSiteURL']) !== ''
     ? (string)$GLOBALS['optionsDB']['WebSiteURL']
@@ -50,7 +56,7 @@ if($siteNameShort === '') {
 </div>
 <?php } ?>
 <?php
-if(hasPermission('perm_editConfig')) {
+if(hasPermission('perm_write')) {
     try {
         $schemaMgr = new SchemaManager();
         if($schemaMgr->isSchemaOutdated()) {
@@ -71,6 +77,7 @@ if(hasPermission('perm_editConfig')) {
 <div class="app-shell">
 <nav class="app-nav <?php echo $navColor; ?>" aria-label="Hauptnavigation">
   <div class="app-nav-primary">
+<?php if($canRead) { ?>
     <a class="app-nav-item <?php getPage('home', 'system'); ?>" href="<?php echo htmlspecialchars($homeUrl, ENT_QUOTES, 'UTF-8'); ?>" title="Stücke">
       <i class="fas fa-home" aria-hidden="true"></i><span class="nav-label">Stücke</span>
     </a>
@@ -83,9 +90,15 @@ if(hasPermission('perm_editConfig')) {
     <a class="app-nav-item <?php getPage('publishers', 'system'); ?>" href="publishers.php" title="Verlage">
       <i class="fas fa-industry" aria-hidden="true"></i><span class="nav-label">Verlage</span>
     </a>
-<?php if($meldeUrl !== '') { ?>
+<?php } ?>
+<?php if($showMeldeNav) { ?>
     <a class="app-nav-item app-nav-item--secondary <?php echo htmlspecialchars(navGroupClass('system'), ENT_QUOTES, 'UTF-8'); ?>" href="<?php echo htmlspecialchars($meldeUrl, ENT_QUOTES, 'UTF-8'); ?>" title="Meldeliste">
       <i class="fas fa-clipboard-list" aria-hidden="true"></i><span class="nav-label">Meldeliste</span>
+    </a>
+<?php } ?>
+<?php if($showMitNav) { ?>
+    <a class="app-nav-item app-nav-item--secondary <?php echo htmlspecialchars(navGroupClass('nutzer'), ENT_QUOTES, 'UTF-8'); ?>" href="<?php echo htmlspecialchars($mitHref, ENT_QUOTES, 'UTF-8'); ?>" title="Mitgliederverwaltung">
+      <i class="fas fa-id-card" aria-hidden="true"></i><span class="nav-label">Mitglieder</span>
     </a>
 <?php } ?>
     <a class="app-nav-item app-nav-item--secondary <?php getPage('help', 'system'); ?>" href="help.php" title="Hilfe">
@@ -104,9 +117,14 @@ if(hasPermission('perm_editConfig')) {
         <button type="button" class="app-nav-more-close" id="appNavMoreClose" aria-label="Schließen">&times;</button>
       </div>
       <div class="app-nav-more-body">
-<?php if($meldeUrl !== '') { ?>
+<?php if($showMeldeNav) { ?>
         <a class="app-nav-item app-nav-more-only-mobile <?php echo htmlspecialchars(navGroupClass('system'), ENT_QUOTES, 'UTF-8'); ?>" href="<?php echo htmlspecialchars($meldeUrl, ENT_QUOTES, 'UTF-8'); ?>" title="Meldeliste">
           <i class="fas fa-clipboard-list" aria-hidden="true"></i><span class="nav-label">Meldeliste</span>
+        </a>
+<?php } ?>
+<?php if($showMitNav) { ?>
+        <a class="app-nav-item app-nav-more-only-mobile <?php echo htmlspecialchars(navGroupClass('nutzer'), ENT_QUOTES, 'UTF-8'); ?>" href="<?php echo htmlspecialchars($mitHref, ENT_QUOTES, 'UTF-8'); ?>" title="Mitgliederverwaltung">
+          <i class="fas fa-id-card" aria-hidden="true"></i><span class="nav-label">Mitglieder</span>
         </a>
 <?php } ?>
         <a class="app-nav-item app-nav-more-only-mobile <?php getPage('help', 'system'); ?>" href="help.php" title="Hilfe">
@@ -116,20 +134,21 @@ if(hasPermission('perm_editConfig')) {
         <div class="admin-nav app-nav-admin">
           <div class="app-nav-admin-title"><i class="fas fa-wrench" aria-hidden="true"></i><span class="nav-label">Admin</span></div>
           <div class="w3-bar-block <?php echo $navAdminColor; ?>">
-            <div class="w3-dropdown-hover w3-mobile admin-nav-group<?php echo adminNavGroupActiveClass(array('composition', 'newcomposer', 'newpublisher', 'newcollection', 'config', 'backup', 'log', 'update', 'updater')); ?>">
+            <div class="w3-dropdown-hover w3-mobile admin-nav-group<?php echo adminNavGroupActiveClass(array('composition', 'newcomposer', 'newpublisher', 'newcollection', 'config', 'backup', 'log', 'update', 'updater', 'permissions')); ?>">
               <button type="button" class="w3-button w3-mobile w3-block w3-left-align <?php echo htmlspecialchars(navGroupClass('system'), ENT_QUOTES, 'UTF-8'); ?>">Verwaltung <i class="fas fa-caret-right admin-nav-caret"></i></button>
               <div class="w3-dropdown-content w3-bar-block w3-card-4 <?php echo $navAdminColor; ?> w3-mobile">
+<?php if($canWrite) { ?>
                 <a title="Stück anlegen" href="composition.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('composition'); ?>"><i class="fas fa-plus-circle"></i> Stück</a>
                 <a title="Sammlung anlegen" href="new-collection.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('newcollection'); ?>"><i class="fas fa-folder-plus"></i> Sammlung</a>
                 <a title="Komponist anlegen" href="new-composer.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('newcomposer'); ?>"><i class="fas fa-feather"></i> Komponist</a>
                 <a title="Verlag anlegen" href="new-publisher.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('newpublisher'); ?>"><i class="fas fa-industry"></i> Verlag</a>
-<?php if($canEditConfig) { ?>
                 <a title="Konfiguration" href="config-menu.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('config'); ?>"><i class="fas fa-cogs"></i> Konfiguration</a>
                 <a title="Backup" href="backup.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('backup'); ?>"><i class="fas fa-file-archive"></i> Backup</a>
                 <a title="Updater" href="updater.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('updater'); ?>"><i class="fas fa-code-branch"></i> Updater</a>
-<?php } ?>
-<?php if($canShowLog) { ?>
                 <a title="Log" href="log.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('log'); ?>"><i class="fas fa-poll"></i> Log</a>
+<?php } ?>
+<?php if($canEditPermissions) { ?>
+                <a title="Berechtigungen" href="permissions.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('permissions'); ?>"><i class="fas fa-lock"></i> Berechtigungen</a>
 <?php } ?>
               </div>
             </div>

@@ -8,16 +8,19 @@
 
 $sections = array();
 $showAdmin = !empty($_SESSION['admin']);
-$canEditConfig = hasPermission('perm_editConfig');
-$canShowLog = hasPermission('perm_showLog');
+$canEditConfig = hasPermission('perm_write');
+$canShowLog = hasPermission('perm_write');
+$canEditPermissions = hasPermission('perm_editPermissions');
 $meldeUrl = isset($optionsDB['urlMeldeliste']) ? trim((string)$optionsDB['urlMeldeliste']) : '';
+$mitUrl = isset($optionsDB['urlMitgliederverwaltung']) ? trim((string)$optionsDB['urlMitgliederverwaltung']) : '';
+$showMitNav = ($mitUrl !== '' && hasMeldePlatformPermission('perm_accessMitgliederverwaltung'));
 $masterPage = isset($optionsDB['MasterPage']) ? trim((string)$optionsDB['MasterPage']) : '';
 
 $sections[] = array(
     'id' => 'einfuehrung',
     'title' => 'Einführung',
     'body' => '
-<p>Das <b>Notenarchiv</b> verwaltet den Vereinsnotenbestand: Stücke, Stimmen, Sammlungen, Komponisten und Verlage. Login und Rechte kommen aus der Meldeliste (SSO).</p>
+<p>Das <b>Notenarchiv</b> verwaltet den Vereinsnotenbestand: Stücke, Stimmen, Sammlungen, Komponisten und Verlage. Die Konten kommen aus der Meldeliste; <b>Lesen/Schreiben/Rechte</b> werden im Archiv lokal vergeben.</p>
 <p>Über die Navigation erreichst du die Bereiche, die für dich freigeschaltet sind: auf breiten Bildschirmen links mit Text, auf Tablet und Smartphone unten als Leiste (weitere Einträge und Admin unter <b>Mehr</b>). Diese Hilfe zeigt nur Abschnitte, die zu deinen aktuellen Rechten passen.</p>
 '
 );
@@ -32,10 +35,11 @@ $sections[] = array(
 <li><i class="fas fa-folder-open"></i> <b>Sammlungen</b> – physische oder thematische Zusammenstellungen</li>
 <li><i class="fas fa-feather"></i> <b>Komponisten</b> – Komponisten und Arrangeure</li>
 <li><i class="fas fa-industry"></i> <b>Verlage</b> – Verlagsstammdaten</li>
-'.($meldeUrl !== '' ? '<li><i class="fas fa-clipboard-list"></i> <b>Meldeliste</b> – Rückkehr zur Meldeliste (SSO)</li>' : '').'
+'.($meldeUrl !== '' ? '<li><i class="fas fa-clipboard-list"></i> <b>Meldeliste</b> – Rückkehr zur Meldeliste</li>' : '').'
+'.($showMitNav ? '<li><i class="fas fa-id-card"></i> <b>Mitglieder</b> – Mitgliederverwaltung (Melde-Recht)</li>' : '').'
 <li>Logo oben rechts – öffnet die <b>Vereinshomepage</b> in einem neuen Tab</li>
 <li><i class="fas fa-circle-question"></i> <b>Hilfe</b> – diese Seite inkl. Changelog</li>
-'.($showAdmin ? '<li><i class="fas fa-wrench"></i> <b>Admin</b> – Verwaltung (Anlegen je Kategorie, Konfiguration, Updater, Log); Desktop unter Mehr, mobil ebenfalls unter Mehr</li>' : '').'
+'.(($showAdmin || $canEditPermissions) ? '<li><i class="fas fa-wrench"></i> <b>Admin</b> – Verwaltung (Anlegen, Konfiguration, Updater, Log, Berechtigungen); Desktop und mobil unter Mehr</li>' : '').'
 <li><i class="fas fa-sign-out-alt"></i> <b>Ausloggen</b> – Sitzung beenden</li>
 </ul>
 '
@@ -78,10 +82,11 @@ $sections[] = array(
 
 $sections[] = array(
     'id' => 'login-sso',
-    'title' => 'Login &amp; Meldeliste',
+    'title' => 'Login &amp; Rechte',
     'body' => '
-<p>Das Notenarchiv teilt die Benutzerkonten mit der Meldeliste. Typischer Einstieg: von der Meldeliste aus per SSO-Link (einmaliges Ticket) oder direktes Login mit denselben Zugangsdaten.</p>
+<p>Zugang zum Archiv setzt in der Meldeliste das Recht <b>Notenarchiv</b> voraus (Nav/SSO oder Passwort-Login). Katalog-<b>Lesen</b>, <b>Schreiben</b> (inkl. Config/Log/Backup/API) und <b>Berechtigungen</b> werden lokal im Archiv vergeben. Der erste Nutzer, der sich jemals anmeldet, erhält automatisch alle lokalen Rechte und kann andere freischalten.</p>
 '.($meldeUrl !== '' ? '<p>Über den Nav-Eintrag <b>Meldeliste</b> kehrst du zurück: <a href="'.htmlspecialchars($meldeUrl, ENT_QUOTES, 'UTF-8').'">'.htmlspecialchars($meldeUrl, ENT_QUOTES, 'UTF-8').'</a></p>' : '').'
+'.($showMitNav ? '<p>Mit Melde-Recht <b>Mitgliederverwaltung</b> erscheint der Nav-Link <b>Mitglieder</b>'.($meldeUrl !== '' ? ' (SSO über die Meldeliste)' : '').'.</p>' : '').'
 '.($masterPage !== '' ? '<p>Die Vereinshomepage erreichst du über das Logo oder: <a href="'.htmlspecialchars($masterPage, ENT_QUOTES, 'UTF-8').'" target="_blank" rel="noopener noreferrer">'.htmlspecialchars($masterPage, ENT_QUOTES, 'UTF-8').'</a></p>' : '').'
 '
 );
@@ -89,18 +94,21 @@ $sections[] = array(
 $sections[] = array(
     'id' => 'admin-verwaltung',
     'title' => 'Admin: Verwaltung',
-    'visible' => $showAdmin,
+    'visible' => ($showAdmin || $canEditPermissions),
     'body' => '
 <ul class="help-list">
-<li><b>Stück</b> – Anlegen/Bearbeiten auf der Stückseite (<code>composition.php</code>); Liste → Detail-Modal → Bearbeiten/Öffnen. <b>Sammlung / Komponist / Verlag</b> – jeweils eigene Anlege-Seite</li>
+'.($showAdmin ? '<li><b>Stück</b> – Anlegen/Bearbeiten auf der Stückseite (<code>composition.php</code>); Liste → Detail-Modal → Bearbeiten/Öffnen. <b>Sammlung / Komponist / Verlag</b> – jeweils eigene Anlege-Seite</li>' : '').'
 '.($canEditConfig ? '
-<li><b>Konfiguration</b> – Farben/Farbschema, Site-Name, URLs, Feature-Schalter; Änderungen erscheinen im Log. Archiv-Parameter heißen in der Datenbank <code>Archiv*</code> (Anzeige in der Hilfe/UI oft unter dem kurzen Namen)</li>
+<li><b>Konfiguration</b> – Farben/Farbschema, Site-Name, URLs (Melde/Mitglieder), Feature-Schalter; Änderungen erscheinen im Log. Archiv-Parameter heißen in der Datenbank <code>Archiv*</code></li>
 <li><b>Backup</b> – ZIP mit Versionsinfo und SQL nur für Archiv-Tabellen (<code>archiv_*</code>), nicht Melde-Identity. Download im Browser, CLI <code>php cron.php CRONID backup</code>, remote nur mit eigenem <code>$backupToken</code> (≥32 Zeichen) über <code>cron.php?id=…&amp;cmd=backup</code>. Erfolgreiche Downloads erscheinen im Log als Info, Fehler als Error. PDFs unter <code>data/</code> gehören nicht ins ZIP</li>
-<li><b>API-Token</b> – JSON-API unter <code>api/</code> (Medien, Noten, Mappen) mit persönlichem Bearer-Token (nur Admins). Ausgabe einmalig per Login-Endpunkt oder CLI <code>php scripts/issueApiToken.php</code>; Tokens nicht in Repos speichern. Details: <code>docs/api.md</code></li>
+<li><b>API-Token</b> – JSON-API unter <code>api/</code> (Medien, Noten, Mappen) mit persönlichem Bearer-Token (Schreiben-Recht). Ausgabe einmalig per Login-Endpunkt oder CLI <code>php scripts/issueApiToken.php</code>; Tokens nicht in Repos speichern. Details: <code>docs/api.md</code></li>
 <li><b>Updater</b> – Software-Update vom Remote und Datenbank-Prüfung/Reparatur; der Bericht listet nur Änderungen und Probleme</li>
 ' : '').'
 '.($canShowLog ? '
 <li><b>Log</b> – Anwendungsprotokoll (Server-Suche, Live-Aktualisierung, Nachladen beim Scrollen; Einträge können zu Stücken/Personen verlinken)</li>
+' : '').'
+'.($canEditPermissions ? '
+<li><b>Berechtigungen</b> – lokale Matrix Lesen / Schreiben / Berechtigungen bearbeiten für Nutzer mit Melde-Zugang Notenarchiv</li>
 ' : '').'
 </ul>
 '
@@ -110,7 +118,7 @@ $sections[] = array(
     'id' => 'kontakt',
     'title' => 'Kontakt',
     'body' => '
-<p>Bei Fragen zu Rechten oder Zugang wende dich an die Meldeliste-Administration.</p>
+<p>Bei Fragen zum Melde-Zugang (Notenarchiv/Mitglieder) wende dich an die Meldeliste-Administration; lokale Archiv-Rechte vergibt, wer hier <b>Berechtigungen</b> hat.</p>
 <p>Die installierte Version ist im Changelog markiert (rechts bzw. darunter).</p>
 '
 );

@@ -5,7 +5,7 @@ Verkaufbare / installierbare Module:
 | Modul | Repo | DB-Prefix (Ziel) | Identity |
 |-------|------|------------------|----------|
 | Meldeliste | meldeliste | `meldeliste_` (später `melde_`) | Owner von `User` + `Permissions` + SSO-Issuer |
-| Notenarchiv | notenarchiv | `archiv_` | liest Melde-`User` / Permissions; SSO-Redeem |
+| Notenarchiv | notenarchiv | `archiv_` | liest Melde-`User` + Plattform-Permissions; lokale `archiv_Permissions`; SSO-Redeem |
 | Mitgliederverwaltung | mitgliederverwaltung | `mit_` | später Mitgliedschafts-Hub; liest Melde-Login |
 
 **Kanonische** Plattform-Quelle (Ownership-Matrix A/B/C, Phasenreihenfolge): Meldeliste `docs/PLATFORM.md` (MELD-157). Diese Datei hält nur Archiv-spezifische Hinweise.
@@ -25,7 +25,7 @@ Verkaufbare / installierbare Module:
 
 ## Reihenfolge
 
-1. **Phase 1 (aktuell):** Notenarchiv an Melde andocken (ARCHIV-4: Identity → SSO → Permissions → Security).
+1. **Phase 1 (aktuell):** Notenarchiv an Melde andocken (Identity → SSO → lokale Rechte ARCHIV-42 → Security).
 2. **Phase 2:** Mitgliederverwaltung als Mitgliedschafts-Hub (`mit_Person`, Fördernde) — blockiert Archiv nicht.
 
 ## Ops-Grenzen (ARCHIV-16)
