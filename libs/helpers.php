@@ -1944,17 +1944,15 @@ function archivPersonChipsEditorHtml($prefix, $hiddenName, array $catalog, array
     }
 
     $html = '<div class="profile-field collection-chips-editor person-chips-editor" data-person-chips="'.archivEscHtml($prefix).'">';
-    $html .= '<div class="profile-control-with-btn person-chips-controls">';
-    $html .= '<div class="person-chips-main">';
     $html .= '<div id="'.archivEscHtml($chipsId).'" class="mail-recipient-chips" role="list" aria-live="polite"></div>';
+    $html .= '<div class="profile-control-with-btn person-chips-controls">';
     $html .= '<input id="'.archivEscHtml($inputId).'" type="text" class="w3-input w3-border profile-control '.archivEscHtml($inputBg).'"'
         .' placeholder="'.archivEscHtml($placeholder).'" autocomplete="off" aria-label="'.archivEscHtml($placeholder).'">';
-    $html .= '<div id="'.archivEscHtml($suggestId).'" class="mail-recipient-suggest" hidden></div>';
-    $html .= '</div>';
     if($plusAttrs !== '') {
         $html .= '<button type="button" class="w3-button w3-border profile-control-btn '.archivEscHtml($inputBg).'" '.$plusAttrs.'><i class="fas fa-plus" aria-hidden="true"></i></button>';
     }
     $html .= '</div>';
+    $html .= '<div id="'.archivEscHtml($suggestId).'" class="mail-recipient-suggest" hidden></div>';
     $html .= '<input type="hidden" name="'.archivEscHtml($hiddenName).'" id="'.archivEscHtml($hiddenId).'" value="'.archivEscHtml(json_encode(array_values($spec))).'">';
     $html .= '<script type="application/json" id="'.archivEscHtml($catalogId).'">'
         .json_encode(
