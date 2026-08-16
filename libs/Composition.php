@@ -621,15 +621,21 @@ class Composition
             return $items;
         }
         $sql = sprintf(
-            'SELECT `Collections`, `CollectionNumber` FROM `%sCollectionItem` WHERE `Composition` = "%d" ORDER BY `CollectionNumber` ASC;',
+            'SELECT `Collections`, `CollectionNumber` FROM `%sCollectionItem` WHERE `Composition` = "%d" ORDER BY `CollectionNumber` ASC, `Index` ASC;',
             $GLOBALS['dbprefix'],
             $id
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
         sqlerror();
+        $seen = array();
         while($row = mysqli_fetch_array($dbr)) {
+            $colId = (int)$row['Collections'];
+            if($colId < 1 || isset($seen[$colId])) {
+                continue;
+            }
+            $seen[$colId] = true;
             $items[] = array(
-                'id' => (int)$row['Collections'],
+                'id' => $colId,
                 'number' => (int)$row['CollectionNumber'],
             );
         }

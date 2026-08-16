@@ -1277,6 +1277,94 @@ function archivCollectionsCatalog(array $includeIds = array()) {
 }
 
 /**
+ * Delete duplicate CollectionItem rows (same Collections+Composition), keep lowest Index.
+ * @return int number of deleted rows
+ */
+function archivDeduplicateCollectionItems() {
+    if(!isset($GLOBALS['conn'], $GLOBALS['dbprefix'])) {
+        return 0;
+    }
+    $table = $GLOBALS['dbprefix'].'CollectionItem';
+    $sql = sprintf(
+        'SELECT `Collections`, `Composition`, COUNT(*) AS `c`, MIN(`Index`) AS `keep`
+         FROM `%s`
+         GROUP BY `Collections`, `Composition`
+         HAVING `c` > 1;',
+        $table
+    );
+    try {
+        $dbr = mysqli_query($GLOBALS['conn'], $sql);
+    }
+    catch(Throwable $e) {
+        return 0;
+    }
+    if(!$dbr) {
+        return 0;
+    }
+    $deleted = 0;
+    while($row = mysqli_fetch_assoc($dbr)) {
+        $keep = (int)$row['keep'];
+        $colId = (int)$row['Collections'];
+        $compId = (int)$row['Composition'];
+        $delSql = sprintf(
+            'DELETE FROM `%s` WHERE `Collections` = %d AND `Composition` = %d AND `Index` != %d;',
+            $table,
+            $colId,
+            $compId,
+            $keep
+        );
+        try {
+            $ok = mysqli_query($GLOBALS['conn'], $delSql);
+        }
+        catch(Throwable $e) {
+            $ok = false;
+        }
+        if($ok) {
+            $deleted += (int)mysqli_affected_rows($GLOBALS['conn']);
+        }
+    }
+    return $deleted;
+}
+
+/**
+ * Ensure UNIQUE(Collections, Composition) on CollectionItem (after dedupe).
+ * @return bool
+ */
+function archivEnsureCollectionItemUniqueIndex() {
+    if(!isset($GLOBALS['conn'], $GLOBALS['dbprefix'])) {
+        return false;
+    }
+    $table = $GLOBALS['dbprefix'].'CollectionItem';
+    $indexName = 'uq_collection_composition';
+    try {
+        $check = mysqli_query(
+            $GLOBALS['conn'],
+            sprintf(
+                "SHOW INDEX FROM `%s` WHERE `Key_name` = '%s';",
+                $table,
+                mysqli_real_escape_string($GLOBALS['conn'], $indexName)
+            )
+        );
+        if($check && mysqli_num_rows($check) > 0) {
+            return true;
+        }
+        archivDeduplicateCollectionItems();
+        $dbr = mysqli_query(
+            $GLOBALS['conn'],
+            sprintf(
+                'ALTER TABLE `%s` ADD UNIQUE KEY `%s` (`Collections`, `Composition`);',
+                $table,
+                $indexName
+            )
+        );
+        return (bool)$dbr;
+    }
+    catch(Throwable $e) {
+        return false;
+    }
+}
+
+/**
  * Parse chip spec JSON into list of {id, number}.
  * Returns null if JSON is invalid (callers must not treat that as "clear all").
  * @param string $json
@@ -1328,7 +1416,7 @@ function archivSyncCollectionItemsForCollection($collectionId, array $items) {
 
     $existing = array();
     $sql = sprintf(
-        'SELECT `Index`, `Composition`, `CollectionNumber` FROM `%sCollectionItem` WHERE `Collections` = "%d";',
+        'SELECT `Index`, `Composition`, `CollectionNumber` FROM `%sCollectionItem` WHERE `Collections` = "%d" ORDER BY `Index` ASC;',
         $GLOBALS['dbprefix'],
         $collectionId
     );
@@ -1397,7 +1485,7 @@ function archivSyncCollectionItemsForComposition($compositionId, array $items) {
 
     $existing = array();
     $sql = sprintf(
-        'SELECT `Index`, `Collections`, `CollectionNumber` FROM `%sCollectionItem` WHERE `Composition` = "%d";',
+        'SELECT `Index`, `Collections`, `CollectionNumber` FROM `%sCollectionItem` WHERE `Composition` = "%d" ORDER BY `Index` ASC;',
         $GLOBALS['dbprefix'],
         $compositionId
     );

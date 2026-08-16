@@ -90,6 +90,7 @@ class SchemaManager
         $this->migrateLegacySharedConfigKeys(true);
         $this->pruneObsoleteSchema(true);
         $this->checkConfigDefaults(true);
+        $this->ensureCollectionItemUniqueness(true);
         $this->finalizeSchemaVersion();
         return $this->report;
     }
@@ -101,6 +102,7 @@ class SchemaManager
         $this->migrateLegacySharedConfigKeys(true);
         $this->pruneObsoleteSchema(true);
         $this->checkConfigDefaults(true);
+        $this->ensureCollectionItemUniqueness(true);
         $this->finalizeSchemaVersion();
         return $this->report;
     }
@@ -112,7 +114,62 @@ class SchemaManager
         $this->migrateLegacySharedConfigKeys(false);
         $this->pruneObsoleteSchema(false);
         $this->checkConfigDefaults(false);
+        $this->ensureCollectionItemUniqueness(false);
         return $this->report;
+    }
+
+    /**
+     * ARCHIV-43: dedupe CollectionItem rows and enforce UNIQUE(Collections, Composition).
+     * @param bool $apply
+     */
+    private function ensureCollectionItemUniqueness($apply) {
+        if(!function_exists('archivDeduplicateCollectionItems')
+            || !function_exists('archivEnsureCollectionItemUniqueIndex')) {
+            return;
+        }
+        $table = 'CollectionItem';
+        if($apply) {
+            $deleted = archivDeduplicateCollectionItems();
+            if($deleted > 0) {
+                $this->addReport('data', $table, 'fixed', 'Doppelte CollectionItems entfernt: '.$deleted);
+            }
+            if(archivEnsureCollectionItemUniqueIndex()) {
+                $this->addReport('index', $table.'.uq_collection_composition', 'fixed', 'UNIQUE(Collections, Composition)');
+            }
+            else {
+                $this->addReport('index', $table.'.uq_collection_composition', 'error', 'UNIQUE-Index konnte nicht angelegt werden');
+            }
+            return;
+        }
+        if(!isset($GLOBALS['conn'], $GLOBALS['dbprefix'])) {
+            return;
+        }
+        $full = $GLOBALS['dbprefix'].'CollectionItem';
+        try {
+            $dup = mysqli_query(
+                $GLOBALS['conn'],
+                sprintf(
+                    'SELECT COUNT(*) AS `c` FROM (
+                        SELECT 1 FROM `%s` GROUP BY `Collections`, `Composition` HAVING COUNT(*) > 1
+                     ) `d`;',
+                    $full
+                )
+            );
+            $dupCount = ($dup && ($row = mysqli_fetch_assoc($dup))) ? (int)$row['c'] : 0;
+            if($dupCount > 0) {
+                $this->addReport('data', $table, 'mismatch', 'Doppelte CollectionItems: '.$dupCount.' Paare');
+            }
+            $idx = mysqli_query(
+                $GLOBALS['conn'],
+                "SHOW INDEX FROM `".$full."` WHERE `Key_name` = 'uq_collection_composition';"
+            );
+            if(!$idx || mysqli_num_rows($idx) < 1) {
+                $this->addReport('index', $table.'.uq_collection_composition', 'missing', 'UNIQUE(Collections, Composition) fehlt');
+            }
+        }
+        catch(Throwable $e) {
+            $this->addReport('index', $table.'.uq_collection_composition', 'error', $e->getMessage());
+        }
     }
 
     /**
