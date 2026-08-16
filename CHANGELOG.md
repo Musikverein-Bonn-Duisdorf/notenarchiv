@@ -2,6 +2,11 @@
 
 Automatisch aus Git-Release-Commits erzeugt.
 
+## 2026-08-16-634ae (2026-08-16)
+
+- ARCHIV-49: Quick-Create-Modals vor MotD isolieren und korrekt darstellen
+- ARCHIV-49: Quick-Create-Modals vor MotD isolieren
+
 ## 2026-08-16-f4469 (2026-08-16)
 
 - ARCHIV-49: Plus-Buttons öffnen Quick-Create-Modal zuverlässig
