@@ -5137,7 +5137,8 @@ select.profile-control {
 .composer-row,
 .publisher-row,
 .collection-row {
-  --archiv-id-col-w: 9.75rem;
+  /* ID/Nr. only — narrower than Melde Inventar (Reg+Typ). */
+  --archiv-id-col-w: 5rem;
   --archiv-rail-w: 0.35rem;
   --archiv-rail-color: var(--page-title-accent, #345A95);
   --archiv-row-pad-y: 0.85rem;
@@ -5204,6 +5205,11 @@ select.profile-control {
   border-radius: 0.25rem;
   border: 1px solid rgba(0, 0, 0, 0.14);
   opacity: 0.9;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  box-sizing: border-box;
 }
 
 .piece-rail,
@@ -5540,10 +5546,18 @@ select.profile-control {
   .composer-row,
   .publisher-row,
   .collection-row {
-    --archiv-id-col-w: 7.5rem;
+    --archiv-id-col-w: 3.5rem;
     --archiv-row-pad-y: 0.75rem;
+    column-gap: 0.55rem;
     padding-left: 0.75rem;
     padding-right: 0.75rem;
+  }
+
+  .piece-reg,
+  .composer-id-num,
+  .publisher-id-num,
+  .collection-nr {
+    font-size: 0.88rem;
   }
 }
 
