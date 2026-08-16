@@ -174,6 +174,20 @@ class Collection
         return true;
     }
     protected function insert() {
+        // Prefer updating an existing (Collections, Composition) row instead of creating duplicates.
+        $sqlFind = sprintf(
+            'SELECT `Index` FROM `%sCollectionItem` WHERE `Collections` = "%d" AND `Composition` = "%d" ORDER BY `Index` ASC LIMIT 1;',
+            $GLOBALS['dbprefix'],
+            (int)$this->Collections,
+            (int)$this->Composition
+        );
+        $found = mysqli_query($GLOBALS['conn'], $sqlFind);
+        sqlerror();
+        $row = ($found) ? mysqli_fetch_assoc($found) : null;
+        if($row && (int)$row['Index'] > 0) {
+            $this->_data['Index'] = (int)$row['Index'];
+            return $this->update();
+        }
         $sql = sprintf('INSERT INTO `%sCollectionItem` (`Collections`, `Composition`, `CollectionNumber`) VALUES ("%d", "%d", %s);',
         $GLOBALS['dbprefix'],
         $this->Collections,

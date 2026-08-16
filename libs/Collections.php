@@ -163,7 +163,7 @@ class Collections
         $openJs = 'openModal(\'collection\', '.$id.')';
 
         $sql = sprintf(
-            'SELECT `Index` FROM `%sCollectionItem` WHERE `Collections` = "%d" ORDER BY `CollectionNumber` ASC;',
+            'SELECT `Index`, `Composition` FROM `%sCollectionItem` WHERE `Collections` = "%d" ORDER BY `CollectionNumber` ASC, `Index` ASC;',
             $GLOBALS['dbprefix'],
             $id
         );
@@ -171,8 +171,16 @@ class Collections
         sqlerror();
         $lines = '';
         $itemCount = 0;
+        $seen = array();
         if($dbr) {
             while($row = mysqli_fetch_array($dbr)) {
+                $compId = (int)$row['Composition'];
+                if($compId > 0 && isset($seen[$compId])) {
+                    continue;
+                }
+                if($compId > 0) {
+                    $seen[$compId] = true;
+                }
                 $content = new Collection;
                 $content->load_by_id($row['Index']);
                 $lines .= $content->printLine();
@@ -210,15 +218,21 @@ class Collections
             return $items;
         }
         $sql = sprintf(
-            'SELECT `Composition`, `CollectionNumber` FROM `%sCollectionItem` WHERE `Collections` = "%d" ORDER BY `CollectionNumber` ASC;',
+            'SELECT `Composition`, `CollectionNumber` FROM `%sCollectionItem` WHERE `Collections` = "%d" ORDER BY `CollectionNumber` ASC, `Index` ASC;',
             $GLOBALS['dbprefix'],
             $id
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
         sqlerror();
+        $seen = array();
         while($row = mysqli_fetch_array($dbr)) {
+            $compId = (int)$row['Composition'];
+            if($compId < 1 || isset($seen[$compId])) {
+                continue;
+            }
+            $seen[$compId] = true;
             $items[] = array(
-                'id' => (int)$row['Composition'],
+                'id' => $compId,
                 'number' => (int)$row['CollectionNumber'],
             );
         }
@@ -232,16 +246,21 @@ class Collections
             return $items;
         }
         $sql = sprintf(
-            'SELECT `CollectionNumber`, `Composition` FROM `%sCollectionItem` WHERE `Collections` = "%d" ORDER BY `CollectionNumber` ASC;',
+            'SELECT `CollectionNumber`, `Composition` FROM `%sCollectionItem` WHERE `Collections` = "%d" ORDER BY `CollectionNumber` ASC, `Index` ASC;',
             $GLOBALS['dbprefix'],
             $id
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
         sqlerror();
+        $seen = array();
         while($row = mysqli_fetch_array($dbr)) {
+            $compId = (int)$row['Composition'];
+            if($compId < 1 || isset($seen[$compId])) {
+                continue;
+            }
+            $seen[$compId] = true;
             $title = '';
             $coverHtml = '';
-            $compId = (int)$row['Composition'];
             if($compId > 0) {
                 $piece = new Composition;
                 $piece->load_by_id($compId);
