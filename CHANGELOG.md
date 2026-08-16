@@ -2,6 +2,11 @@
 
 Automatisch aus Git-Release-Commits erzeugt.
 
+## 2026-08-16-93241 (2026-08-16)
+
+- ARCHIV-47: Sammlungsfilter lässt Inhalt bei Namens-Treffer sichtbar
+- ARCHIV-47: Sammlungsfilter Name vs. Stück
+
 ## 2026-08-16-bf03f (2026-08-16)
 
 - ARCHIV-46: Logfile-Recht, Nav-Gruppenfarben und Melde-Matrix-Parität
