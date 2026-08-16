@@ -15,14 +15,34 @@ if(isset($_POST['save']) && $isAdmin) {
         $piece->load_by_id((int)$_POST['Index']);
     }
     $piece->fill_from_array($_POST);
+    $composersSpec = isset($_POST['composersSpec'])
+        ? archivParsePersonChipSpec($_POST['composersSpec'])
+        : null;
+    $arrangersSpec = isset($_POST['arrangersSpec'])
+        ? archivParsePersonChipSpec($_POST['arrangersSpec'])
+        : null;
+    if($composersSpec !== null) {
+        $piece->Composer = !empty($composersSpec[0]['id']) ? (int)$composersSpec[0]['id'] : 0;
+    }
+    if($arrangersSpec !== null) {
+        $piece->Arranger = !empty($arrangersSpec[0]['id']) ? (int)$arrangersSpec[0]['id'] : 0;
+    }
     $piece->save();
-    if((int)$piece->Index > 0 && isset($_POST['collectionsSpec'])) {
-        $items = archivParseCollectionChipSpec($_POST['collectionsSpec']);
-        if($items !== null) {
-            archivSyncCollectionItemsForComposition((int)$piece->Index, $items);
+    $redirId = (int)$piece->Index;
+    if($redirId > 0) {
+        if($composersSpec !== null) {
+            archivSyncCompositionPersons($redirId, 'composer', $composersSpec);
+        }
+        if($arrangersSpec !== null) {
+            archivSyncCompositionPersons($redirId, 'arranger', $arrangersSpec);
+        }
+        if(isset($_POST['collectionsSpec'])) {
+            $items = archivParseCollectionChipSpec($_POST['collectionsSpec']);
+            if($items !== null) {
+                archivSyncCollectionItemsForComposition($redirId, $items);
+            }
         }
     }
-    $redirId = (int)$piece->Index;
     redirectAfterPost($redirId > 0 ? ('composition.php?id='.$redirId) : 'composition.php');
 }
 
@@ -216,16 +236,30 @@ if(!$isCreate) {
         <input id="editReg" class="w3-input w3-border profile-control <?php echo htmlspecialchars($inputBg, ENT_QUOTES, 'UTF-8'); ?>" name="RegistrationNumber" type="number" value="<?php echo archivEscHtml($piece->RegistrationNumber); ?>">
       </div>
       <div class="profile-field">
-        <label class="profile-label" for="editComposer">Komponist</label>
-        <select id="editComposer" name="Composer" class="w3-input w3-border profile-control <?php echo htmlspecialchars($inputBg, ENT_QUOTES, 'UTF-8'); ?>">
-          <?php echo ComposersOption($piece->Composer); ?>
-        </select>
+        <label class="profile-label" for="piece-composers-input">Komponist</label>
+        <?php
+          echo archivPersonChipsEditorHtml(
+              'piece-composers',
+              'composersSpec',
+              archivComposersCatalog(),
+              $piece->getPersonChipSpec('composer'),
+              'Komponist…',
+              'data-quick-create="person" data-kind="Komponist" data-person-chips="piece-composers" aria-label="Komponist anlegen" title="Komponist anlegen"'
+          );
+        ?>
       </div>
       <div class="profile-field">
-        <label class="profile-label" for="editArranger">Arrangeur</label>
-        <select id="editArranger" name="Arranger" class="w3-input w3-border profile-control <?php echo htmlspecialchars($inputBg, ENT_QUOTES, 'UTF-8'); ?>">
-          <?php echo ComposersOption($piece->Arranger); ?>
-        </select>
+        <label class="profile-label" for="piece-arrangers-input">Arrangeur</label>
+        <?php
+          echo archivPersonChipsEditorHtml(
+              'piece-arrangers',
+              'arrangersSpec',
+              archivComposersCatalog(),
+              $piece->getPersonChipSpec('arranger'),
+              'Arrangeur…',
+              'data-quick-create="person" data-kind="Arrangeur" data-person-chips="piece-arrangers" aria-label="Arrangeur anlegen" title="Arrangeur anlegen"'
+          );
+        ?>
       </div>
     </section>
 
@@ -237,9 +271,12 @@ if(!$isCreate) {
       </div>
       <div class="profile-field">
         <label class="profile-label" for="editPublisher">Verlag</label>
-        <select id="editPublisher" name="Publisher" class="w3-input w3-border profile-control <?php echo htmlspecialchars($inputBg, ENT_QUOTES, 'UTF-8'); ?>">
-          <?php echo PublishersOption($piece->Publisher); ?>
-        </select>
+        <div class="profile-control-with-btn">
+          <select id="editPublisher" name="Publisher" class="w3-input w3-border profile-control <?php echo htmlspecialchars($inputBg, ENT_QUOTES, 'UTF-8'); ?>">
+            <?php echo PublishersOption($piece->Publisher); ?>
+          </select>
+          <button type="button" class="w3-button w3-border profile-control-btn <?php echo htmlspecialchars($inputBg, ENT_QUOTES, 'UTF-8'); ?>" data-quick-create="publisher" aria-label="Verlag anlegen" title="Verlag anlegen"><i class="fas fa-plus" aria-hidden="true"></i></button>
+        </div>
       </div>
       <div class="profile-field">
         <label class="profile-label" for="editWebsite">Produktseite</label>
@@ -346,5 +383,59 @@ if(!$isCreate) {
 </div>
 </div>
 <?php
+if($isAdmin) {
+    ob_start();
+    ?>
+<div id="quickPersonModal" class="w3-modal" style="display:none;">
+  <div class="w3-modal-content profile-shell modal-shell">
+    <header class="profile-hero">
+      <div class="profile-hero-text">
+        <p class="profile-kicker">Anlegen</p>
+        <h2 class="profile-title" id="quickPersonTitle">Komponist</h2>
+      </div>
+      <button type="button" class="modal-close w3-button" data-quick-close="quickPersonModal" aria-label="Schließen">&times;</button>
+    </header>
+    <form id="quickPersonForm" class="profile-grid">
+      <div class="profile-field">
+        <label class="profile-label" for="quickPersonFirst">Vorname</label>
+        <input id="quickPersonFirst" class="w3-input w3-border profile-control <?php echo htmlspecialchars($inputBg, ENT_QUOTES, 'UTF-8'); ?>" type="text" autocomplete="off">
+      </div>
+      <div class="profile-field">
+        <label class="profile-label" for="quickPersonLast">Nachname</label>
+        <input id="quickPersonLast" class="w3-input w3-border profile-control <?php echo htmlspecialchars($inputBg, ENT_QUOTES, 'UTF-8'); ?>" type="text" required autocomplete="off">
+      </div>
+      <p id="quickPersonError" class="profile-value quick-create-error" hidden></p>
+      <div class="profile-field profile-actions">
+        <button type="submit" class="w3-button <?php echo htmlspecialchars($btnSubmit, ENT_QUOTES, 'UTF-8'); ?>">Anlegen</button>
+        <button type="button" class="w3-button w3-border" data-quick-close="quickPersonModal">Abbrechen</button>
+      </div>
+    </form>
+  </div>
+</div>
+<div id="quickPublisherModal" class="w3-modal" style="display:none;">
+  <div class="w3-modal-content profile-shell modal-shell">
+    <header class="profile-hero">
+      <div class="profile-hero-text">
+        <p class="profile-kicker">Anlegen</p>
+        <h2 class="profile-title">Verlag</h2>
+      </div>
+      <button type="button" class="modal-close w3-button" data-quick-close="quickPublisherModal" aria-label="Schließen">&times;</button>
+    </header>
+    <form id="quickPublisherForm" class="profile-grid">
+      <div class="profile-field">
+        <label class="profile-label" for="quickPublisherName">Name</label>
+        <input id="quickPublisherName" class="w3-input w3-border profile-control <?php echo htmlspecialchars($inputBg, ENT_QUOTES, 'UTF-8'); ?>" type="text" required autocomplete="off">
+      </div>
+      <p id="quickPublisherError" class="profile-value quick-create-error" hidden></p>
+      <div class="profile-field profile-actions">
+        <button type="submit" class="w3-button <?php echo htmlspecialchars($btnSubmit, ENT_QUOTES, 'UTF-8'); ?>">Anlegen</button>
+        <button type="button" class="w3-button w3-border" data-quick-close="quickPublisherModal">Abbrechen</button>
+      </div>
+    </form>
+  </div>
+</div>
+    <?php
+    deferPageModalHtml(ob_get_clean().'<script src="'.assetUrl('js/quickCreateEntity.js').'"></script>');
+}
 include 'common/footer.php';
 ?>

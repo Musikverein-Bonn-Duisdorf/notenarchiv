@@ -39,10 +39,18 @@
     this.catalog = Array.isArray(opts.catalog) ? opts.catalog : [];
     this.chipClass = opts.chipClass || 'mail-recipient-chip--composition';
     this.inputBg = opts.inputBg || '';
+    this.hideNumbers = !!opts.hideNumbers;
     this.items = normalizeItems(opts.initial);
     this._active = -1;
     this._bound = false;
   }
+
+  CollectionChips.prototype.ensureCatalogEntry = function(id, label) {
+    id = Number(id);
+    if(!(id > 0)) return;
+    if(this.catalogById(id)) return;
+    this.catalog.push({id: id, label: label || ('#' + id)});
+  };
 
   CollectionChips.prototype.catalogById = function(id) {
     id = Number(id);
@@ -76,16 +84,28 @@
     return false;
   };
 
+  CollectionChips.prototype.renumber = function() {
+    for(var i = 0; i < this.items.length; i++) {
+      this.items[i].number = i + 1;
+    }
+  };
+
   CollectionChips.prototype.add = function(id) {
     id = Number(id);
     if(!(id > 0) || this.hasId(id)) return;
-    this.items.push({id: id, number: this.nextNumber()});
+    if(this.hideNumbers) {
+      this.items.push({id: id, number: this.items.length + 1});
+      this.renumber();
+    } else {
+      this.items.push({id: id, number: this.nextNumber()});
+    }
     this.notify();
   };
 
   CollectionChips.prototype.remove = function(id) {
     id = Number(id);
     this.items = this.items.filter(function(it) { return Number(it.id) !== id; });
+    if(this.hideNumbers) this.renumber();
     this.notify();
   };
 
@@ -118,28 +138,31 @@
     this.chipsEl.innerHTML = '';
     this.items.forEach(function(it) {
       var row = document.createElement('div');
-      row.className = 'collection-chip-row';
+      row.className = 'collection-chip-row' + (self.hideNumbers ? ' collection-chip-row--plain' : '');
       row.setAttribute('data-id', String(it.id));
 
-      var nrWrap = document.createElement('label');
-      nrWrap.className = 'collection-chip-nr';
-      var nrLab = document.createElement('span');
-      nrLab.className = 'collection-chip-nr-label';
-      nrLab.textContent = 'Nr';
-      var nrInput = document.createElement('input');
-      nrInput.type = 'number';
-      nrInput.className = 'w3-input w3-border profile-control collection-chip-nr-input' +
-        (self.inputBg ? (' ' + self.inputBg) : '');
-      nrInput.value = String(it.number);
-      nrInput.setAttribute('aria-label', 'Nr');
-      nrInput.addEventListener('change', function() {
-        self.setNumber(it.id, nrInput.value);
-      });
-      nrInput.addEventListener('input', function() {
-        self.setNumber(it.id, nrInput.value);
-      });
-      nrWrap.appendChild(nrLab);
-      nrWrap.appendChild(nrInput);
+      if(!self.hideNumbers) {
+        var nrWrap = document.createElement('label');
+        nrWrap.className = 'collection-chip-nr';
+        var nrLab = document.createElement('span');
+        nrLab.className = 'collection-chip-nr-label';
+        nrLab.textContent = 'Nr';
+        var nrInput = document.createElement('input');
+        nrInput.type = 'number';
+        nrInput.className = 'w3-input w3-border profile-control collection-chip-nr-input' +
+          (self.inputBg ? (' ' + self.inputBg) : '');
+        nrInput.value = String(it.number);
+        nrInput.setAttribute('aria-label', 'Nr');
+        nrInput.addEventListener('change', function() {
+          self.setNumber(it.id, nrInput.value);
+        });
+        nrInput.addEventListener('input', function() {
+          self.setNumber(it.id, nrInput.value);
+        });
+        nrWrap.appendChild(nrLab);
+        nrWrap.appendChild(nrInput);
+        row.appendChild(nrWrap);
+      }
 
       var chip = document.createElement('span');
       chip.className = 'mail-recipient-chip ' + self.chipClass;
@@ -158,7 +181,6 @@
       chip.appendChild(text);
       chip.appendChild(btn);
 
-      row.appendChild(nrWrap);
       row.appendChild(chip);
       self.chipsEl.appendChild(row);
     });

@@ -1,7 +1,7 @@
 <?php
 /**
  * GET /api/compositions.php?id=&q=&limit=
- * POST JSON: title, composerId?, publisherId?, arrangerId?, year?, grade?, performanceTime?, registrationNumber?, website?
+ * POST JSON: title, composerId?/composerIds?, arrangerId?/arrangerIds?, publisherId?, year?, grade?, performanceTime?, registrationNumber?, website?
  * PATCH JSON: id + same optional fields
  */
 require_once __DIR__.'/_bootstrap.php';
@@ -16,12 +16,16 @@ $defaultCover = isset($GLOBALS['optionsDB']['defaultCompositionCover'])
 function apiCompositionPayload(Composition $p, $defaultCover) {
     $cover = $p->getCover();
     $website = trim((string)$p->Website);
+    $composerIds = $p->getPersonIds('composer');
+    $arrangerIds = $p->getPersonIds('arranger');
     return array(
         'id' => (int)$p->Index,
         'title' => archivPlainText($p->Title),
         'registrationNumber' => $p->RegistrationNumber !== null ? (int)$p->RegistrationNumber : null,
-        'composerId' => $p->Composer ? (int)$p->Composer : null,
-        'arrangerId' => $p->Arranger ? (int)$p->Arranger : null,
+        'composerId' => !empty($composerIds[0]) ? (int)$composerIds[0] : ($p->Composer ? (int)$p->Composer : null),
+        'arrangerId' => !empty($arrangerIds[0]) ? (int)$arrangerIds[0] : ($p->Arranger ? (int)$p->Arranger : null),
+        'composerIds' => array_values(array_map('intval', $composerIds)),
+        'arrangerIds' => array_values(array_map('intval', $arrangerIds)),
         'publisherId' => $p->Publisher ? (int)$p->Publisher : null,
         'year' => $p->Year !== null && $p->Year !== '' ? (int)$p->Year : null,
         'grade' => $p->Grade !== null && $p->Grade !== '' ? (float)$p->Grade : null,
@@ -31,6 +35,27 @@ function apiCompositionPayload(Composition $p, $defaultCover) {
         'cover' => ($cover !== '' && $cover !== $defaultCover) ? $cover : null,
         'hasCustomCover' => ($cover !== '' && $cover !== $defaultCover),
     );
+}
+
+function apiNormalizePersonIds($body, $arrayKey, $scalarKey) {
+    if(array_key_exists($arrayKey, $body) && is_array($body[$arrayKey])) {
+        $out = array();
+        $pos = 1;
+        foreach($body[$arrayKey] as $id) {
+            $id = (int)$id;
+            if($id < 1) {
+                continue;
+            }
+            $out[] = array('id' => $id, 'number' => $pos);
+            $pos++;
+        }
+        return $out;
+    }
+    if(array_key_exists($scalarKey, $body)) {
+        $id = $body[$scalarKey] !== null && $body[$scalarKey] !== '' ? (int)$body[$scalarKey] : 0;
+        return $id > 0 ? array(array('id' => $id, 'number' => 1)) : array();
+    }
+    return null;
 }
 
 if($method === 'GET') {
@@ -76,10 +101,18 @@ if($method === 'POST') {
     if($title === '') {
         apiJsonExit(array('error' => 'invalid_title'), 400);
     }
+    $composers = apiNormalizePersonIds($body, 'composerIds', 'composerId');
+    $arrangers = apiNormalizePersonIds($body, 'arrangerIds', 'arrangerId');
+    if($composers === null) {
+        $composers = array();
+    }
+    if($arrangers === null) {
+        $arrangers = array();
+    }
     $p = new Composition;
     $p->Title = $title;
-    $p->Composer = isset($body['composerId']) ? (int)$body['composerId'] : null;
-    $p->Arranger = isset($body['arrangerId']) ? (int)$body['arrangerId'] : null;
+    $p->Composer = !empty($composers[0]['id']) ? (int)$composers[0]['id'] : null;
+    $p->Arranger = !empty($arrangers[0]['id']) ? (int)$arrangers[0]['id'] : null;
     $p->Publisher = isset($body['publisherId']) ? (int)$body['publisherId'] : null;
     $p->Year = isset($body['year']) && $body['year'] !== '' && $body['year'] !== null ? (int)$body['year'] : null;
     $p->Grade = isset($body['grade']) && $body['grade'] !== '' && $body['grade'] !== null ? (float)$body['grade'] : 0;
@@ -93,6 +126,8 @@ if($method === 'POST') {
     if((int)$p->Index < 1) {
         apiJsonExit(array('error' => 'save_failed'), 500);
     }
+    archivSyncCompositionPersons((int)$p->Index, 'composer', $composers);
+    archivSyncCompositionPersons((int)$p->Index, 'arranger', $arrangers);
     apiJsonExit(array('ok' => true, 'id' => (int)$p->Index, 'registrationNumber' => (int)$p->RegistrationNumber));
 }
 
@@ -113,11 +148,13 @@ if($method === 'PATCH') {
         }
         $p->Title = $title;
     }
-    if(array_key_exists('composerId', $body)) {
-        $p->Composer = $body['composerId'] !== null && $body['composerId'] !== '' ? (int)$body['composerId'] : null;
+    $composers = apiNormalizePersonIds($body, 'composerIds', 'composerId');
+    $arrangers = apiNormalizePersonIds($body, 'arrangerIds', 'arrangerId');
+    if($composers !== null) {
+        $p->Composer = !empty($composers[0]['id']) ? (int)$composers[0]['id'] : null;
     }
-    if(array_key_exists('arrangerId', $body)) {
-        $p->Arranger = $body['arrangerId'] !== null && $body['arrangerId'] !== '' ? (int)$body['arrangerId'] : null;
+    if($arrangers !== null) {
+        $p->Arranger = !empty($arrangers[0]['id']) ? (int)$arrangers[0]['id'] : null;
     }
     if(array_key_exists('publisherId', $body)) {
         $p->Publisher = $body['publisherId'] !== null && $body['publisherId'] !== '' ? (int)$body['publisherId'] : null;
@@ -138,6 +175,12 @@ if($method === 'PATCH') {
         $p->RegistrationNumber = (int)$body['registrationNumber'];
     }
     $p->save();
+    if($composers !== null) {
+        archivSyncCompositionPersons((int)$p->Index, 'composer', $composers);
+    }
+    if($arrangers !== null) {
+        archivSyncCompositionPersons((int)$p->Index, 'arranger', $arrangers);
+    }
     apiJsonExit(array('ok' => true, 'id' => (int)$p->Index));
 }
 

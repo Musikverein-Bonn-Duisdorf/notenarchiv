@@ -567,6 +567,16 @@ function nextArchiverNumber() {
     return $i;
 }
 
+/** Select option label for composers (LastName, FirstName). */
+function archivComposerOptionLabel($firstName, $lastName) {
+    return trim((string)$lastName).', '.trim((string)$firstName);
+}
+
+/** Select option label for publishers. */
+function archivPublisherOptionLabel($name) {
+    return trim((string)$name);
+}
+
 function ComposersOption($val) {
     if($val == 0) {
         echo "<option value=\"null\" selected></option>\n";
@@ -580,11 +590,12 @@ function ComposersOption($val) {
     $dbr = mysqli_query($GLOBALS['conn'], $sql);
     sqlerror();
     while($row = mysqli_fetch_array($dbr)) {
+        $label = archivComposerOptionLabel($row['FirstName'], $row['LastName']);
         if($val == $row['Index']) {
-            echo "<option value=\"".$row['Index']."\" selected>".$row['LastName'].", ".$row['FirstName']."</option>\n";
+            echo "<option value=\"".$row['Index']."\" selected>".$label."</option>\n";
         }
         else {
-            echo "<option value=\"".$row['Index']."\">".$row['LastName'].", ".$row['FirstName']."</option>\n";
+            echo "<option value=\"".$row['Index']."\">".$label."</option>\n";
         }
     }
 }
@@ -602,11 +613,12 @@ function PublishersOption($val) {
     $dbr = mysqli_query($GLOBALS['conn'], $sql);
     sqlerror();
     while($row = mysqli_fetch_array($dbr)) {
+        $label = archivPublisherOptionLabel($row['Name']);
         if($val == $row['Index']) {
-            echo "<option value=\"".$row['Index']."\" selected>".$row['Name']."</option>\n";
+            echo "<option value=\"".$row['Index']."\" selected>".$label."</option>\n";
         }
         else {
-            echo "<option value=\"".$row['Index']."\">".$row['Name']."</option>\n";
+            echo "<option value=\"".$row['Index']."\">".$label."</option>\n";
         }
     }
 }
@@ -1611,6 +1623,365 @@ function archivCollectionChipsEditorHtml($prefix, $chipClass, $hiddenName, array
     $html .= 'chipClass:'.json_encode($chipClass).',';
     $html .= 'inputBg:'.json_encode($inputBg);
     $html .= '});})();</script>';
+    return $html;
+}
+
+/** Valid CompositionPerson.Role values. */
+function archivCompositionPersonRoles() {
+    return array('composer', 'arranger');
+}
+
+/**
+ * @param string $role
+ * @return bool
+ */
+function archivIsCompositionPersonRole($role) {
+    return in_array((string)$role, archivCompositionPersonRoles(), true);
+}
+
+/**
+ * Catalog of composers for person chip typeahead.
+ * @return array [{id, label}, ...]
+ */
+function archivComposersCatalog() {
+    $out = array();
+    $sql = sprintf(
+        'SELECT `Index`, `FirstName`, `LastName` FROM `%sComposer` ORDER BY `LastName` ASC, `FirstName` ASC;',
+        $GLOBALS['dbprefix']
+    );
+    $dbr = mysqli_query($GLOBALS['conn'], $sql);
+    sqlerror();
+    while($dbr && ($row = mysqli_fetch_assoc($dbr))) {
+        $id = (int)$row['Index'];
+        if($id < 1) {
+            continue;
+        }
+        $out[] = array(
+            'id' => $id,
+            'label' => archivComposerOptionLabel($row['FirstName'], $row['LastName']),
+        );
+    }
+    return $out;
+}
+
+/**
+ * Person chip spec: [{id, number}] — number = Position (1-based).
+ * @param string $json
+ * @return array|null
+ */
+function archivParsePersonChipSpec($json) {
+    return archivParseCollectionChipSpec($json);
+}
+
+/**
+ * Load person chips for one composition + role.
+ * @param int $compositionId
+ * @param string $role composer|arranger
+ * @return array [{id, number, label}, ...]
+ */
+function archivLoadCompositionPersons($compositionId, $role) {
+    $compositionId = (int)$compositionId;
+    $out = array();
+    if($compositionId < 1 || !archivIsCompositionPersonRole($role)) {
+        return $out;
+    }
+    $sql = sprintf(
+        'SELECT p.`Composer` AS `id`, p.`Position` AS `number`,'
+        .' c.`FirstName`, c.`LastName`'
+        .' FROM `%sCompositionPerson` p'
+        .' LEFT JOIN `%sComposer` c ON c.`Index` = p.`Composer`'
+        .' WHERE p.`Composition` = %d AND p.`Role` = "%s"'
+        .' ORDER BY p.`Position` ASC, p.`Index` ASC;',
+        $GLOBALS['dbprefix'],
+        $GLOBALS['dbprefix'],
+        $compositionId,
+        mysqli_real_escape_string($GLOBALS['conn'], $role)
+    );
+    $dbr = mysqli_query($GLOBALS['conn'], $sql);
+    sqlerror();
+    while($dbr && ($row = mysqli_fetch_assoc($dbr))) {
+        $id = (int)$row['id'];
+        if($id < 1) {
+            continue;
+        }
+        $out[] = array(
+            'id' => $id,
+            'number' => (int)$row['number'],
+            'label' => archivComposerOptionLabel($row['FirstName'], $row['LastName']),
+            'firstName' => (string)$row['FirstName'],
+            'lastName' => (string)$row['LastName'],
+        );
+    }
+    return $out;
+}
+
+/**
+ * Display names joined with " / ".
+ * @param array $persons from archivLoadCompositionPersons
+ * @return string
+ */
+function archivCompositionPersonNames(array $persons) {
+    $names = array();
+    foreach($persons as $row) {
+        if(isset($row['firstName']) || isset($row['lastName'])) {
+            $label = archivComposerDisplayName(
+                isset($row['firstName']) ? $row['firstName'] : '',
+                isset($row['lastName']) ? $row['lastName'] : ''
+            );
+        }
+        else {
+            $label = isset($row['label']) ? trim((string)$row['label']) : '';
+        }
+        if($label !== '') {
+            $names[] = $label;
+        }
+    }
+    return implode(' / ', $names);
+}
+
+/**
+ * Sync CompositionPerson rows for one composition + role; sets primary FK column.
+ * @param int $compositionId
+ * @param string $role
+ * @param array $items [{id, number}, ...]
+ */
+function archivSyncCompositionPersons($compositionId, $role, array $items) {
+    $compositionId = (int)$compositionId;
+    if($compositionId < 1 || !archivIsCompositionPersonRole($role)) {
+        return;
+    }
+    $wanted = array();
+    $pos = 1;
+    foreach($items as $row) {
+        $id = (int)$row['id'];
+        if($id < 1 || isset($wanted[$id])) {
+            continue;
+        }
+        $wanted[$id] = $pos;
+        $pos++;
+    }
+
+    $existing = array();
+    $sql = sprintf(
+        'SELECT `Index`, `Composer`, `Position` FROM `%sCompositionPerson`'
+        .' WHERE `Composition` = %d AND `Role` = "%s" ORDER BY `Index` ASC;',
+        $GLOBALS['dbprefix'],
+        $compositionId,
+        mysqli_real_escape_string($GLOBALS['conn'], $role)
+    );
+    $dbr = mysqli_query($GLOBALS['conn'], $sql);
+    sqlerror();
+    while($dbr && ($row = mysqli_fetch_assoc($dbr))) {
+        $cid = (int)$row['Composer'];
+        $idx = (int)$row['Index'];
+        if(isset($existing[$cid])) {
+            mysqli_query(
+                $GLOBALS['conn'],
+                sprintf('DELETE FROM `%sCompositionPerson` WHERE `Index` = %d;', $GLOBALS['dbprefix'], $idx)
+            );
+            continue;
+        }
+        $existing[$cid] = array('Index' => $idx, 'Position' => (int)$row['Position']);
+    }
+
+    foreach($existing as $cid => $info) {
+        if(!isset($wanted[$cid])) {
+            mysqli_query(
+                $GLOBALS['conn'],
+                sprintf(
+                    'DELETE FROM `%sCompositionPerson` WHERE `Index` = %d;',
+                    $GLOBALS['dbprefix'],
+                    (int)$info['Index']
+                )
+            );
+        }
+    }
+
+    foreach($wanted as $cid => $number) {
+        if(isset($existing[$cid])) {
+            if((int)$existing[$cid]['Position'] !== (int)$number) {
+                mysqli_query(
+                    $GLOBALS['conn'],
+                    sprintf(
+                        'UPDATE `%sCompositionPerson` SET `Position` = %d WHERE `Index` = %d;',
+                        $GLOBALS['dbprefix'],
+                        (int)$number,
+                        (int)$existing[$cid]['Index']
+                    )
+                );
+            }
+        }
+        else {
+            mysqli_query(
+                $GLOBALS['conn'],
+                sprintf(
+                    'INSERT INTO `%sCompositionPerson` (`Composition`, `Composer`, `Role`, `Position`)'
+                    .' VALUES (%d, %d, "%s", %d);',
+                    $GLOBALS['dbprefix'],
+                    $compositionId,
+                    $cid,
+                    mysqli_real_escape_string($GLOBALS['conn'], $role),
+                    (int)$number
+                )
+            );
+        }
+    }
+
+    $primary = 0;
+    foreach($wanted as $cid => $number) {
+        if((int)$number === 1) {
+            $primary = (int)$cid;
+            break;
+        }
+    }
+    $col = ($role === 'arranger') ? 'Arranger' : 'Composer';
+    mysqli_query(
+        $GLOBALS['conn'],
+        sprintf(
+            'UPDATE `%sComposition` SET `%s` = %s WHERE `Index` = %d;',
+            $GLOBALS['dbprefix'],
+            $col,
+            $primary > 0 ? (string)$primary : 'NULL',
+            $compositionId
+        )
+    );
+}
+
+/**
+ * One-time migrate FK Composer/Arranger into CompositionPerson.
+ * @return int rows inserted
+ */
+function archivMigrateCompositionPersonsFromFk() {
+    if(!isset($GLOBALS['conn'], $GLOBALS['dbprefix'])) {
+        return 0;
+    }
+    $p = $GLOBALS['dbprefix'];
+    $tbl = new SQLtable('CompositionPerson');
+    if(!$tbl->exists()) {
+        return 0;
+    }
+    $inserted = 0;
+    foreach(array(
+        array('col' => 'Composer', 'role' => 'composer'),
+        array('col' => 'Arranger', 'role' => 'arranger'),
+    ) as $spec) {
+        $sql = sprintf(
+            'INSERT INTO `%sCompositionPerson` (`Composition`, `Composer`, `Role`, `Position`)'
+            .' SELECT c.`Index`, c.`%s`, "%s", 1'
+            .' FROM `%sComposition` c'
+            .' WHERE c.`%s` IS NOT NULL AND c.`%s` > 0'
+            .' AND NOT EXISTS ('
+            .'   SELECT 1 FROM `%sCompositionPerson` p'
+            .'   WHERE p.`Composition` = c.`Index` AND p.`Composer` = c.`%s` AND p.`Role` = "%s"'
+            .' );',
+            $p,
+            $spec['col'],
+            mysqli_real_escape_string($GLOBALS['conn'], $spec['role']),
+            $p,
+            $spec['col'],
+            $spec['col'],
+            $p,
+            $spec['col'],
+            mysqli_real_escape_string($GLOBALS['conn'], $spec['role'])
+        );
+        if(mysqli_query($GLOBALS['conn'], $sql)) {
+            $inserted += (int)mysqli_affected_rows($GLOBALS['conn']);
+        }
+    }
+    return $inserted;
+}
+
+/**
+ * @return bool true if index exists (or was created)
+ */
+function archivEnsureCompositionPersonUniqueIndex() {
+    if(!isset($GLOBALS['conn'], $GLOBALS['dbprefix'])) {
+        return false;
+    }
+    $full = $GLOBALS['dbprefix'].'CompositionPerson';
+    $tbl = new SQLtable('CompositionPerson');
+    if(!$tbl->exists()) {
+        return false;
+    }
+    try {
+        $idx = mysqli_query(
+            $GLOBALS['conn'],
+            "SHOW INDEX FROM `".$full."` WHERE `Key_name` = 'uq_composition_person_role';"
+        );
+        if($idx && mysqli_num_rows($idx) > 0) {
+            return true;
+        }
+        $dbr = mysqli_query(
+            $GLOBALS['conn'],
+            'ALTER TABLE `'.$full.'` ADD UNIQUE KEY `uq_composition_person_role` (`Composition`, `Composer`, `Role`(16));'
+        );
+        return (bool)$dbr;
+    }
+    catch(Throwable $e) {
+        return false;
+    }
+}
+
+/**
+ * Person chip editor (no Nr fields); reuses CollectionChips with hideNumbers.
+ * @return string
+ */
+function archivPersonChipsEditorHtml($prefix, $hiddenName, array $catalog, array $initial, $placeholder, $plusAttrs = '') {
+    $inputBg = isset($GLOBALS['optionsDB']['colorInputBackground'])
+        ? (string)$GLOBALS['optionsDB']['colorInputBackground']
+        : '';
+    $chipsId = $prefix.'-chips';
+    $inputId = $prefix.'-input';
+    $suggestId = $prefix.'-suggest';
+    $hiddenId = $prefix.'-spec';
+    $catalogId = $prefix.'-catalog';
+    $spec = array();
+    foreach($initial as $i => $row) {
+        $spec[] = array(
+            'id' => (int)$row['id'],
+            'number' => isset($row['number']) ? (int)$row['number'] : ($i + 1),
+        );
+    }
+
+    $html = '<div class="profile-field collection-chips-editor person-chips-editor" data-person-chips="'.archivEscHtml($prefix).'">';
+    $html .= '<div class="profile-control-with-btn person-chips-controls">';
+    $html .= '<div class="person-chips-main">';
+    $html .= '<div id="'.archivEscHtml($chipsId).'" class="mail-recipient-chips" role="list" aria-live="polite"></div>';
+    $html .= '<input id="'.archivEscHtml($inputId).'" type="text" class="w3-input w3-border profile-control '.archivEscHtml($inputBg).'"'
+        .' placeholder="'.archivEscHtml($placeholder).'" autocomplete="off" aria-label="'.archivEscHtml($placeholder).'">';
+    $html .= '<div id="'.archivEscHtml($suggestId).'" class="mail-recipient-suggest" hidden></div>';
+    $html .= '</div>';
+    if($plusAttrs !== '') {
+        $html .= '<button type="button" class="w3-button w3-border profile-control-btn '.archivEscHtml($inputBg).'" '.$plusAttrs.'><i class="fas fa-plus" aria-hidden="true"></i></button>';
+    }
+    $html .= '</div>';
+    $html .= '<input type="hidden" name="'.archivEscHtml($hiddenName).'" id="'.archivEscHtml($hiddenId).'" value="'.archivEscHtml(json_encode(array_values($spec))).'">';
+    $html .= '<script type="application/json" id="'.archivEscHtml($catalogId).'">'
+        .json_encode(
+            array_values($catalog),
+            JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS
+        )
+        .'</script>';
+    $html .= '</div>';
+    $html .= '<script src="'.assetUrl('js/collectionChips.js').'"></script>';
+    $html .= '<script>(function(){';
+    $html .= 'var catEl=document.getElementById('.json_encode($catalogId).');';
+    $html .= 'var catalog=[]; try{ catalog=JSON.parse(catEl.textContent||"[]"); }catch(e){}';
+    $html .= 'var hid=document.getElementById('.json_encode($hiddenId).');';
+    $html .= 'var inst=CollectionChips.init({';
+    $html .= 'chipsEl:document.getElementById('.json_encode($chipsId).'),';
+    $html .= 'inputEl:document.getElementById('.json_encode($inputId).'),';
+    $html .= 'suggestEl:document.getElementById('.json_encode($suggestId).'),';
+    $html .= 'hiddenEl:hid,';
+    $html .= 'catalog:catalog,';
+    $html .= 'initial:'.json_encode(array_values($spec), JSON_UNESCAPED_UNICODE).',';
+    $html .= 'chipClass:"mail-recipient-chip--composer",';
+    $html .= 'inputBg:'.json_encode($inputBg).',';
+    $html .= 'hideNumbers:true';
+    $html .= '});';
+    $html .= 'if(!window.ArchivPersonChips) window.ArchivPersonChips={};';
+    $html .= 'window.ArchivPersonChips['.json_encode($prefix).']=inst;';
+    $html .= '})();</script>';
     return $html;
 }
 

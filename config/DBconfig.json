@@ -21,6 +21,13 @@
         "CollectionNumber": {"Type": "int", "Null": "YES"},
         "Composition": {"Type": "int"}
     },
+    "CompositionPerson": {
+        "Index": {"Type": "int", "Extra": "AUTO_INCREMENT"},
+        "Composition": {"Type": "int"},
+        "Composer": {"Type": "int"},
+        "Role": {"Type": "text", "Collation": "utf8mb4_unicode_ci"},
+        "Position": {"Type": "int", "Default": 1}
+    },
     "Composition": {
         "Index": {"Type": "int", "Extra": "AUTO_INCREMENT"},
         "RegistrationNumber": {"Type": "int", "Null": "YES"},
