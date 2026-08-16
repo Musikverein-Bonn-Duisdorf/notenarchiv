@@ -7,8 +7,11 @@ $canRead = $uidNav > 0 && hasPermission('perm_read');
 $canWrite = $isAdminNav;
 $canEditPermissions = $uidNav > 0 && hasPermission('perm_editPermissions');
 $canEditConfig = $canWrite;
-$canShowLog = $canWrite;
-$showAdminNav = $canWrite || $canEditPermissions;
+$canShowLog = $uidNav > 0 && hasPermission('perm_showLog');
+$showAdminNav = $canWrite || $canEditPermissions || $canShowLog;
+$verwaltungPermClass = $canWrite
+    ? adminNavPermClass('perm_write')
+    : ($canShowLog ? adminNavPermClass('perm_showLog') : adminNavPermClass('perm_editPermissions'));
 $meldeUrl = isset($optionsDB['urlMeldeliste']) ? trim((string)$optionsDB['urlMeldeliste']) : '';
 $mitUrl = isset($optionsDB['urlMitgliederverwaltung']) ? trim((string)$optionsDB['urlMitgliederverwaltung']) : '';
 $showMeldeNav = ($meldeUrl !== '');
@@ -78,16 +81,16 @@ if(hasPermission('perm_write')) {
 <nav class="app-nav <?php echo $navColor; ?>" aria-label="Hauptnavigation">
   <div class="app-nav-primary">
 <?php if($canRead) { ?>
-    <a class="app-nav-item <?php getPage('home', 'system'); ?>" href="<?php echo htmlspecialchars($homeUrl, ENT_QUOTES, 'UTF-8'); ?>" title="Stücke">
+    <a class="app-nav-item <?php getPage('home', 'archiv'); ?>" href="<?php echo htmlspecialchars($homeUrl, ENT_QUOTES, 'UTF-8'); ?>" title="Stücke">
       <i class="fas fa-home" aria-hidden="true"></i><span class="nav-label">Stücke</span>
     </a>
-    <a class="app-nav-item <?php getPage('collections', 'system'); ?>" href="collections.php" title="Sammlungen">
+    <a class="app-nav-item <?php getPage('collections', 'archiv'); ?>" href="collections.php" title="Sammlungen">
       <i class="fas fa-folder-open" aria-hidden="true"></i><span class="nav-label">Sammlungen</span>
     </a>
-    <a class="app-nav-item <?php getPage('composers', 'system'); ?>" href="composers.php" title="Komponisten">
+    <a class="app-nav-item <?php getPage('composers', 'archiv'); ?>" href="composers.php" title="Komponisten">
       <i class="fas fa-feather" aria-hidden="true"></i><span class="nav-label">Komponisten</span>
     </a>
-    <a class="app-nav-item <?php getPage('publishers', 'system'); ?>" href="publishers.php" title="Verlage">
+    <a class="app-nav-item <?php getPage('publishers', 'archiv'); ?>" href="publishers.php" title="Verlage">
       <i class="fas fa-industry" aria-hidden="true"></i><span class="nav-label">Verlage</span>
     </a>
 <?php } ?>
@@ -135,20 +138,22 @@ if(hasPermission('perm_write')) {
           <div class="app-nav-admin-title"><i class="fas fa-wrench" aria-hidden="true"></i><span class="nav-label">Admin</span></div>
           <div class="w3-bar-block <?php echo $navAdminColor; ?>">
             <div class="w3-dropdown-hover w3-mobile admin-nav-group<?php echo adminNavGroupActiveClass(array('composition', 'newcomposer', 'newpublisher', 'newcollection', 'config', 'backup', 'log', 'update', 'updater', 'permissions')); ?>">
-              <button type="button" class="w3-button w3-mobile w3-block w3-left-align <?php echo htmlspecialchars(navGroupClass('system'), ENT_QUOTES, 'UTF-8'); ?>">Verwaltung <i class="fas fa-caret-right admin-nav-caret"></i></button>
+              <button type="button" class="w3-button w3-mobile w3-block w3-left-align <?php echo htmlspecialchars($verwaltungPermClass, ENT_QUOTES, 'UTF-8'); ?>">Verwaltung <i class="fas fa-caret-right admin-nav-caret"></i></button>
               <div class="w3-dropdown-content w3-bar-block w3-card-4 <?php echo $navAdminColor; ?> w3-mobile">
 <?php if($canWrite) { ?>
-                <a title="Stück anlegen" href="composition.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('composition'); ?>"><i class="fas fa-plus-circle"></i> Stück</a>
-                <a title="Sammlung anlegen" href="new-collection.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('newcollection'); ?>"><i class="fas fa-folder-plus"></i> Sammlung</a>
-                <a title="Komponist anlegen" href="new-composer.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('newcomposer'); ?>"><i class="fas fa-feather"></i> Komponist</a>
-                <a title="Verlag anlegen" href="new-publisher.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('newpublisher'); ?>"><i class="fas fa-industry"></i> Verlag</a>
-                <a title="Konfiguration" href="config-menu.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('config'); ?>"><i class="fas fa-cogs"></i> Konfiguration</a>
-                <a title="Backup" href="backup.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('backup'); ?>"><i class="fas fa-file-archive"></i> Backup</a>
-                <a title="Updater" href="updater.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('updater'); ?>"><i class="fas fa-code-branch"></i> Updater</a>
-                <a title="Log" href="log.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('log'); ?>"><i class="fas fa-poll"></i> Log</a>
+                <a title="Stück anlegen" href="composition.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPagePerm('composition', 'perm_write'); ?>"><i class="fas fa-plus-circle"></i> Stück</a>
+                <a title="Sammlung anlegen" href="new-collection.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPagePerm('newcollection', 'perm_write'); ?>"><i class="fas fa-folder-plus"></i> Sammlung</a>
+                <a title="Komponist anlegen" href="new-composer.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPagePerm('newcomposer', 'perm_write'); ?>"><i class="fas fa-feather"></i> Komponist</a>
+                <a title="Verlag anlegen" href="new-publisher.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPagePerm('newpublisher', 'perm_write'); ?>"><i class="fas fa-industry"></i> Verlag</a>
+                <a title="Konfiguration" href="config-menu.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPagePerm('config', 'perm_editConfig'); ?>"><i class="fas fa-cogs"></i> Konfiguration</a>
+                <a title="Backup" href="backup.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPagePerm('backup', 'perm_editConfig'); ?>"><i class="fas fa-file-archive"></i> Backup</a>
+                <a title="Updater" href="updater.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPagePerm('updater', 'perm_editConfig'); ?>"><i class="fas fa-code-branch"></i> Updater</a>
+<?php } ?>
+<?php if($canShowLog) { ?>
+                <a title="Log" href="log.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPagePerm('log', 'perm_showLog'); ?>"><i class="fas fa-poll"></i> Log</a>
 <?php } ?>
 <?php if($canEditPermissions) { ?>
-                <a title="Berechtigungen" href="permissions.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPage('permissions'); ?>"><i class="fas fa-lock"></i> Berechtigungen</a>
+                <a title="Berechtigungen" href="permissions.php" class="w3-bar-item w3-button w3-mobile <?php getAdminPagePerm('permissions', 'perm_editPermissions'); ?>"><i class="fas fa-lock"></i> Berechtigungen</a>
 <?php } ?>
               </div>
             </div>

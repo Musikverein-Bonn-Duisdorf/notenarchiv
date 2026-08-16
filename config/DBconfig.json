@@ -86,6 +86,7 @@
         "User": {"Type": "int"},
         "perm_read": {"Type": "int", "Default": 0},
         "perm_write": {"Type": "int", "Default": 0},
+        "perm_showLog": {"Type": "int", "Default": 0},
         "perm_editPermissions": {"Type": "int", "Default": 0}
     }
 }

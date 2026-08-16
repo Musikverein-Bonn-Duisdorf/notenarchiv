@@ -332,8 +332,8 @@ function logConfigChange($parameter, $oldValue, $newValue, $type = '') {
 /**
  * Non-fatal local Archiv permission check (ARCHIV-42).
  * perm_read is also true when perm_write is set.
- * Legacy Melde keys perm_editConfig / perm_showLog map to perm_write.
- * @param string $perm e.g. perm_read, perm_write, perm_editPermissions
+ * Legacy Melde key perm_editConfig maps to perm_write.
+ * @param string $perm e.g. perm_read, perm_write, perm_showLog, perm_editPermissions
  * @return bool
  */
 function hasPermission($perm) {
@@ -342,7 +342,7 @@ function hasPermission($perm) {
         return false;
     }
     $perm = (string)$perm;
-    if($perm === 'perm_editConfig' || $perm === 'perm_showLog') {
+    if($perm === 'perm_editConfig') {
         $perm = 'perm_write';
     }
     try {
@@ -630,6 +630,36 @@ function getAdminPage($string) {
     else {
         echo $GLOBALS['optionsDB']['colorNavAdmin'];
     }
+}
+
+/**
+ * Admin menu entry: active = TitleBar, else permission group color (Melde-parity).
+ * @param string $page
+ * @param string $permKey ArchivPermissions / legacy Melde key
+ */
+function getAdminPagePerm($page, $permKey) {
+    if($page == $_SESSION['page'] && !empty($_SESSION['adminpage'])) {
+        echo $GLOBALS['optionsDB']['colorTitleBar'];
+        return;
+    }
+    echo adminNavPermClass($permKey);
+}
+
+/**
+ * CSS classes for admin nav from permission group colors.
+ * @param string $permKey
+ * @return string
+ */
+function adminNavPermClass($permKey) {
+    $permKey = (string)$permKey;
+    // Melde Config key → System-Chrome; gate still maps to perm_write.
+    if($permKey === 'perm_editConfig') {
+        return navGroupClass('system');
+    }
+    if(class_exists('ArchivPermissions', false)) {
+        return navGroupClass(ArchivPermissions::groupIdForPermission($permKey));
+    }
+    return navGroupClass('system');
 }
 
 function string2Date($string) {

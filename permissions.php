@@ -6,7 +6,11 @@ $_SESSION['adminpage'] = true;
 include 'common/header.php';
 requirePermission('perm_editPermissions');
 
-$permKeys = ArchivPermissions::permissionKeys();
+$permCatalog = ArchivPermissions::permissionCatalog();
+$permKeys = array();
+foreach($permCatalog as $item) {
+    $permKeys[] = $item['key'];
+}
 $permLabels = ArchivPermissions::permissionLabels();
 $sessionUserId = isset($_SESSION['userid']) ? (int)$_SESSION['userid'] : 0;
 $inputBg = $GLOBALS['optionsDB']['colorInputBackground'];
@@ -62,7 +66,7 @@ adminListPageBegin('System', 'Berechtigungen', array(
       <div class="profile-field perm-toolbar-filter">
         <label class="profile-pref" for="permOnlyActive">
           <input type="checkbox" id="permOnlyActive">
-          <span>nur mit Archiv-Recht</span>
+          <span>nur mit mindestens einem Recht</span>
         </label>
       </div>
     </div>

@@ -10,6 +10,7 @@ class ArchivPermissions
         'User' => null,
         'perm_read' => 0,
         'perm_write' => 0,
+        'perm_showLog' => 0,
         'perm_editPermissions' => 0,
     );
 
@@ -41,7 +42,11 @@ class ArchivPermissions
      * @return string[]
      */
     public static function permissionKeys() {
-        return array('perm_read', 'perm_write', 'perm_editPermissions');
+        $keys = array();
+        foreach(self::permissionCatalog() as $item) {
+            $keys[] = $item['key'];
+        }
+        return $keys;
     }
 
     /**
@@ -51,23 +56,18 @@ class ArchivPermissions
         return array(
             'perm_read' => array('short' => 'Lesen', 'label' => 'Lesen'),
             'perm_write' => array('short' => 'Schreiben', 'label' => 'Schreiben'),
+            'perm_showLog' => array('short' => 'Log', 'label' => 'Logfile lesen'),
             'perm_editPermissions' => array('short' => 'Rechte', 'label' => 'Berechtigungen bearbeiten'),
         );
     }
 
     /**
      * Logical groups + Melde-parity accent colors for Nav/Hero/Matrix.
-     * `nutzer` / `system` mirror Melde ids so shared chrome matches.
+     * Order mirrors Melde: Nutzer → Domäne → System.
      * @return array<int,array{id:string,title:string,color:string,keys:string[]}>
      */
     public static function permissionGroups() {
         return array(
-            array(
-                'id' => 'archiv',
-                'title' => 'Archiv',
-                'color' => '#8D6E63',
-                'keys' => array('perm_read', 'perm_write'),
-            ),
             array(
                 'id' => 'nutzer',
                 'title' => 'Nutzer',
@@ -75,12 +75,42 @@ class ArchivPermissions
                 'keys' => array('perm_editPermissions'),
             ),
             array(
+                'id' => 'archiv',
+                'title' => 'Archiv',
+                'color' => '#8D6E63',
+                'keys' => array('perm_read', 'perm_write'),
+            ),
+            array(
                 'id' => 'system',
                 'title' => 'System',
                 'color' => '#78909C',
-                'keys' => array(),
+                'keys' => array('perm_showLog'),
             ),
         );
+    }
+
+    /**
+     * Flat catalog in group sort order (Melde-parity for matrix columns).
+     * @return array<int,array{key:string,label:string,group:string,groupId:string}>
+     */
+    public static function permissionCatalog() {
+        $labels = self::permissionLabels();
+        $out = array();
+        foreach(self::permissionGroups() as $group) {
+            $groupId = isset($group['id']) ? (string)$group['id'] : 'sonst';
+            $groupTitle = isset($group['title']) ? (string)$group['title'] : '';
+            $keys = isset($group['keys']) && is_array($group['keys']) ? $group['keys'] : array();
+            foreach($keys as $key) {
+                $meta = isset($labels[$key]) ? $labels[$key] : array('label' => $key);
+                $out[] = array(
+                    'key' => (string)$key,
+                    'label' => (string)$meta['label'],
+                    'group' => $groupTitle,
+                    'groupId' => $groupId,
+                );
+            }
+        }
+        return $out;
     }
 
     /**
@@ -145,19 +175,66 @@ class ArchivPermissions
                     `User` INT NOT NULL,
                     `perm_read` INT NOT NULL DEFAULT 0,
                     `perm_write` INT NOT NULL DEFAULT 0,
+                    `perm_showLog` INT NOT NULL DEFAULT 0,
                     `perm_editPermissions` INT NOT NULL DEFAULT 0,
                     UNIQUE KEY `User` (`User`)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;',
                 $table
             );
             $dbr = mysqli_query($GLOBALS['conn'], $sql);
-            self::$tableReady = (bool)$dbr;
-            return self::$tableReady;
+            if(!$dbr) {
+                self::$tableReady = false;
+                return false;
+            }
+            self::ensureShowLogColumn($table);
+            self::$tableReady = true;
+            return true;
         }
         catch(Throwable $e) {
             self::$tableReady = false;
             return false;
         }
+    }
+
+    /**
+     * Add perm_showLog on older tables; grant to existing writers once.
+     * @param string $table full table name
+     * @return void
+     */
+    private static function ensureShowLogColumn($table) {
+        if(!isset($GLOBALS['conn'])) {
+            return;
+        }
+        $conn = $GLOBALS['conn'];
+        $db = '';
+        $r = self::querySafe('SELECT DATABASE() AS d');
+        if($r && ($row = mysqli_fetch_assoc($r))) {
+            $db = (string)$row['d'];
+        }
+        if($db === '') {
+            return;
+        }
+        $sql = sprintf(
+            "SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='%s' AND TABLE_NAME='%s' AND COLUMN_NAME='perm_showLog' LIMIT 1;",
+            mysqli_real_escape_string($conn, $db),
+            mysqli_real_escape_string($conn, $table)
+        );
+        $exists = self::querySafe($sql);
+        if($exists && mysqli_fetch_row($exists)) {
+            return;
+        }
+        $alter = self::querySafe(sprintf(
+            'ALTER TABLE `%s` ADD COLUMN `perm_showLog` INT NOT NULL DEFAULT 0 AFTER `perm_write`;',
+            $table
+        ));
+        if(!$alter) {
+            return;
+        }
+        // Preserve prior behaviour: Schreiben covered Log.
+        self::querySafe(sprintf(
+            'UPDATE `%s` SET `perm_showLog` = 1 WHERE `perm_write` = 1;',
+            $table
+        ));
     }
 
     /**
@@ -317,11 +394,12 @@ class ArchivPermissions
             return false;
         }
         $sql = sprintf(
-            'INSERT INTO `%sPermissions` (`User`, `perm_read`, `perm_write`, `perm_editPermissions`) VALUES (%d, %d, %d, %d);',
+            'INSERT INTO `%sPermissions` (`User`, `perm_read`, `perm_write`, `perm_showLog`, `perm_editPermissions`) VALUES (%d, %d, %d, %d, %d);',
             $GLOBALS['dbprefix'],
             (int)$this->User,
             ((int)$this->perm_read) ? 1 : 0,
             ((int)$this->perm_write) ? 1 : 0,
+            ((int)$this->perm_showLog) ? 1 : 0,
             ((int)$this->perm_editPermissions) ? 1 : 0
         );
         $dbr = self::querySafe($sql);
@@ -340,10 +418,11 @@ class ArchivPermissions
             return false;
         }
         $sql = sprintf(
-            'UPDATE `%sPermissions` SET `perm_read` = %d, `perm_write` = %d, `perm_editPermissions` = %d WHERE `Index` = %d;',
+            'UPDATE `%sPermissions` SET `perm_read` = %d, `perm_write` = %d, `perm_showLog` = %d, `perm_editPermissions` = %d WHERE `Index` = %d;',
             $GLOBALS['dbprefix'],
             ((int)$this->perm_read) ? 1 : 0,
             ((int)$this->perm_write) ? 1 : 0,
+            ((int)$this->perm_showLog) ? 1 : 0,
             ((int)$this->perm_editPermissions) ? 1 : 0,
             (int)$this->Index
         );
