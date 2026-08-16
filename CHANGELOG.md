@@ -2,6 +2,11 @@
 
 Automatisch aus Git-Release-Commits erzeugt.
 
+## 2026-08-16-8e73d (2026-08-16)
+
+- ARCHIV-43: Doppelte CollectionItems bereinigen und verhindern
+- ARCHIV-43: Doppelte CollectionItems bereinigen
+
 ## 2026-08-16-243a0 (2026-08-16)
 
 - ARCHIV-42: SSO ohne Permissions-Tabelle absichern, Berechtigungsfarben
