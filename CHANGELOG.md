@@ -2,6 +2,10 @@
 
 Automatisch aus Git-Release-Commits erzeugt.
 
+## 2026-08-16-31f63 (2026-08-16)
+
+- ARCHIV-48: Mehrere Komponisten/Arrangeure per Chip und Schnell-Anlegen
+
 ## 2026-08-16-257ec (2026-08-16)
 
 - ARCHIV-44: ID-Spalte in Listen schmaler (Desktop + mobil)
