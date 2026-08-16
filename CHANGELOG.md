@@ -2,6 +2,11 @@
 
 Automatisch aus Git-Release-Commits erzeugt.
 
+## 2026-08-16-f4469 (2026-08-16)
+
+- ARCHIV-49: Plus-Buttons öffnen Quick-Create-Modal zuverlässig
+- ARCHIV-49: Plus öffnet Quick-Create-Modal
+
 ## 2026-08-16-31f63 (2026-08-16)
 
 - ARCHIV-48: Mehrere Komponisten/Arrangeure per Chip und Schnell-Anlegen
