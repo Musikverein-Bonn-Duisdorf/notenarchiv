@@ -2,6 +2,11 @@
 
 Automatisch aus Git-Release-Commits erzeugt.
 
+## 2026-08-16-243a0 (2026-08-16)
+
+- ARCHIV-42: SSO ohne Permissions-Tabelle absichern, Berechtigungsfarben
+- ARCHIV-42: Lokale Lese-/Schreibrechte und Plattform-Nav
+
 ## 2026-08-16-f6efa (2026-08-16)
 
 - ARCHIV-41: Login-Screen an Melde-Parität zentrieren
