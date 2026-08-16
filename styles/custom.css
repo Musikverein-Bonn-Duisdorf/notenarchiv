@@ -4092,23 +4092,32 @@ select.profile-control {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
   min-width: 2.5rem;
+  height: auto;
+  padding-top: 0;
+  padding-bottom: 0;
   padding-left: 0.65rem;
   padding-right: 0.65rem;
   margin: 0;
+  line-height: 1;
+}
+
+.person-chips-editor > .mail-recipient-chips:empty {
+  display: none;
+}
+
+.person-chips-editor > .mail-recipient-chips:not(:empty) {
+  margin-bottom: 0.35rem;
 }
 
 .person-chips-controls {
-  align-items: flex-start;
+  align-items: stretch;
 }
 
-.person-chips-main {
+.person-chips-controls > .profile-control {
   flex: 1 1 auto;
   min-width: 0;
-}
-
-.person-chips-controls > .profile-control-btn {
-  margin-top: 0.15rem;
 }
 
 .collection-chip-row--plain {

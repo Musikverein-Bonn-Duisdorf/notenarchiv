@@ -1,17 +1,47 @@
 /**
- * ARCHIV-48: Quick-create composer/arranger/publisher from composition form.
+ * ARCHIV-48/49: Quick-create composer/arranger/publisher from composition form.
+ * Prefer this file when deployed; composition.php also embeds a full inline fallback
+ * (archiv-dev had a 404 for this path).
  */
-(function() {
+(function(global) {
   'use strict';
 
+  if(global.ArchivQuickCreate && global.ArchivQuickCreate.__archivFull) {
+    return;
+  }
+
+  var personChipsTarget = 'piece-composers';
+  var ignoreBackdropUntil = 0;
+
+  function el(id) {
+    return document.getElementById(id);
+  }
+
+  function closestEl(node, selector) {
+    if(!node) return null;
+    if(node.nodeType !== 1) node = node.parentElement;
+    if(!node || !node.closest) return null;
+    return node.closest(selector);
+  }
+
   function showModal(id) {
-    var el = document.getElementById(id);
-    if(el) el.style.display = 'block';
+    var modal = el(id);
+    if(!modal) return false;
+    ignoreBackdropUntil = Date.now() + 400;
+    global.ArchivQuickCreateIgnoreUntil = ignoreBackdropUntil;
+    modal.style.display = 'block';
+    return true;
   }
 
   function hideModal(id) {
-    var el = document.getElementById(id);
-    if(el) el.style.display = 'none';
+    var modal = el(id);
+    if(modal) modal.style.display = 'none';
+  }
+
+  function setError(node, msg) {
+    if(!node) return;
+    node.textContent = msg || '';
+    node.hidden = !msg;
   }
 
   function insertOption(select, id, label) {
@@ -47,12 +77,6 @@
     select.value = value;
   }
 
-  function setError(el, msg) {
-    if(!el) return;
-    el.textContent = msg || '';
-    el.hidden = !msg;
-  }
-
   function postForm(url, data) {
     var body = new URLSearchParams();
     Object.keys(data).forEach(function(k) {
@@ -73,7 +97,7 @@
   }
 
   function addToPersonChips(prefix, id, label) {
-    var map = window.ArchivPersonChips || {};
+    var map = global.ArchivPersonChips || {};
     var inst = map[prefix];
     if(!inst) return false;
     if(typeof inst.ensureCatalogEntry === 'function') {
@@ -83,82 +107,88 @@
     return true;
   }
 
-  var personChipsTarget = 'piece-composers';
-  var personTitle = null;
-  var personError = null;
-  var personFirst = null;
-  var personLast = null;
-  var pubError = null;
-  var pubName = null;
-
-  function cacheEls() {
-    personTitle = document.getElementById('quickPersonTitle');
-    personError = document.getElementById('quickPersonError');
-    personFirst = document.getElementById('quickPersonFirst');
-    personLast = document.getElementById('quickPersonLast');
-    pubError = document.getElementById('quickPublisherError');
-    pubName = document.getElementById('quickPublisherName');
-  }
-
-  document.addEventListener('click', function(ev) {
-    var btn = ev.target.closest('[data-quick-create]');
-    if(!btn) {
-      var closeBtn = ev.target.closest('[data-quick-close]');
-      if(closeBtn) {
-        hideModal(closeBtn.getAttribute('data-quick-close'));
-      }
-      return;
-    }
-    cacheEls();
-    var kind = btn.getAttribute('data-quick-create');
-    if(kind === 'person') {
+  function openPerson(btn) {
+    if(btn && btn.getAttribute) {
       personChipsTarget = btn.getAttribute('data-person-chips') || 'piece-composers';
       var title = btn.getAttribute('data-kind') || 'Komponist';
-      if(personTitle) personTitle.textContent = title;
-      setError(personError, '');
-      if(personFirst) personFirst.value = '';
-      if(personLast) personLast.value = '';
-      showModal('quickPersonModal');
-      if(personLast) personLast.focus();
+      var titleEl = el('quickPersonTitle');
+      if(titleEl) titleEl.textContent = title;
     }
-    else if(kind === 'publisher') {
-      setError(pubError, '');
-      if(pubName) pubName.value = '';
-      showModal('quickPublisherModal');
-      if(pubName) pubName.focus();
+    setError(el('quickPersonError'), '');
+    var first = el('quickPersonFirst');
+    var last = el('quickPersonLast');
+    if(first) first.value = '';
+    if(last) last.value = '';
+    if(!showModal('quickPersonModal')) return false;
+    if(last) {
+      try { last.focus(); } catch(e) {}
     }
-  });
+    return false;
+  }
 
-  ['quickPersonModal', 'quickPublisherModal'].forEach(function(id) {
-    document.addEventListener('click', function(ev) {
-      if(ev.target && ev.target.id === id) hideModal(id);
-    });
-  });
+  function openPublisher() {
+    setError(el('quickPublisherError'), '');
+    var name = el('quickPublisherName');
+    if(name) name.value = '';
+    if(!showModal('quickPublisherModal')) return false;
+    if(name) {
+      try { name.focus(); } catch(e) {}
+    }
+    return false;
+  }
 
-  document.addEventListener('submit', function(ev) {
+  function close(id) {
+    hideModal(id);
+    return false;
+  }
+
+  function onDocClick(ev) {
+    var target = ev.target;
+    var btn = closestEl(target, '[data-quick-create]');
+    if(btn) {
+      ev.preventDefault();
+      if(ev.stopPropagation) ev.stopPropagation();
+      var kind = btn.getAttribute('data-quick-create');
+      if(kind === 'person') openPerson(btn);
+      else if(kind === 'publisher') openPublisher();
+      return;
+    }
+    var closeBtn = closestEl(target, '[data-quick-close]');
+    if(closeBtn) {
+      ev.preventDefault();
+      hideModal(closeBtn.getAttribute('data-quick-close'));
+      return;
+    }
+    if(Date.now() < ignoreBackdropUntil) return;
+    if(target && target.id === 'quickPersonModal') hideModal('quickPersonModal');
+    else if(target && target.id === 'quickPublisherModal') hideModal('quickPublisherModal');
+  }
+
+  function onDocSubmit(ev) {
     var form = ev.target;
     if(!form || !form.id) return;
-    cacheEls();
     if(form.id === 'quickPersonForm') {
       ev.preventDefault();
-      setError(personError, '');
-      var first = personFirst ? personFirst.value.trim() : '';
-      var last = personLast ? personLast.value.trim() : '';
-      if(!last) {
-        setError(personError, 'Nachname fehlt.');
+      setError(el('quickPersonError'), '');
+      var first = el('quickPersonFirst');
+      var last = el('quickPersonLast');
+      var firstVal = first ? first.value.trim() : '';
+      var lastVal = last ? last.value.trim() : '';
+      if(!lastVal) {
+        setError(el('quickPersonError'), 'Nachname fehlt.');
         return;
       }
       var saveBtn = form.querySelector('[type="submit"]');
       if(saveBtn) saveBtn.disabled = true;
-      postForm('createComposerAjax.php', {firstName: first, lastName: last})
+      postForm('createComposerAjax.php', {firstName: firstVal, lastName: lastVal})
         .then(function(r) {
           if(!r.json.ok || !(r.json.id > 0)) {
-            setError(personError, 'Anlegen fehlgeschlagen.');
+            setError(el('quickPersonError'), 'Anlegen fehlgeschlagen.');
             return;
           }
-          var label = r.json.label || (last + ', ' + first);
+          var label = r.json.label || (lastVal + ', ' + firstVal);
           ['piece-composers', 'piece-arrangers'].forEach(function(prefix) {
-            var inst = (window.ArchivPersonChips || {})[prefix];
+            var inst = (global.ArchivPersonChips || {})[prefix];
             if(inst && typeof inst.ensureCatalogEntry === 'function') {
               inst.ensureCatalogEntry(r.json.id, label);
             }
@@ -167,7 +197,7 @@
           hideModal('quickPersonModal');
         })
         .catch(function() {
-          setError(personError, 'Anlegen fehlgeschlagen.');
+          setError(el('quickPersonError'), 'Anlegen fehlgeschlagen.');
         })
         .finally(function() {
           if(saveBtn) saveBtn.disabled = false;
@@ -175,29 +205,43 @@
     }
     else if(form.id === 'quickPublisherForm') {
       ev.preventDefault();
-      setError(pubError, '');
-      var name = pubName ? pubName.value.trim() : '';
-      if(!name) {
-        setError(pubError, 'Name fehlt.');
+      setError(el('quickPublisherError'), '');
+      var nameEl = el('quickPublisherName');
+      var nameVal = nameEl ? nameEl.value.trim() : '';
+      if(!nameVal) {
+        setError(el('quickPublisherError'), 'Name fehlt.');
         return;
       }
       var savePub = form.querySelector('[type="submit"]');
       if(savePub) savePub.disabled = true;
-      postForm('createPublisherAjax.php', {name: name})
+      postForm('createPublisherAjax.php', {name: nameVal})
         .then(function(r) {
           if(!r.json.ok || !(r.json.id > 0)) {
-            setError(pubError, 'Anlegen fehlgeschlagen.');
+            setError(el('quickPublisherError'), 'Anlegen fehlgeschlagen.');
             return;
           }
-          insertOption(document.getElementById('editPublisher'), r.json.id, r.json.label || name);
+          insertOption(el('editPublisher'), r.json.id, r.json.label || nameVal);
           hideModal('quickPublisherModal');
         })
         .catch(function() {
-          setError(pubError, 'Anlegen fehlgeschlagen.');
+          setError(el('quickPublisherError'), 'Anlegen fehlgeschlagen.');
         })
         .finally(function() {
           if(savePub) savePub.disabled = false;
         });
     }
-  });
-})();
+  }
+
+  if(!global.__archivQuickCreateBound) {
+    document.addEventListener('click', onDocClick);
+    document.addEventListener('submit', onDocSubmit);
+    global.__archivQuickCreateBound = true;
+  }
+
+  global.ArchivQuickCreate = {
+    __archivFull: true,
+    openPerson: openPerson,
+    openPublisher: openPublisher,
+    close: close
+  };
+})(window);

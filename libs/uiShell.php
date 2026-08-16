@@ -682,6 +682,23 @@ function deferPageModalHtml($html) {
     $GLOBALS['mlDeferredPageModals'] .= $html;
 }
 
+/**
+ * Queue a page script for footer output (after deferred modals).
+ * Path relative to app root, e.g. js/quickCreateEntity.js
+ */
+function deferPageScript($rel) {
+    $rel = ltrim(str_replace('\\', '/', (string)$rel), '/');
+    if($rel === '') {
+        return;
+    }
+    if(!isset($GLOBALS['mlDeferredPageScripts']) || !is_array($GLOBALS['mlDeferredPageScripts'])) {
+        $GLOBALS['mlDeferredPageScripts'] = array();
+    }
+    if(!in_array($rel, $GLOBALS['mlDeferredPageScripts'], true)) {
+        $GLOBALS['mlDeferredPageScripts'][] = $rel;
+    }
+}
+
 function navGroupClass($groupId) {
     $gid = preg_replace('/[^a-z0-9_-]/i', '', (string)$groupId);
     if($gid === '') {

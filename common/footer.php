@@ -49,6 +49,18 @@ if(!empty($GLOBALS['mlHeaderRendered'])) {
 <script src="<?php echo assetUrl('js/modal.js'); ?>"></script>
 <script src="<?php echo assetUrl('js/appDialog.js'); ?>"></script>
 <script src="<?php echo assetUrl('js/toast.js'); ?>"></script>
-<?php } ?>
+<?php
+    if(!empty($GLOBALS['mlDeferredPageScripts']) && is_array($GLOBALS['mlDeferredPageScripts'])) {
+        foreach($GLOBALS['mlDeferredPageScripts'] as $rel) {
+            $rel = ltrim(str_replace('\\', '/', (string)$rel), '/');
+            if($rel === '') {
+                continue;
+            }
+            echo '<script src="'.assetUrl($rel).'"></script>'."\n";
+        }
+        unset($GLOBALS['mlDeferredPageScripts']);
+    }
+}
+?>
   </body>
 </html>
