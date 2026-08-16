@@ -3740,26 +3740,41 @@ body.meld-cal-print {
   z-index: 2000;
 }
 
+/* Page-local profile-shell modals: body-level overlay chrome (ARCHIV-49) */
+#calSubscribeModal,
+#delmodal,
+#appConfirmModal,
+#quickPersonModal,
+#quickPublisherModal {
+  z-index: 12000;
+}
+
 /* Page-local profile-shell modals (outside .app-main): same chrome as #ajaxModalContent */
 #calSubscribeModal .w3-modal-content,
 #delmodal .w3-modal-content,
-#appConfirmModal .w3-modal-content {
+#appConfirmModal .w3-modal-content,
+#quickPersonModal .w3-modal-content,
+#quickPublisherModal .w3-modal-content {
   background: transparent;
   box-shadow: none;
-  width: auto !important;
-  max-width: min(36rem, calc(100vw - 1.5rem));
-  margin: 4vh auto;
+  /* Explicit width — auto + width:100% inputs expand to full viewport */
+  width: min(28rem, calc(100vw - 1.5rem)) !important;
+  max-width: min(28rem, calc(100vw - 1.5rem));
+  margin: 8vh auto;
 }
 
-#delmodal .w3-modal-content,
-#appConfirmModal .w3-modal-content {
-  max-width: min(32rem, calc(100vw - 1.5rem));
-  margin: 8vh auto;
+#calSubscribeModal .w3-modal-content {
+  max-width: min(36rem, calc(100vw - 1.5rem));
+  width: min(36rem, calc(100vw - 1.5rem)) !important;
+  margin: 4vh auto;
 }
 
 #calSubscribeModal .calendar-subscribe-modal,
 #delmodal .confirm-delete-modal,
-#appConfirmModal .confirm-delete-modal {
+#appConfirmModal .confirm-delete-modal,
+#quickPersonModal .modal-shell,
+#quickPublisherModal .modal-shell,
+#delmodal .modal-shell {
   margin: 0.75rem;
   background: #fff;
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
@@ -4127,25 +4142,6 @@ select.profile-control {
 .quick-create-error {
   color: #a33;
   margin: 0 0 0.5rem;
-}
-
-#quickPersonModal .w3-modal-content,
-#quickPublisherModal .w3-modal-content {
-  background: transparent;
-  box-shadow: none;
-  width: auto !important;
-  max-width: min(32rem, calc(100vw - 1.5rem));
-  margin: 8vh auto;
-}
-
-#quickPersonModal .modal-shell,
-#quickPublisherModal .modal-shell {
-  margin: 0.75rem;
-  background: #fff;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
-  width: auto;
-  max-width: 100%;
-  box-sizing: border-box;
 }
 
 .profile-group-picker {

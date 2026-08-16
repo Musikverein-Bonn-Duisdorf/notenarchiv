@@ -269,16 +269,22 @@ function getColorConfigParameters() {
     return $params;
 }
 
-/** Cache-busting URL for static assets (Melde UI-SHELL: ?v=&h=). */
+/** Cache-busting URL for static assets (?v=release &h=contentHash-mtime). */
 function assetUrl($rel) {
     $rel = ltrim(str_replace('\\', '/', (string)$rel), '/');
     $ver = isset($GLOBALS['version']['String']) ? (string)$GLOBALS['version']['String'] : '0';
-    $hash = isset($GLOBALS['version']['Hash']) ? (string)$GLOBALS['version']['Hash'] : '0';
-    $mtime = @filemtime(dirname(__DIR__).'/'.$rel);
+    $path = dirname(__DIR__).'/'.$rel;
+    $mtime = @filemtime($path);
     if($mtime === false) {
         $mtime = 0;
     }
-    return htmlspecialchars($rel.'?v='.rawurlencode($ver).'&h='.$hash.'-'.$mtime, ENT_QUOTES, 'UTF-8');
+    // Content hash forces reload even when VERSION/mtime are stale after copy/deploy.
+    $fileHash = is_file($path) ? substr((string)hash_file('sha1', $path), 0, 12) : '0';
+    return htmlspecialchars(
+        $rel.'?v='.rawurlencode($ver).'&h='.rawurlencode($fileHash).'-'.$mtime,
+        ENT_QUOTES,
+        'UTF-8'
+    );
 }
 
 /**
@@ -668,6 +674,46 @@ function logMessageLinkUrls($html) {
     }
 
     return $out;
+}
+
+/**
+ * MotD / config HTML must not break the footer parse stream (ARCHIV-49).
+ * Strips script tags and closes a dangling HTML comment in the fragment.
+ */
+function archivSanitizeMotdHtml($html) {
+    $html = (string)$html;
+    if($html === '') {
+        return '';
+    }
+    // Closed script elements
+    $html = preg_replace('#<script\b[^>]*>.*?</script>#is', '', $html);
+    // Dangling <script ...> (no close) — drop from first open tag to end of fragment
+    $html = preg_replace('#<script\b[^>]*>.*$#is', '', $html);
+    // Unclosed comment would swallow following footer modals
+    if(preg_match('/<!--/s', $html) && !preg_match('/-->/s', $html)) {
+        $html .= ' -->';
+    }
+    return $html;
+}
+
+/** Queue MotD modal HTML in its own footer slot (never with page modals). */
+function deferMotdHtml($html) {
+    $html = (string)$html;
+    if($html === '') {
+        return;
+    }
+    if(!isset($GLOBALS['archivMotdHtml'])) {
+        $GLOBALS['archivMotdHtml'] = '';
+    }
+    $GLOBALS['archivMotdHtml'] .= $html;
+}
+
+/**
+ * Close dangling rawtext / comment contexts so later footer HTML parses as DOM.
+ * Harmless if no such context is open.
+ */
+function archivFooterParseReset() {
+    echo '</script></style></textarea><!-- -->';
 }
 
 /** Queue modal HTML outside .app-main (overflow/z-index). */

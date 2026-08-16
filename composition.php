@@ -3,6 +3,14 @@ require_once __DIR__.'/libs/sessionBootstrap.php';
 archivConfigureSession();
 $_SESSION['page'] = 'composition';
 
+// ARCHIV-49: force fresh PHP for this page (OPcache can keep old body while meta mtime is new)
+if(function_exists('opcache_invalidate')) {
+    @opcache_invalidate(__FILE__, true);
+    @opcache_invalidate(__DIR__.'/common/footer.php', true);
+    @opcache_invalidate(__DIR__.'/common/nav.php', true);
+    @opcache_invalidate(__DIR__.'/views/composition/quickCreateModals.php', true);
+}
+
 include_once 'common/include.php';
 mysqli_select_db($GLOBALS['conn'], $sql['database']) or die(mysqli_error($GLOBALS['conn']));
 
@@ -156,12 +164,14 @@ if($id > 0) {
 $pieceTitle = archivPlainText($piece->Title);
 $pieceComposer = archivPlainText($piece->ComposerName);
 $formTitle = $isCreate ? 'Anlegen' : ($isAdmin ? 'Bearbeiten' : $pieceTitle);
+$compositionPageModals = '';
 
 if(!$isCreate) {
     ob_start();
     ?>
-<div id="delmodal" class="w3-modal">
-  <div class="w3-modal-content profile-shell modal-shell">
+<div id="delmodal" class="w3-modal" style="display:none;">
+  <div class="w3-modal-content">
+    <div class="profile-shell modal-shell confirm-delete-modal">
     <header class="profile-hero">
       <div class="profile-hero-text">
         <p class="profile-kicker">Stück</p>
@@ -180,10 +190,11 @@ if(!$isCreate) {
         <button type="button" class="w3-button w3-border" onclick="document.getElementById('delmodal').style.display='none'">Abbrechen</button>
       </div>
     </div>
+    </div>
   </div>
 </div>
 <?php if(!$isAdmin) { ?>
-<div id="collmodal" class="w3-modal">
+<div id="collmodal" class="w3-modal" style="display:none;">
   <div class="w3-modal-content profile-shell modal-shell">
     <header class="profile-hero">
       <div class="profile-hero-text">
@@ -197,7 +208,8 @@ if(!$isCreate) {
 </div>
 <?php } ?>
     <?php
-    deferPageModalHtml(ob_get_clean());
+    // ARCHIV-49: keep in page buffer — emit BEFORE MotD footer HTML (defer was swallowed).
+    $compositionPageModals = ob_get_clean();
 }
 ?>
 <div class="w3-container w3-margin-bottom termin-page">
@@ -217,7 +229,7 @@ if(!$isCreate) {
           <input class="w3-btn profile-btn-primary <?php echo htmlspecialchars($btnSubmit, ENT_QUOTES, 'UTF-8'); ?> w3-border w3-mobile" type="submit" name="save" value="Speichern">
           <a class="w3-button w3-border <?php echo htmlspecialchars($inputBg, ENT_QUOTES, 'UTF-8'); ?>" href="index.php">Zur Liste</a>
 <?php if(!$isCreate) { ?>
-          <button type="button" class="w3-button <?php echo htmlspecialchars($GLOBALS['optionsDB']['colorBtnDelete'], ENT_QUOTES, 'UTF-8'); ?>" onclick="document.getElementById('delmodal').style.display='block'">Löschen</button>
+          <button type="button" class="w3-button <?php echo htmlspecialchars($GLOBALS['optionsDB']['colorBtnDelete'], ENT_QUOTES, 'UTF-8'); ?>" onclick="(function(){var m=document.getElementById('delmodal');if(!m)return;if(m.parentNode!==document.body)document.body.appendChild(m);m.style.display='block';})()">Löschen</button>
 <?php } ?>
         </div>
       </div>
@@ -237,6 +249,7 @@ if(!$isCreate) {
       </div>
       <div class="profile-field">
         <label class="profile-label" for="piece-composers-input">Komponist</label>
+        <span id="archiv49-marker" hidden data-archiv49="inline">archiv49-inline</span>
         <?php
           echo archivPersonChipsEditorHtml(
               'piece-composers',
@@ -244,7 +257,7 @@ if(!$isCreate) {
               archivComposersCatalog(),
               $piece->getPersonChipSpec('composer'),
               'Komponist…',
-              'data-quick-create="person" data-kind="Komponist" data-person-chips="piece-composers" aria-label="Komponist anlegen" title="Komponist anlegen" onclick="return window.ArchivQuickCreate?ArchivQuickCreate.openPerson(this):(document.getElementById(\'quickPersonModal\').style.display=\'block\',false);"'
+              'data-quick-create="person" data-kind="Komponist" data-person-chips="piece-composers" aria-label="Komponist anlegen" title="Komponist anlegen" onclick="return window.ArchivQuickCreate?window.ArchivQuickCreate.openPerson(this):(function(b){var m=document.getElementById(\'quickPersonModal\');if(!m)return false;window.ArchivQuickCreateIgnoreUntil=Date.now()+500;var t=document.getElementById(\'quickPersonTitle\');if(t)t.textContent=b.getAttribute(\'data-kind\')||\'Komponist\';m.style.display=\'block\';return false;})(this)"'
           );
         ?>
       </div>
@@ -257,7 +270,7 @@ if(!$isCreate) {
               archivComposersCatalog(),
               $piece->getPersonChipSpec('arranger'),
               'Arrangeur…',
-              'data-quick-create="person" data-kind="Arrangeur" data-person-chips="piece-arrangers" aria-label="Arrangeur anlegen" title="Arrangeur anlegen" onclick="return window.ArchivQuickCreate?ArchivQuickCreate.openPerson(this):(document.getElementById(\'quickPersonModal\').style.display=\'block\',false);"'
+              'data-quick-create="person" data-kind="Arrangeur" data-person-chips="piece-arrangers" aria-label="Arrangeur anlegen" title="Arrangeur anlegen" onclick="return window.ArchivQuickCreate?window.ArchivQuickCreate.openPerson(this):(function(b){var m=document.getElementById(\'quickPersonModal\');if(!m)return false;window.ArchivQuickCreateIgnoreUntil=Date.now()+500;var t=document.getElementById(\'quickPersonTitle\');if(t)t.textContent=b.getAttribute(\'data-kind\')||\'Arrangeur\';m.style.display=\'block\';return false;})(this)"'
           );
         ?>
       </div>
@@ -275,7 +288,7 @@ if(!$isCreate) {
           <select id="editPublisher" name="Publisher" class="w3-input w3-border profile-control <?php echo htmlspecialchars($inputBg, ENT_QUOTES, 'UTF-8'); ?>">
             <?php echo PublishersOption($piece->Publisher); ?>
           </select>
-          <button type="button" class="w3-button w3-border profile-control-btn <?php echo htmlspecialchars($inputBg, ENT_QUOTES, 'UTF-8'); ?>" data-quick-create="publisher" aria-label="Verlag anlegen" title="Verlag anlegen" onclick="return window.ArchivQuickCreate?ArchivQuickCreate.openPublisher():(document.getElementById('quickPublisherModal').style.display='block',false);"><i class="fas fa-plus" aria-hidden="true"></i></button>
+          <button type="button" class="w3-button w3-border profile-control-btn <?php echo htmlspecialchars($inputBg, ENT_QUOTES, 'UTF-8'); ?>" data-quick-create="publisher" aria-label="Verlag anlegen" title="Verlag anlegen" onclick="return window.ArchivQuickCreate?window.ArchivQuickCreate.openPublisher():(function(){var m=document.getElementById('quickPublisherModal');if(!m)return false;window.ArchivQuickCreateIgnoreUntil=Date.now()+500;m.style.display='block';return false;})()"><i class="fas fa-plus" aria-hidden="true"></i></button>
         </div>
       </div>
       <div class="profile-field">
@@ -313,6 +326,20 @@ if(!$isCreate) {
 <?php } ?>
   </div>
 </form>
+<?php
+    // Outside the profile <form> (no nested forms). Still before MotD footer.
+    include __DIR__.'/views/composition/quickCreateModals.php';
+?>
+<script>
+(function() {
+  ['quickPersonModal', 'quickPublisherModal'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if(el && el.parentNode !== document.body) {
+      document.body.appendChild(el);
+    }
+  });
+})();
+</script>
 <?php } else { ?>
   <header class="profile-hero">
     <div class="profile-hero-thumb" aria-hidden="true"><?php echo $piece->coverHtml('archiv-thumb archiv-thumb--detail piece-cover piece-cover--detail'); ?></div>
@@ -383,67 +410,23 @@ if(!$isCreate) {
 </div>
 </div>
 <?php
-if($isAdmin) {
-    ob_start();
-    ?>
-<div id="quickPersonModal" class="w3-modal" style="display:none;"
-     onclick="if(event.target===this && !(window.ArchivQuickCreateIgnoreUntil && Date.now()<window.ArchivQuickCreateIgnoreUntil)){ this.style.display='none'; }">
-  <div class="w3-modal-content profile-shell modal-shell">
-    <header class="profile-hero">
-      <div class="profile-hero-text">
-        <p class="profile-kicker">Anlegen</p>
-        <h2 class="profile-title" id="quickPersonTitle">Komponist</h2>
-      </div>
-      <button type="button" class="modal-close w3-button" data-quick-close="quickPersonModal" aria-label="Schließen" onclick="return window.ArchivQuickCreate&&ArchivQuickCreate.close('quickPersonModal');">&times;</button>
-    </header>
-    <form id="quickPersonForm" class="profile-grid">
-      <div class="profile-field">
-        <label class="profile-label" for="quickPersonFirst">Vorname</label>
-        <input id="quickPersonFirst" class="w3-input w3-border profile-control <?php echo htmlspecialchars($inputBg, ENT_QUOTES, 'UTF-8'); ?>" type="text" autocomplete="off">
-      </div>
-      <div class="profile-field">
-        <label class="profile-label" for="quickPersonLast">Nachname</label>
-        <input id="quickPersonLast" class="w3-input w3-border profile-control <?php echo htmlspecialchars($inputBg, ENT_QUOTES, 'UTF-8'); ?>" type="text" required autocomplete="off">
-      </div>
-      <p id="quickPersonError" class="profile-value quick-create-error" hidden></p>
-      <div class="profile-field profile-actions">
-        <button type="submit" class="w3-button <?php echo htmlspecialchars($btnSubmit, ENT_QUOTES, 'UTF-8'); ?>">Anlegen</button>
-        <button type="button" class="w3-button w3-border" data-quick-close="quickPersonModal" onclick="return window.ArchivQuickCreate&&ArchivQuickCreate.close('quickPersonModal');">Abbrechen</button>
-      </div>
-    </form>
-  </div>
-</div>
-<div id="quickPublisherModal" class="w3-modal" style="display:none;"
-     onclick="if(event.target===this && !(window.ArchivQuickCreateIgnoreUntil && Date.now()<window.ArchivQuickCreateIgnoreUntil)){ this.style.display='none'; }">
-  <div class="w3-modal-content profile-shell modal-shell">
-    <header class="profile-hero">
-      <div class="profile-hero-text">
-        <p class="profile-kicker">Anlegen</p>
-        <h2 class="profile-title">Verlag</h2>
-      </div>
-      <button type="button" class="modal-close w3-button" data-quick-close="quickPublisherModal" aria-label="Schließen" onclick="return window.ArchivQuickCreate&&ArchivQuickCreate.close('quickPublisherModal');">&times;</button>
-    </header>
-    <form id="quickPublisherForm" class="profile-grid">
-      <div class="profile-field">
-        <label class="profile-label" for="quickPublisherName">Name</label>
-        <input id="quickPublisherName" class="w3-input w3-border profile-control <?php echo htmlspecialchars($inputBg, ENT_QUOTES, 'UTF-8'); ?>" type="text" required autocomplete="off">
-      </div>
-      <p id="quickPublisherError" class="profile-value quick-create-error" hidden></p>
-      <div class="profile-field profile-actions">
-        <button type="submit" class="w3-button <?php echo htmlspecialchars($btnSubmit, ENT_QUOTES, 'UTF-8'); ?>">Anlegen</button>
-        <button type="button" class="w3-button w3-border" data-quick-close="quickPublisherModal" onclick="return window.ArchivQuickCreate&&ArchivQuickCreate.close('quickPublisherModal');">Abbrechen</button>
-      </div>
-    </form>
-  </div>
-</div>
-    <?php
-    $quickCreateJs = '';
-    $quickCreateJsFile = __DIR__.'/js/quickCreateEntity.js';
-    if(is_file($quickCreateJsFile)) {
-        // Inline so open/submit works even when static js/… is missing on the host (archiv-dev 404).
-        $quickCreateJs = '<script>'."\n".file_get_contents($quickCreateJsFile)."\n".'</script>';
-    }
-    deferPageModalHtml(ob_get_clean().$quickCreateJs);
+/*
+ * ARCHIV-49: delmodal/collmodal before MotD footer; quick-create already inlined at Komponist field.
+ */
+if(!empty($compositionPageModals)) {
+    echo $compositionPageModals;
 }
+?>
+<script>
+(function() {
+  ['delmodal', 'collmodal', 'quickPersonModal', 'quickPublisherModal'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if(el && el.parentNode !== document.body) {
+      document.body.appendChild(el);
+    }
+  });
+})();
+</script>
+<?php
 include 'common/footer.php';
 ?>

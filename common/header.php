@@ -4,6 +4,8 @@
       <?php
           if(!headers_sent()) {
               header('Content-Type: text/html; charset=utf-8');
+              header('Cache-Control: no-store, no-cache, must-revalidate');
+              header('Pragma: no-cache');
           }
       ?>
       <meta charset="utf-8">
@@ -11,6 +13,14 @@
       <?php
           include_once 'include.php';
       ?>
+      <meta name="archiv-build" content="<?php
+          echo htmlspecialchars(
+              (isset($GLOBALS['version']['String']) ? (string)$GLOBALS['version']['String'] : '0')
+              .'-c'.(string)@filemtime(__DIR__.'/../composition.php'),
+              ENT_QUOTES,
+              'UTF-8'
+          );
+      ?>">
       <link rel="stylesheet" href="<?php echo assetUrl('styles/w3.css'); ?>">
       <link rel="stylesheet" href="<?php echo assetUrl('styles/w3-colors-highway.css'); ?>">
       <link rel="stylesheet" href="<?php echo assetUrl('styles/w3-color-mvd.css'); ?>">
