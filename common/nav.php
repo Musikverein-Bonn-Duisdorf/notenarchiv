@@ -189,7 +189,10 @@ if($motdShort !== '') {
 <div id="MessageOfTheDay" class="w3-modal">
   <div class="w3-modal-content">
     <div class="w3-container">
-      <?php echo isset($optionsDB['MessageOfTheDay']) ? $optionsDB['MessageOfTheDay'] : ''; ?>
+      <?php
+        $motdBody = isset($optionsDB['MessageOfTheDay']) ? (string)$optionsDB['MessageOfTheDay'] : '';
+        echo archivSanitizeMotdHtml($motdBody);
+      ?>
       <div class="w3-center"><button class="w3-btn w3-blue w3-padding w3-center" onclick="document.getElementById('MessageOfTheDay').style.display='none'">Verstanden</button></div>
       <div class="w3-container">&nbsp;</div>
     </div>
@@ -202,7 +205,8 @@ if($motdShort !== '') {
 <script>document.getElementById('MessageOfTheDay').style.display='block';</script>
 <?php
     }
-    deferPageModalHtml(ob_get_clean());
+    // Own footer slot — never share buffer with #delmodal / quick-create (ARCHIV-49).
+    deferMotdHtml(ob_get_clean());
 }
 ?>
 <script src="<?php echo assetUrl('js/app-nav.js'); ?>"></script>

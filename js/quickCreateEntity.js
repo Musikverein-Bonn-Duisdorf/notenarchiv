@@ -11,24 +11,29 @@
   }
 
   var personChipsTarget = 'piece-composers';
-  var ignoreBackdropUntil = 0;
 
   function el(id) {
     return document.getElementById(id);
   }
 
-  function closestEl(node, selector) {
-    if(!node) return null;
-    if(node.nodeType !== 1) node = node.parentElement;
-    if(!node || !node.closest) return null;
-    return node.closest(selector);
+  function armGhostClickGuard(ms) {
+    var until = Date.now() + (ms || 500);
+    global.ArchivQuickCreateIgnoreUntil = until;
+    return until;
+  }
+
+  function ghostClickArmed() {
+    return !!(global.ArchivQuickCreateIgnoreUntil && Date.now() < global.ArchivQuickCreateIgnoreUntil);
   }
 
   function showModal(id) {
     var modal = el(id);
     if(!modal) return false;
-    ignoreBackdropUntil = Date.now() + 400;
-    global.ArchivQuickCreateIgnoreUntil = ignoreBackdropUntil;
+    // Escape .app-main stacking (nav/titlebar) — must be direct body child
+    if(modal.parentNode !== document.body) {
+      document.body.appendChild(modal);
+    }
+    armGhostClickGuard(500);
     modal.style.display = 'block';
     return true;
   }
@@ -142,26 +147,17 @@
     return false;
   }
 
+  /**
+   * Backdrop close only. Open is wired on the + buttons (onclick + bind script).
+   * Must honor ArchivQuickCreateIgnoreUntil — otherwise the same click that opens
+   * the modal (or a touch ghost-click) immediately closes it via this listener.
+   */
   function onDocClick(ev) {
     var target = ev.target;
-    var btn = closestEl(target, '[data-quick-create]');
-    if(btn) {
-      ev.preventDefault();
-      if(ev.stopPropagation) ev.stopPropagation();
-      var kind = btn.getAttribute('data-quick-create');
-      if(kind === 'person') openPerson(btn);
-      else if(kind === 'publisher') openPublisher();
-      return;
-    }
-    var closeBtn = closestEl(target, '[data-quick-close]');
-    if(closeBtn) {
-      ev.preventDefault();
-      hideModal(closeBtn.getAttribute('data-quick-close'));
-      return;
-    }
-    if(Date.now() < ignoreBackdropUntil) return;
-    if(target && target.id === 'quickPersonModal') hideModal('quickPersonModal');
-    else if(target && target.id === 'quickPublisherModal') hideModal('quickPublisherModal');
+    if(!target || !target.id) return;
+    if(target.id !== 'quickPersonModal' && target.id !== 'quickPublisherModal') return;
+    if(ghostClickArmed()) return;
+    hideModal(target.id);
   }
 
   function onDocSubmit(ev) {
@@ -242,6 +238,7 @@
     __archivFull: true,
     openPerson: openPerson,
     openPublisher: openPublisher,
-    close: close
+    close: close,
+    armGhostClickGuard: armGhostClickGuard
   };
 })(window);

@@ -5,17 +5,11 @@ if(!empty($GLOBALS['mlHeaderRendered'])) {
 </div><!-- .app-shell -->
 <?php
 }
-/* Page-local modals must live outside .app-main (overflow/z-index stacking). */
-if(!empty($GLOBALS['mlDeferredPageModals'])) {
-    echo $GLOBALS['mlDeferredPageModals'];
-    unset($GLOBALS['mlDeferredPageModals']);
+/* Close any dangling MotD/rawtext context BEFORE hosts/modals (ARCHIV-49). */
+if(function_exists('archivFooterParseReset')) {
+    archivFooterParseReset();
 }
-if(!empty($GLOBALS['mlDeferredToasts'])) {
-    echo '<div class="app-toast-host" aria-live="polite">'
-        .$GLOBALS['mlDeferredToasts']
-        .'</div>';
-    unset($GLOBALS['mlDeferredToasts']);
-}
+/* Stable hosts first — must survive MotD HTML breakage. */
 if(!empty($GLOBALS['mlHeaderRendered'])) {
 ?>
 <div id="ajaxModalHost" class="w3-modal" onclick="if(event.target===this)closeModal();">
@@ -45,6 +39,30 @@ if(!empty($GLOBALS['mlHeaderRendered'])) {
     </div>
   </div>
 </div>
+<?php
+}
+if(!empty($GLOBALS['mlDeferredPageModals'])) {
+    echo $GLOBALS['mlDeferredPageModals'];
+    unset($GLOBALS['mlDeferredPageModals']);
+    if(function_exists('archivFooterParseReset')) {
+        archivFooterParseReset();
+    }
+}
+if(!empty($GLOBALS['archivMotdHtml'])) {
+    echo $GLOBALS['archivMotdHtml'];
+    unset($GLOBALS['archivMotdHtml']);
+    if(function_exists('archivFooterParseReset')) {
+        archivFooterParseReset();
+    }
+}
+if(!empty($GLOBALS['mlDeferredToasts'])) {
+    echo '<div class="app-toast-host" aria-live="polite">'
+        .$GLOBALS['mlDeferredToasts']
+        .'</div>';
+    unset($GLOBALS['mlDeferredToasts']);
+}
+if(!empty($GLOBALS['mlHeaderRendered'])) {
+?>
 <script src="<?php echo assetUrl('js/listRowSearch.js'); ?>"></script>
 <script src="<?php echo assetUrl('js/modal.js'); ?>"></script>
 <script src="<?php echo assetUrl('js/appDialog.js'); ?>"></script>
