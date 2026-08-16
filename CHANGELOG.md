@@ -2,6 +2,11 @@
 
 Automatisch aus Git-Release-Commits erzeugt.
 
+## 2026-08-16-257ec (2026-08-16)
+
+- ARCHIV-44: ID-Spalte in Listen schmaler (Desktop + mobil)
+- ARCHIV-44: ID-Spalte in Listen schmaler
+
 ## 2026-08-16-93241 (2026-08-16)
 
 - ARCHIV-47: Sammlungsfilter lässt Inhalt bei Namens-Treffer sichtbar
