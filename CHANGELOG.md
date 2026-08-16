@@ -2,6 +2,10 @@
 
 Automatisch aus Git-Release-Commits erzeugt.
 
+## 2026-08-16-f6efa (2026-08-16)
+
+- ARCHIV-41: Login-Screen an Melde-Parität zentrieren
+
 ## 2026-08-15-53f9e (2026-08-15)
 
 - ARCHIV-40: Media-CLI-Scripts behalten und /scripts/ HTTP-sperren
