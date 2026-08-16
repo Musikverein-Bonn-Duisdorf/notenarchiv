@@ -91,6 +91,7 @@ class SchemaManager
         $this->pruneObsoleteSchema(true);
         $this->checkConfigDefaults(true);
         $this->ensureCollectionItemUniqueness(true);
+        $this->ensureCompositionPersonMigration(true);
         $this->finalizeSchemaVersion();
         return $this->report;
     }
@@ -103,6 +104,7 @@ class SchemaManager
         $this->pruneObsoleteSchema(true);
         $this->checkConfigDefaults(true);
         $this->ensureCollectionItemUniqueness(true);
+        $this->ensureCompositionPersonMigration(true);
         $this->finalizeSchemaVersion();
         return $this->report;
     }
@@ -115,6 +117,7 @@ class SchemaManager
         $this->pruneObsoleteSchema(false);
         $this->checkConfigDefaults(false);
         $this->ensureCollectionItemUniqueness(false);
+        $this->ensureCompositionPersonMigration(false);
         return $this->report;
     }
 
@@ -169,6 +172,55 @@ class SchemaManager
         }
         catch(Throwable $e) {
             $this->addReport('index', $table.'.uq_collection_composition', 'error', $e->getMessage());
+        }
+    }
+
+    /**
+     * ARCHIV-48: migrate Composition.Composer/Arranger into CompositionPerson + UNIQUE index.
+     * @param bool $apply
+     */
+    private function ensureCompositionPersonMigration($apply) {
+        if(!function_exists('archivMigrateCompositionPersonsFromFk')
+            || !function_exists('archivEnsureCompositionPersonUniqueIndex')) {
+            return;
+        }
+        $table = 'CompositionPerson';
+        if($apply) {
+            $inserted = archivMigrateCompositionPersonsFromFk();
+            if($inserted > 0) {
+                $this->addReport('data', $table, 'fixed', 'CompositionPerson aus FK befüllt: '.$inserted);
+            }
+            if(archivEnsureCompositionPersonUniqueIndex()) {
+                $this->addReport('index', $table.'.uq_composition_person_role', 'fixed', 'UNIQUE(Composition, Composer, Role)');
+            }
+            else {
+                $this->addReport('index', $table.'.uq_composition_person_role', 'error', 'UNIQUE-Index konnte nicht angelegt werden');
+            }
+            return;
+        }
+        if(!isset($GLOBALS['conn'], $GLOBALS['dbprefix'])) {
+            return;
+        }
+        $full = $GLOBALS['dbprefix'].'CompositionPerson';
+        try {
+            $tbl = mysqli_query(
+                $GLOBALS['conn'],
+                "SHOW TABLES LIKE '".mysqli_real_escape_string($GLOBALS['conn'], $full)."'"
+            );
+            if(!$tbl || mysqli_num_rows($tbl) < 1) {
+                $this->addReport('table', $table, 'missing', 'Tabelle fehlt');
+                return;
+            }
+            $idx = mysqli_query(
+                $GLOBALS['conn'],
+                "SHOW INDEX FROM `".$full."` WHERE `Key_name` = 'uq_composition_person_role';"
+            );
+            if(!$idx || mysqli_num_rows($idx) < 1) {
+                $this->addReport('index', $table.'.uq_composition_person_role', 'missing', 'UNIQUE(Composition, Composer, Role) fehlt');
+            }
+        }
+        catch(Throwable $e) {
+            $this->addReport('index', $table.'.uq_composition_person_role', 'error', $e->getMessage());
         }
     }
 

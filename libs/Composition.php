@@ -72,7 +72,18 @@ class Composition
     }
 
     public function fillJoins() {
-        if(!$this->ComposerName) {
+        $composers = array();
+        $arrangers = array();
+        if((int)$this->Index > 0 && function_exists('archivLoadCompositionPersons')) {
+            $composers = archivLoadCompositionPersons((int)$this->Index, 'composer');
+            $arrangers = archivLoadCompositionPersons((int)$this->Index, 'arranger');
+        }
+        if($composers) {
+            $this->ComposerName = archivCompositionPersonNames($composers);
+            if(!(int)$this->Composer && !empty($composers[0]['id'])) {
+                $this->_data['Composer'] = (int)$composers[0]['id'];
+            }
+        } elseif(!$this->ComposerName && (int)$this->Composer > 0) {
             $sql = sprintf('SELECT * FROM `%sComposer` WHERE `Index` = %d;',
             $GLOBALS['dbprefix'],
             $this->Composer
@@ -82,7 +93,12 @@ class Composition
             $row = mysqli_fetch_array($dbr);
             if($row) $this->ComposerName = $row['FirstName']." ".$row['LastName'];
         }
-        if(!$this->ArrangerName) {
+        if($arrangers) {
+            $this->ArrangerName = archivCompositionPersonNames($arrangers);
+            if(!(int)$this->Arranger && !empty($arrangers[0]['id'])) {
+                $this->_data['Arranger'] = (int)$arrangers[0]['id'];
+            }
+        } elseif(!$this->ArrangerName && (int)$this->Arranger > 0) {
             $sql = sprintf('SELECT * FROM `%sComposer` WHERE `Index` = %d;',
             $GLOBALS['dbprefix'],
             $this->Arranger
@@ -116,6 +132,51 @@ class Composition
                 $this->PublisherWebsite = isset($row['Website']) ? (string)$row['Website'] : '';
             }
         }
+    }
+
+    /**
+     * @param string $role composer|arranger
+     * @return int[]
+     */
+    public function getPersonIds($role) {
+        if((int)$this->Index < 1 || !function_exists('archivLoadCompositionPersons')) {
+            if($role === 'arranger') {
+                return (int)$this->Arranger > 0 ? array((int)$this->Arranger) : array();
+            }
+            return (int)$this->Composer > 0 ? array((int)$this->Composer) : array();
+        }
+        $persons = archivLoadCompositionPersons((int)$this->Index, $role);
+        if($persons) {
+            $ids = array();
+            foreach($persons as $row) {
+                $ids[] = (int)$row['id'];
+            }
+            return $ids;
+        }
+        if($role === 'arranger') {
+            return (int)$this->Arranger > 0 ? array((int)$this->Arranger) : array();
+        }
+        return (int)$this->Composer > 0 ? array((int)$this->Composer) : array();
+    }
+
+    /**
+     * Chip spec for form editors.
+     * @param string $role
+     * @return array [{id,number},...]
+     */
+    public function getPersonChipSpec($role) {
+        if((int)$this->Index > 0 && function_exists('archivLoadCompositionPersons')) {
+            $persons = archivLoadCompositionPersons((int)$this->Index, $role);
+            if($persons) {
+                $out = array();
+                foreach($persons as $row) {
+                    $out[] = array('id' => (int)$row['id'], 'number' => (int)$row['number']);
+                }
+                return $out;
+            }
+        }
+        $id = ($role === 'arranger') ? (int)$this->Arranger : (int)$this->Composer;
+        return $id > 0 ? array(array('id' => $id, 'number' => 1)) : array();
     }
     
     public function save() {
@@ -326,14 +387,21 @@ class Composition
         $this->Index
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
-        sqlerror();        
+        sqlerror();
+
+        $sql = sprintf('DELETE FROM `%sCompositionPerson` WHERE `Composition` = "%d";',
+        $GLOBALS['dbprefix'],
+        $this->Index
+        );
+        mysqli_query($GLOBALS['conn'], $sql);
+        sqlerror();
 
         $sql = sprintf('DELETE FROM `%sScoreFile` WHERE `Composition` = "%d";',
         $GLOBALS['dbprefix'],
         $this->Index
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
-        sqlerror();        
+        sqlerror();
 
         $sql = sprintf('DELETE FROM `%sComposition` WHERE `Index` = "%d";',
         $GLOBALS['dbprefix'],

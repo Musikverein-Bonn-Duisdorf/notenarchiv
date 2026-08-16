@@ -114,11 +114,15 @@ class Composer
         if(!$this->LastName) return false;
         return true;
     }
+    private function esc($val) {
+        return mysqli_real_escape_string($GLOBALS['conn'], (string)$val);
+    }
+
     protected function insert() {
         $sql = sprintf('INSERT INTO `%sComposer` (`FirstName`, `LastName`) VALUES ("%s", "%s");',
         $GLOBALS['dbprefix'],
-        $this->FirstName,
-        $this->LastName
+        $this->esc($this->FirstName),
+        $this->esc($this->LastName)
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
         sqlerror();
@@ -129,8 +133,8 @@ class Composer
     protected function update() {
         $sql = sprintf('UPDATE `%sComposer` SET `FirstName` = "%s", `LastName` = "%s" WHERE `Index` = "%d";',
         $GLOBALS['dbprefix'],
-        $this->FirstName,
-        $this->LastName,
+        $this->esc($this->FirstName),
+        $this->esc($this->LastName),
         $this->Index
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
@@ -211,6 +215,28 @@ class Composer
         if($id < 1 || ($column !== 'Composer' && $column !== 'Arranger')) {
             return 0;
         }
+        $role = ($column === 'Arranger') ? 'arranger' : 'composer';
+        $tbl = new SQLtable('CompositionPerson');
+        if($tbl->exists()) {
+            $sql = sprintf(
+                'SELECT COUNT(*) AS `Count` FROM ('
+                .' SELECT `Index` AS `id` FROM `%sComposition` WHERE `%s` = %d'
+                .' UNION'
+                .' SELECT `Composition` AS `id` FROM `%sCompositionPerson`'
+                .' WHERE `Composer` = %d AND `Role` = "%s"'
+                .') `u`;',
+                $GLOBALS['dbprefix'],
+                $column,
+                $id,
+                $GLOBALS['dbprefix'],
+                $id,
+                mysqli_real_escape_string($GLOBALS['conn'], $role)
+            );
+            $dbr = mysqli_query($GLOBALS['conn'], $sql);
+            sqlerror();
+            $row = $dbr ? mysqli_fetch_assoc($dbr) : null;
+            return $row ? (int)$row['Count'] : 0;
+        }
         $sql = sprintf(
             'SELECT COUNT(`Index`) AS `Count` FROM `%sComposition` WHERE `%s` = %d;',
             $GLOBALS['dbprefix'],
@@ -234,17 +260,42 @@ class Composer
             return $items;
         }
         $limit = max(1, min(500, (int)$limit));
-        $sql = sprintf(
-            'SELECT `Index`, `Title`, `RegistrationNumber`
-             FROM `%sComposition`
-             WHERE `%s` = %d
-             ORDER BY `RegistrationNumber` DESC, `Title` ASC
-             LIMIT %d;',
-            $GLOBALS['dbprefix'],
-            $column,
-            $id,
-            $limit
-        );
+        $role = ($column === 'Arranger') ? 'arranger' : 'composer';
+        $tbl = new SQLtable('CompositionPerson');
+        if($tbl->exists()) {
+            $sql = sprintf(
+                'SELECT c.`Index`, c.`Title`, c.`RegistrationNumber` FROM ('
+                .' SELECT `Index` AS `id` FROM `%sComposition` WHERE `%s` = %d'
+                .' UNION'
+                .' SELECT `Composition` AS `id` FROM `%sCompositionPerson`'
+                .' WHERE `Composer` = %d AND `Role` = "%s"'
+                .') `u`'
+                .' INNER JOIN `%sComposition` c ON c.`Index` = `u`.`id`'
+                .' ORDER BY c.`RegistrationNumber` DESC, c.`Title` ASC'
+                .' LIMIT %d;',
+                $GLOBALS['dbprefix'],
+                $column,
+                $id,
+                $GLOBALS['dbprefix'],
+                $id,
+                mysqli_real_escape_string($GLOBALS['conn'], $role),
+                $GLOBALS['dbprefix'],
+                $limit
+            );
+        }
+        else {
+            $sql = sprintf(
+                'SELECT `Index`, `Title`, `RegistrationNumber`
+                 FROM `%sComposition`
+                 WHERE `%s` = %d
+                 ORDER BY `RegistrationNumber` DESC, `Title` ASC
+                 LIMIT %d;',
+                $GLOBALS['dbprefix'],
+                $column,
+                $id,
+                $limit
+            );
+        }
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
         sqlerror();
         while($dbr && ($row = mysqli_fetch_assoc($dbr))) {

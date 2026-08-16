@@ -4073,6 +4073,72 @@ select.profile-control {
   margin-bottom: 0 !important;
 }
 
+/* ARCHIV-48: select + quick-create plus */
+.profile-control-with-btn {
+  display: flex;
+  align-items: stretch;
+  gap: 0.35rem;
+}
+
+.profile-control-with-btn > .profile-control,
+.profile-control-with-btn > select {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.profile-control-btn {
+  flex: 0 0 auto;
+  align-self: stretch;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.5rem;
+  padding-left: 0.65rem;
+  padding-right: 0.65rem;
+  margin: 0;
+}
+
+.person-chips-controls {
+  align-items: flex-start;
+}
+
+.person-chips-main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.person-chips-controls > .profile-control-btn {
+  margin-top: 0.15rem;
+}
+
+.collection-chip-row--plain {
+  gap: 0.35rem;
+}
+
+.quick-create-error {
+  color: #a33;
+  margin: 0 0 0.5rem;
+}
+
+#quickPersonModal .w3-modal-content,
+#quickPublisherModal .w3-modal-content {
+  background: transparent;
+  box-shadow: none;
+  width: auto !important;
+  max-width: min(32rem, calc(100vw - 1.5rem));
+  margin: 8vh auto;
+}
+
+#quickPersonModal .modal-shell,
+#quickPublisherModal .modal-shell {
+  margin: 0.75rem;
+  background: #fff;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+  width: auto;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
 .profile-group-picker {
   position: relative;
   padding: 0.45rem 0.55rem 0.55rem;
