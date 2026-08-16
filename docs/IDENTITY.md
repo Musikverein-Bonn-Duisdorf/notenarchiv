@@ -5,7 +5,7 @@
 - **User:** `{identityPrefix}User` (Singular, nicht `Users`). Prod/Standard: `meldeliste_User`.
 - **Instrument / Register:** `{identityPrefix}Instrument`, `{identityPrefix}Register` (Meldeliste-Stammdaten).
 - **Melde-Permissions:** `{identityPrefix}Permissions` — Plattform-Zugang read-only (`perm_accessNotenarchiv`, `perm_accessMitgliederverwaltung`, inkl. Gruppen-`PermissionSpec`).
-- **Archiv-Permissions:** `{dbprefix}Permissions` — lokale Rechte `perm_read`, `perm_write`, `perm_editPermissions` (ARCHIV-42).
+- **Archiv-Permissions:** `{dbprefix}Permissions` — lokale Rechte `perm_read`, `perm_write`, `perm_showLog`, `perm_editPermissions` (ARCHIV-42/46).
 - **SsoTicket:** `{identityPrefix}SsoTicket` — Melde stellt aus, Archiv redeemed nur.
 - **Archiv-Daten:** `{dbprefix}…` mit `$dbprefix = archiv_` (Composition, ScoreFile, …).
 
@@ -31,9 +31,9 @@ $identityPrefix = "meldeliste_";
 - **Login-Voraussetzung:** Melde-`perm_accessNotenarchiv` (personal + Gruppe). Melde-`User.Admin` allein reicht nicht.
 - **Erster Login:** wenn `{dbprefix}Permissions` leer ist, erhält dieser Nutzer alle lokalen Rechte.
 - **Session-Admin** (`$_SESSION['admin']`) = lokales `perm_write`.
-- **Feine Gates:** `perm_read` (Katalog), `perm_write` (Schreiben + Config/Log/Backup/API), `perm_editPermissions` (Rechte-Matrix).
+- **Feine Gates:** `perm_read` (Katalog), `perm_write` (Schreiben + Config/Backup/API), `perm_showLog` (Log), `perm_editPermissions` (Rechte-Matrix).
 - `perm_read` gilt auch bei `perm_write`.
-
+- Upgrade: bestehende `perm_write`-Zeilen erhalten einmalig `perm_showLog` (Schema 15 / `ensureTableExists`).
 ## SSO (ARCHIV-7)
 
 1. Melde: `sso.php?redirect=<Archiv-URL>` stellt Einmal-Ticket aus (MELD-111); Melde prüft `perm_accessNotenarchiv`.

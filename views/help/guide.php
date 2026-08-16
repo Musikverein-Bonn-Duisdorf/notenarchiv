@@ -9,8 +9,9 @@
 $sections = array();
 $showAdmin = !empty($_SESSION['admin']);
 $canEditConfig = hasPermission('perm_write');
-$canShowLog = hasPermission('perm_write');
+$canShowLog = hasPermission('perm_showLog');
 $canEditPermissions = hasPermission('perm_editPermissions');
+$showAdminHelp = $showAdmin || $canEditPermissions || $canShowLog;
 $meldeUrl = isset($optionsDB['urlMeldeliste']) ? trim((string)$optionsDB['urlMeldeliste']) : '';
 $mitUrl = isset($optionsDB['urlMitgliederverwaltung']) ? trim((string)$optionsDB['urlMitgliederverwaltung']) : '';
 $showMitNav = ($mitUrl !== '' && hasMeldePlatformPermission('perm_accessMitgliederverwaltung'));
@@ -20,7 +21,7 @@ $sections[] = array(
     'id' => 'einfuehrung',
     'title' => 'Einführung',
     'body' => '
-<p>Das <b>Notenarchiv</b> verwaltet den Vereinsnotenbestand: Stücke, Stimmen, Sammlungen, Komponisten und Verlage. Die Konten kommen aus der Meldeliste; <b>Lesen/Schreiben/Rechte</b> werden im Archiv lokal vergeben.</p>
+<p>Das <b>Notenarchiv</b> verwaltet den Vereinsnotenbestand: Stücke, Stimmen, Sammlungen, Komponisten und Verlage. Die Konten kommen aus der Meldeliste; <b>Lesen/Schreiben/Log/Rechte</b> werden im Archiv lokal vergeben.</p>
 <p>Über die Navigation erreichst du die Bereiche, die für dich freigeschaltet sind: auf breiten Bildschirmen links mit Text, auf Tablet und Smartphone unten als Leiste (weitere Einträge und Admin unter <b>Mehr</b>). Diese Hilfe zeigt nur Abschnitte, die zu deinen aktuellen Rechten passen.</p>
 '
 );
@@ -39,7 +40,7 @@ $sections[] = array(
 '.($showMitNav ? '<li><i class="fas fa-id-card"></i> <b>Mitglieder</b> – Mitgliederverwaltung (Melde-Recht)</li>' : '').'
 <li>Logo oben rechts – öffnet die <b>Vereinshomepage</b> in einem neuen Tab</li>
 <li><i class="fas fa-circle-question"></i> <b>Hilfe</b> – diese Seite inkl. Changelog</li>
-'.(($showAdmin || $canEditPermissions) ? '<li><i class="fas fa-wrench"></i> <b>Admin</b> – Verwaltung (Anlegen, Konfiguration, Updater, Log, Berechtigungen); Desktop und mobil unter Mehr</li>' : '').'
+'.($showAdminHelp ? '<li><i class="fas fa-wrench"></i> <b>Admin</b> – Verwaltung (Anlegen, Konfiguration, Updater, Log, Berechtigungen); Desktop und mobil unter Mehr</li>' : '').'
 <li><i class="fas fa-sign-out-alt"></i> <b>Ausloggen</b> – Sitzung beenden</li>
 </ul>
 '
@@ -59,7 +60,7 @@ $sections[] = array(
     'id' => 'sammlungen',
     'title' => 'Sammlungen',
     'body' => '
-<p>Unter <b>Sammlungen</b> verwaltest du Zusammenstellungen (z.&nbsp;B. Ordner im Schrank oder thematische Listen). Stücke können einer oder mehreren Sammlungen zugeordnet sein. Die Liste startet zugeklappt (Stückzahl am Titel); Aufklappen zeigt den Inhalt. Standard-Sortierung: neueste zuerst (ID). Archivierte Sammlungen sind standardmäßig ausgeblendet; der Filter <b>Archivierte</b> zeigt sie wieder. <b>Details</b> öffnet das Modal'.($showAdmin ? '; <b>Bearbeiten</b> führt zur Anlege-Seite (dort auch das Flag <b>Archiviert</b>). Dort, auf der Stückseite und im Sammlungen-Dialog am Stück pflegst du die Zuordnung per Chips (Nr = Reihenfolge). Anlegen über Plus bzw. <b>Admin → Sammlung</b>' : '').'.</p>
+<p>Unter <b>Sammlungen</b> verwaltest du Zusammenstellungen (z.&nbsp;B. Ordner im Schrank oder thematische Listen). Stücke können einer oder mehreren Sammlungen zugeordnet sein. Die Liste startet zugeklappt (Stückzahl am Titel); Aufklappen zeigt den Inhalt. Die Suche filtert Sammlungen nach Name; bei Namens-Treffer bleibt der Inhalt sichtbar. Suche nach Stücktiteln findet Sammlungen mit Treffer und blendet dort nicht passende Stücke aus. Standard-Sortierung: neueste zuerst (ID). Archivierte Sammlungen sind standardmäßig ausgeblendet; der Filter <b>Archivierte</b> zeigt sie wieder. <b>Details</b> öffnet das Modal'.($showAdmin ? '; <b>Bearbeiten</b> führt zur Anlege-Seite (dort auch das Flag <b>Archiviert</b>). Dort, auf der Stückseite und im Sammlungen-Dialog am Stück pflegst du die Zuordnung per Chips (Nr = Reihenfolge). Anlegen über Plus bzw. <b>Admin → Sammlung</b>' : '').'.</p>
 '
 );
 
@@ -84,7 +85,7 @@ $sections[] = array(
     'id' => 'login-sso',
     'title' => 'Login &amp; Rechte',
     'body' => '
-<p>Zugang zum Archiv setzt in der Meldeliste das Recht <b>Notenarchiv</b> voraus (Nav/SSO oder Passwort-Login). Katalog-<b>Lesen</b>, <b>Schreiben</b> (inkl. Config/Log/Backup/API) und <b>Berechtigungen</b> werden lokal im Archiv vergeben. Der erste Nutzer, der sich jemals anmeldet, erhält automatisch alle lokalen Rechte und kann andere freischalten.</p>
+<p>Zugang zum Archiv setzt in der Meldeliste das Recht <b>Notenarchiv</b> voraus (Nav/SSO oder Passwort-Login). Katalog-<b>Lesen</b>, <b>Schreiben</b> (inkl. Config/Backup/API), <b>Logfile lesen</b> und <b>Berechtigungen</b> werden lokal im Archiv vergeben. Der erste Nutzer, der sich jemals anmeldet, erhält automatisch alle lokalen Rechte und kann andere freischalten.</p>
 '.($meldeUrl !== '' ? '<p>Über den Nav-Eintrag <b>Meldeliste</b> kehrst du zurück: <a href="'.htmlspecialchars($meldeUrl, ENT_QUOTES, 'UTF-8').'">'.htmlspecialchars($meldeUrl, ENT_QUOTES, 'UTF-8').'</a></p>' : '').'
 '.($showMitNav ? '<p>Mit Melde-Recht <b>Mitgliederverwaltung</b> erscheint der Nav-Link <b>Mitglieder</b>'.($meldeUrl !== '' ? ' (SSO über die Meldeliste)' : '').'.</p>' : '').'
 '.($masterPage !== '' ? '<p>Die Vereinshomepage erreichst du über das Logo oder: <a href="'.htmlspecialchars($masterPage, ENT_QUOTES, 'UTF-8').'" target="_blank" rel="noopener noreferrer">'.htmlspecialchars($masterPage, ENT_QUOTES, 'UTF-8').'</a></p>' : '').'
@@ -94,7 +95,7 @@ $sections[] = array(
 $sections[] = array(
     'id' => 'admin-verwaltung',
     'title' => 'Admin: Verwaltung',
-    'visible' => ($showAdmin || $canEditPermissions),
+    'visible' => $showAdminHelp,
     'body' => '
 <ul class="help-list">
 '.($showAdmin ? '<li><b>Stück</b> – Anlegen/Bearbeiten auf der Stückseite (<code>composition.php</code>); Liste → Detail-Modal → Bearbeiten/Öffnen. <b>Sammlung / Komponist / Verlag</b> – jeweils eigene Anlege-Seite</li>' : '').'
@@ -108,7 +109,7 @@ $sections[] = array(
 <li><b>Log</b> – Anwendungsprotokoll (Server-Suche, Live-Aktualisierung, Nachladen beim Scrollen; Einträge können zu Stücken/Personen verlinken)</li>
 ' : '').'
 '.($canEditPermissions ? '
-<li><b>Berechtigungen</b> – lokale Matrix Lesen / Schreiben / Berechtigungen bearbeiten für Nutzer mit Melde-Zugang Notenarchiv</li>
+<li><b>Berechtigungen</b> – lokale Matrix Rechte / Lesen / Schreiben / Logfile lesen für Nutzer mit Melde-Zugang Notenarchiv</li>
 ' : '').'
 </ul>
 '
