@@ -2,6 +2,10 @@
 
 Automatisch aus Git-Release-Commits erzeugt.
 
+## 2026-08-22-60d57 (2026-08-22)
+
+- ARCHIV-51: Komponisten-Abkürzungen deduplizieren, DELETE in composers-API
+
 ## 2026-08-22-005a8 (2026-08-22)
 
 - ARCHIV-51: Excel-Genre-Suffixe vor Import aus Titel entfernen
