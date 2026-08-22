@@ -2,6 +2,10 @@
 
 Automatisch aus Git-Release-Commits erzeugt.
 
+## 2026-08-22-bc5ed (2026-08-22)
+
+- ARCHIV-29: DELETE für Stücke per JSON-API
+
 ## 2026-08-22-60d57 (2026-08-22)
 
 - ARCHIV-51: Komponisten-Abkürzungen deduplizieren, DELETE in composers-API
