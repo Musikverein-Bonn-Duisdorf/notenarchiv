@@ -67,6 +67,9 @@ class Log
     public function generate($Type, $Message) {
        $this->Type = $Type;
        $this->Message = $Message;
+       if(function_exists('archivPrefixLogRunNote')) {
+           $this->Message = archivPrefixLogRunNote($this->Message, $this->Type);
+       }
        $this->User = isset($_SESSION['userid']) ? (int)$_SESSION['userid'] : 0;
        $this->save();
        $this->Index = NULL;

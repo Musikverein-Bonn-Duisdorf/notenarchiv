@@ -18,7 +18,10 @@
 
   function finish(ok) {
     var modal = el('appConfirmModal');
-    if (modal) modal.style.display = 'none';
+    if (modal) {
+      modal.style.display = 'none';
+      modal.classList.remove('w3-show');
+    }
     var fn = resolvePending;
     resolvePending = null;
     if (fn) fn(ok);
@@ -49,11 +52,12 @@
     }
     okBtn.textContent = opts.okLabel || 'OK';
     okBtn.className = opts.okClass || 'w3-btn profile-btn-primary w3-border w3-mobile';
-    setVisible(cancelBtn, mode === 'confirm');
+    setVisible(cancelBtn, mode === 'confirm' && !opts.hideCancel);
     if (cancelBtn) {
       cancelBtn.textContent = opts.cancelLabel || 'Abbrechen';
     }
     modal.style.display = 'block';
+    modal.classList.add('w3-show');
     try {
       okBtn.focus();
     } catch (e) {}
@@ -119,6 +123,9 @@
     var ok = node.getAttribute('data-confirm-ok');
     var title = node.getAttribute('data-confirm-title');
     var okClass = node.getAttribute('data-confirm-ok-class');
+    if (node.getAttribute('data-confirm-no-cancel') === '1') {
+      opts.hideCancel = true;
+    }
     if (ok) opts.okLabel = ok;
     if (title) opts.title = title;
     if (okClass) opts.okClass = okClass;
@@ -126,8 +133,14 @@
   }
 
   function resolveSubmitter(form, eventSubmitter) {
-    if (eventSubmitter && form.contains(eventSubmitter)) return eventSubmitter;
-    if (lastSubmitter && form.contains(lastSubmitter)) return lastSubmitter;
+    if (eventSubmitter) {
+      if (form.contains(eventSubmitter)) return eventSubmitter;
+      if (eventSubmitter.form === form) return eventSubmitter;
+    }
+    if (lastSubmitter) {
+      if (form.contains(lastSubmitter)) return lastSubmitter;
+      if (lastSubmitter.form === form) return lastSubmitter;
+    }
     return null;
   }
 

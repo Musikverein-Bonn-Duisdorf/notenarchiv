@@ -8,6 +8,10 @@ chdir(dirname(__DIR__));
 require_once dirname(__DIR__).'/common/include.php';
 mysqli_select_db($GLOBALS['conn'], $sql['database']) or die(mysqli_error($GLOBALS['conn']));
 
+if(function_exists('archivApiCaptureRunNoteFromRequest')) {
+    archivApiCaptureRunNoteFromRequest();
+}
+
 header('Content-Type: application/json; charset=UTF-8');
 header('Cache-Control: no-store, no-cache, must-revalidate');
 

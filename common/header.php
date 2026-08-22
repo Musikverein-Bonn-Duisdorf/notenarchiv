@@ -14,9 +14,11 @@
           include_once 'include.php';
       ?>
       <meta name="archiv-build" content="<?php
+          $adPath = __DIR__.'/../js/appDialog.js';
+          $adHash = is_readable($adPath) ? substr(md5_file($adPath), 0, 8) : '0';
           echo htmlspecialchars(
               (isset($GLOBALS['version']['String']) ? (string)$GLOBALS['version']['String'] : '0')
-              .'-c'.(string)@filemtime(__DIR__.'/../composition.php'),
+              .'-ad'.$adHash,
               ENT_QUOTES,
               'UTF-8'
           );
@@ -54,6 +56,23 @@
         $docTitle = isset($optionsDB['WebSiteName']) ? trim((string)$optionsDB['WebSiteName']) : '';
         echo htmlspecialchars($docTitle !== '' ? $docTitle : 'Notenarchiv', ENT_QUOTES, 'UTF-8');
       ?></title>
+      <script>
+      /* ARCHIV-51: inline so onclick works even if footer scripts are blocked by HTML parse issues. */
+      window.archivOpenDeleteModal = function (id) {
+        var modal = document.getElementById(id);
+        if (!modal) return false;
+        modal.style.display = 'block';
+        modal.classList.add('w3-show');
+        return false;
+      };
+      window.archivCloseDeleteModal = function (id) {
+        var modal = document.getElementById(id);
+        if (!modal) return false;
+        modal.style.display = 'none';
+        modal.classList.remove('w3-show');
+        return false;
+      };
+      </script>
   </head>
   <body class="<?php echo htmlspecialchars((string)$GLOBALS['optionsDB']['colorBackground'], ENT_QUOTES, 'UTF-8'); ?> app-layout">
 <?php

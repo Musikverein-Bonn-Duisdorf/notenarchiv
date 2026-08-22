@@ -123,37 +123,17 @@ class Part
             $row->body="<a target=\"_blank\" href=\"".$this->getURL()."\" class=\"fas fa-download\"></a>";
             $str=$str.$row->print();
 
-            $form = new div;
-            $form->col(1,3,3);
-            $form->tag="form";
-            $form->action="";
-            $form->method="POST";
-            $form->enctype="multipart/form-data";
-            $str=$str.$form->open();
-            
-            $hidden = new div;
-            $hidden->tag="input";
-            $hidden->type="hidden";
-            $hidden->name="pIndex";
-            $hidden->value=$this->Index;
-            $str=$str.$hidden->print();
-
-            $hidden = new div;
-            $hidden->tag="input";
-            $hidden->type="hidden";
-            $hidden->name="Index";
-            $hidden->value=$this->Composition;
-            $str=$str.$hidden->print();
-
-            $submit = new div;
-            $submit->tag="button";
-            $submit->type="submit";
-            $submit->name="partdelete";
-            $submit->value="delete";
-            $submit->body="<i class=\"fas fa-trash\"></i>";
-            $str=$str.$submit->print();
-
-            $str=$str.$form->close();
+            $modalId = 'archivDelPart'.(int)$this->Index;
+            $str = $str.archivDeleteAction(
+                $modalId,
+                'Stimme wirklich löschen?',
+                'w3-button',
+                '<input type="hidden" name="pIndex" value="'.(int)$this->Index.'">'
+                    .'<input type="hidden" name="Index" value="'.(int)$this->Composition.'">'
+                    .'<input type="hidden" name="partdelete" value="delete">',
+                '',
+                'Löschen'
+            );
         }
         else {
             $row = new div;

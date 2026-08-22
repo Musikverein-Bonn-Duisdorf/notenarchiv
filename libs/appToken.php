@@ -106,8 +106,8 @@ function archivFindUserByAppToken($rawToken) {
 }
 
 /**
- * Bind PHP session to the AppToken owner. Does not write an info log on every
- * API request — changes already appear under that user in the log.
+ * Bind PHP session to the AppToken owner. Session start is logged via
+ * archivLogApiSessionEstablished() from api/me.php (not on every API call).
  */
 function archivEstablishApiSessionFromUserRow(array $row, $via = 'AppToken') {
     if(isset($row['Deleted']) && (int)$row['Deleted'] === 1) {
@@ -148,6 +148,55 @@ function archivValidateAppToken($rawToken) {
         return false;
     }
     return archivEstablishApiSessionFromUserRow($row, 'AppToken');
+}
+
+/**
+ * Info log when a client establishes an API session (GET api/me.php).
+ * Idempotent for the current PHP session (one line per me.php call).
+ */
+function archivLogApiSessionEstablished($rawToken) {
+    if(!empty($_SESSION['apiSessionLogged'])) {
+        return;
+    }
+    $rawToken = trim((string)$rawToken);
+    if($rawToken === '' || empty($_SESSION['userid'])) {
+        return;
+    }
+    $hash = archivHashAppToken($rawToken);
+    $sql = sprintf(
+        "SELECT t.`DeviceLabel`, t.`User` FROM `%sAppTokens` t
+         WHERE t.`TokenHash` = '%s' AND t.`Revoked` = 0 LIMIT 1;",
+        $GLOBALS['dbprefix'],
+        mysqli_real_escape_string($GLOBALS['conn'], $hash)
+    );
+    $dbr = mysqli_query($GLOBALS['conn'], $sql);
+    sqlerror();
+    $row = $dbr ? mysqli_fetch_assoc($dbr) : null;
+    $userId = (int)$_SESSION['userid'];
+    $label = archivAppTokenUserLabel($userId);
+    $msg = sprintf(
+        'API session via AppToken for User-ID: %d <b>%s</b>',
+        $userId,
+        htmlspecialchars($label, ENT_QUOTES, 'UTF-8')
+    );
+    if(is_array($row)) {
+        $device = trim((string)($row['DeviceLabel'] ?? ''));
+        if($device !== '') {
+            $msg .= ', device: '.htmlspecialchars($device, ENT_QUOTES, 'UTF-8');
+        }
+    }
+    $path = isset($_SERVER['REQUEST_URI']) ? (string)$_SERVER['REQUEST_URI'] : '/api/me.php';
+    if(strlen($path) > 120) {
+        $path = substr($path, 0, 117).'…';
+    }
+    $msg .= ', path: '.htmlspecialchars($path, ENT_QUOTES, 'UTF-8').'.';
+    if(function_exists('archivApiRunNote') && archivApiRunNote() !== '') {
+        $note = htmlspecialchars(archivApiRunNote(), ENT_QUOTES, 'UTF-8');
+        $msg = '['.$note.'] '.$msg;
+    }
+    $log = new Log;
+    $log->info($msg);
+    $_SESSION['apiSessionLogged'] = true;
 }
 
 function archivRevokeAppToken($rawToken) {

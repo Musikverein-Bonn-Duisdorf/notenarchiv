@@ -28,6 +28,8 @@ curl -sS "$BASE/api/me.php" -H "Authorization: Bearer $TOKEN"
 curl -sS "$BASE/api/me.php" -H "X-Archiv-Token: $TOKEN"
 ```
 
+Successful `GET api/me.php` writes an **info** log line (`API session via AppToken …`) — also for read-only script runs (dry-run) that only call `me.php` and GET endpoints.
+
 4. **Revoke**:
 
 ```bash
@@ -59,6 +61,15 @@ Non-admins receive `403`. Invalid/revoked tokens → `401`.
 | PUT | `api/collections/items.php` | JSON `{id, items:[{id,number}]}` |
 
 All write endpoints require Bearer admin auth except `auth/token.php`.
+
+### Run note (optional)
+
+Batch imports can label DB log rows (types INSERT/UPDATE/DELETE) via:
+
+- HTTP header: `X-Archiv-Run-Note: Dachschränke-Import`
+- JSON field on write requests: `"runNote": "…"` (used when the header is absent)
+
+The note is stored as a prefix on the standard catalog log message, e.g. `[Dachschränke-Import] Composition-ID: …` — entity chips in the log UI are unchanged.
 
 ## Cursor MCP
 

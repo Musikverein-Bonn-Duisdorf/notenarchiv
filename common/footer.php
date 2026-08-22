@@ -39,6 +39,8 @@ if(!empty($GLOBALS['mlHeaderRendered'])) {
     </div>
   </div>
 </div>
+<script src="<?php echo assetUrl('js/archivDeleteModal.js'); ?>"></script>
+<script src="<?php echo assetUrl('js/appDialog.js'); ?>"></script>
 <?php
 }
 if(!empty($GLOBALS['mlDeferredPageModals'])) {
@@ -65,7 +67,6 @@ if(!empty($GLOBALS['mlHeaderRendered'])) {
 ?>
 <script src="<?php echo assetUrl('js/listRowSearch.js'); ?>"></script>
 <script src="<?php echo assetUrl('js/modal.js'); ?>"></script>
-<script src="<?php echo assetUrl('js/appDialog.js'); ?>"></script>
 <script src="<?php echo assetUrl('js/toast.js'); ?>"></script>
 <?php
     if(!empty($GLOBALS['mlDeferredPageScripts']) && is_array($GLOBALS['mlDeferredPageScripts'])) {

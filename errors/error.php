@@ -24,16 +24,18 @@ $siteName = 'Notenarchiv';
 $homeUrl = '../';
 $title = $titles[$code];
 $message = $messages[$code];
+require_once __DIR__.'/../common/version.php';
+require_once __DIR__.'/../libs/uiShell.php';
 ?><!DOCTYPE html>
 <html lang="de">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><?php echo htmlspecialchars($code . ' — ' . $title . ' | ' . $siteName, ENT_QUOTES, 'UTF-8'); ?></title>
-  <link rel="stylesheet" href="../styles/w3.css">
-  <link rel="stylesheet" href="../styles/w3-colors-highway.css">
-  <link rel="stylesheet" href="../styles/w3-color-mvd.css">
-  <link rel="stylesheet" href="../styles/custom.css">
+  <link rel="stylesheet" href="../<?php echo assetUrl('styles/w3.css'); ?>">
+  <link rel="stylesheet" href="../<?php echo assetUrl('styles/w3-colors-highway.css'); ?>">
+  <link rel="stylesheet" href="../<?php echo assetUrl('styles/w3-color-mvd.css'); ?>">
+  <link rel="stylesheet" href="../<?php echo assetUrl('styles/custom.css'); ?>">
 </head>
 <body class="w3-light-grey">
   <div class="w3-container w3-indigo">
