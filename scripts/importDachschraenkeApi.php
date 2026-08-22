@@ -133,19 +133,31 @@ function apiRequest($method, $path, $token, $base, $json = null, $runNote = '') 
 }
 
 function loadComposersByKey($token, $base) {
+    $rows = array();
     list($code, $res) = apiRequest('GET', '/composers.php?limit=200', $token, $base);
-    if($code !== 200 || empty($res['composers'])) {
-        return array();
+    if($code === 200) {
+        foreach(($res['composers'] ?? array()) as $row) {
+            $rows[(int)$row['id']] = $row;
+        }
+    }
+    foreach(range('A', 'Z') as $letter) {
+        list($code, $res) = apiRequest('GET', '/composers.php?q='.rawurlencode($letter).'&limit=200', $token, $base);
+        if($code !== 200) {
+            continue;
+        }
+        foreach(($res['composers'] ?? array()) as $row) {
+            $rows[(int)$row['id']] = $row;
+        }
     }
     $map = array();
-    foreach($res['composers'] as $row) {
+    foreach($rows as $row) {
         $key = mb_strtolower(trim((string)$row['lastName']).'|'.trim((string)$row['firstName']), 'UTF-8');
         $map[$key] = (int)$row['id'];
     }
-    return $map;
+    return array($map, array_values($rows));
 }
 
-function ensureComposer($token, $base, array &$composerIds, $first, $last, $dryRun, $runNote = '') {
+function ensureComposer($token, $base, array &$composerIds, array $composerRows, $first, $last, $dryRun, $runNote = '') {
     $first = trim((string)$first);
     $last = trim((string)$last);
     if($last === '') {
@@ -155,6 +167,11 @@ function ensureComposer($token, $base, array &$composerIds, $first, $last, $dryR
     if(isset($composerIds[$key])) {
         return $composerIds[$key];
     }
+    $existingId = archivFindExistingComposerId($composerRows, $first, $last);
+    if($existingId > 0) {
+        $composerIds[$key] = $existingId;
+        return $existingId;
+    }
     list($code, $res) = apiRequest('GET', '/composers.php?q='.rawurlencode($last).'&limit=200', $token, $base);
     if($code === 200) {
         foreach(($res['composers'] ?? array()) as $row) {
@@ -163,6 +180,11 @@ function ensureComposer($token, $base, array &$composerIds, $first, $last, $dryR
             if($rKey === $key) {
                 return (int)$row['id'];
             }
+        }
+        $existingId = archivFindExistingComposerId($res['composers'] ?? array(), $first, $last);
+        if($existingId > 0) {
+            $composerIds[$key] = $existingId;
+            return $existingId;
         }
     }
     if($dryRun) {
@@ -305,7 +327,7 @@ try {
     fwrite(STDERR, 'Mode: on-conflict='.$onConflict."\n");
     fwrite(STDERR, 'Parsed works with title: '.count($works)."\n");
 
-    $composerIds = loadComposersByKey($token, $base);
+    list($composerIds, $composerRows) = loadComposersByKey($token, $base);
     $index = loadCompositionsIndex($token, $base, $works);
     $byReg = $index['byReg'];
     $byTitle = $index['byTitle'];
@@ -379,10 +401,10 @@ try {
 
         $composer = archivParsePersonLabel($work['composerLabel']);
         $arranger = archivParsePersonLabel($work['arrangerLabel']);
-        $composerId = ensureComposer($token, $base, $composerIds, $composer['firstName'], $composer['lastName'], $dryRun, $runNote);
+        $composerId = ensureComposer($token, $base, $composerIds, $composerRows, $composer['firstName'], $composer['lastName'], $dryRun, $runNote);
         $arrangerId = 0;
         if($arranger['lastName'] !== '') {
-            $arrangerId = ensureComposer($token, $base, $composerIds, $arranger['firstName'], $arranger['lastName'], $dryRun, $runNote);
+            $arrangerId = ensureComposer($token, $base, $composerIds, $composerRows, $arranger['firstName'], $arranger['lastName'], $dryRun, $runNote);
         }
 
         if($dryRun) {

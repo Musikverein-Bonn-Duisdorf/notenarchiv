@@ -63,21 +63,26 @@ class Composer
     }
         
     public function delete() {
-        $vars = $this->getVars();
         $id = (int)$this->Index;
+        if($id < 1) {
+            return false;
+        }
+        $vars = $this->getVars();
         $sql = sprintf('DELETE FROM `%sComposer` WHERE `Index` = "%d";',
         $GLOBALS['dbprefix'],
         $id
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
         sqlerror();
-        if($dbr) {
-            archivEntityAvatarDelete('Composers', $id, false);
-            if($vars !== '') {
-                $logentry = new Log;
-                $logentry->DBdelete($vars);
-            }
+        if(!$dbr) {
+            return false;
         }
+        archivEntityAvatarDelete('Composers', $id, false);
+        if($vars !== '') {
+            $logentry = new Log;
+            $logentry->DBdelete($vars);
+        }
+        return true;
     }
 
     public function avatarInitials() {

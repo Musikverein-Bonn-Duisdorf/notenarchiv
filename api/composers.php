@@ -3,6 +3,7 @@
  * GET /api/composers.php?id=&q=&limit=
  * POST JSON: firstName?, lastName
  * PATCH JSON: id, firstName?, lastName?
+ * DELETE ?id= or JSON id
  */
 require_once __DIR__.'/_bootstrap.php';
 
@@ -97,6 +98,22 @@ if($method === 'PATCH') {
     }
     $c->save();
     apiJsonExit(array('ok' => true, 'id' => (int)$c->Index));
+}
+
+if($method === 'DELETE') {
+    $id = isset($_GET['id']) ? (int)$_GET['id'] : (isset($body['id']) ? (int)$body['id'] : 0);
+    if($id < 1) {
+        apiJsonExit(array('error' => 'invalid_id'), 400);
+    }
+    $c = new Composer;
+    $c->load_by_id($id);
+    if((int)$c->Index < 1) {
+        apiJsonExit(array('error' => 'not_found'), 404);
+    }
+    if(!$c->delete()) {
+        apiJsonExit(array('error' => 'delete_failed'), 500);
+    }
+    apiJsonExit(array('ok' => true));
 }
 
 apiJsonExit(array('error' => 'method_not_allowed'), 405);

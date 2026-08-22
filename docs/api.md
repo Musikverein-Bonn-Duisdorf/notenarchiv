@@ -47,7 +47,7 @@ Non-admins receive `403`. Invalid/revoked tokens → `401`.
 | POST | `api/auth/revoke.php` | Bearer revoke |
 | GET | `api/me.php` | current admin user |
 | GET | `api/gaps/media.php` | `?limit=&scores=1` |
-| GET/POST/PATCH | `api/composers.php` | `firstName`, `lastName` |
+| GET/POST/PATCH/DELETE | `api/composers.php` | `firstName`, `lastName` |
 | POST | `api/composers/avatar.php` | multipart `id`, `avatar` |
 | GET/POST/PATCH | `api/compositions.php` | `title`, `composerId`, `publisherId`, `website` (Produktseite), … |
 | POST | `api/compositions/cover.php` | multipart `id`, `cover` |

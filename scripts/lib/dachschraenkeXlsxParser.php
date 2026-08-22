@@ -278,3 +278,70 @@ function archivImportWriteConflictReport($path, array $conflicts) {
     fclose($fh);
     return true;
 }
+
+/** True when a catalog first name looks abbreviated (e.g. "H.", "Chr.", "W. A."). */
+function archivComposerFirstNameIsAbbreviated($firstName) {
+    $firstName = trim((string)$firstName);
+    return $firstName !== '' && strpos($firstName, '.') !== false;
+}
+
+/** Match abbreviated import label to an existing full first name on the same last name. */
+function archivComposerAbbrevMatchesFullName($abbrevFirst, $fullFirst) {
+    $abbrevFirst = trim((string)$abbrevFirst);
+    $fullFirst = trim((string)$fullFirst);
+    if($abbrevFirst === '' || $fullFirst === '' || archivComposerFirstNameIsAbbreviated($fullFirst)) {
+        return false;
+    }
+    if(!preg_match_all('/([A-Za-zÄÖÜäöüß]+)\.?/u', $abbrevFirst, $m) || empty($m[1])) {
+        return false;
+    }
+    $fullWords = preg_split('/\s+/u', $fullFirst, -1, PREG_SPLIT_NO_EMPTY);
+    if(empty($fullWords) || count($m[1]) > count($fullWords)) {
+        return false;
+    }
+    foreach($m[1] as $i => $part) {
+        if(mb_strtolower(mb_substr($fullWords[$i], 0, 1, 'UTF-8'), 'UTF-8')
+            !== mb_strtolower(mb_substr($part, 0, 1, 'UTF-8'), 'UTF-8')) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/** Find existing composer row id for import label; prefers full-name catalog match over abbrev duplicate. */
+function archivFindExistingComposerId(array $rows, $firstName, $lastName) {
+    $firstName = trim((string)$firstName);
+    $lastName = trim((string)$lastName);
+    if($lastName === '') {
+        return 0;
+    }
+    $exactKey = mb_strtolower($lastName.'|'.$firstName, 'UTF-8');
+    $sameLast = array();
+    $exactId = 0;
+    foreach($rows as $row) {
+        $rowLast = trim((string)($row['lastName'] ?? ''));
+        if(mb_strtolower($rowLast, 'UTF-8') !== mb_strtolower($lastName, 'UTF-8')) {
+            continue;
+        }
+        $sameLast[] = $row;
+        $rowFirst = trim((string)($row['firstName'] ?? ''));
+        if(mb_strtolower($rowLast.'|'.$rowFirst, 'UTF-8') === $exactKey) {
+            $exactId = (int)($row['id'] ?? 0);
+        }
+    }
+    if(!archivComposerFirstNameIsAbbreviated($firstName)) {
+        return $exactId;
+    }
+    $matches = array();
+    foreach($sameLast as $row) {
+        $rowFirst = trim((string)($row['firstName'] ?? ''));
+        if(archivComposerAbbrevMatchesFullName($firstName, $rowFirst)) {
+            $matches[] = (int)($row['id'] ?? 0);
+        }
+    }
+    $matches = array_values(array_filter(array_unique($matches)));
+    if(count($matches) === 1) {
+        return (int)$matches[0];
+    }
+    return $exactId;
+}
