@@ -30,6 +30,8 @@ if(!function_exists('sqlerror')) {
 require_once __DIR__.'/libs/SQLtable.php';
 require_once __DIR__.'/config/ConfigDefaults.php';
 require_once __DIR__.'/libs/SchemaManager.php';
+require_once __DIR__.'/common/version.php';
+require_once __DIR__.'/libs/uiShell.php';
 
 $manager = new SchemaManager();
 $isAdminSession = !empty($_SESSION['userid']) && !empty($_SESSION['admin']);
@@ -63,7 +65,7 @@ if(in_array($action, $allowedActions, true)) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Notenarchiv – Installation</title>
-  <link rel="stylesheet" href="styles/w3.css">
+  <link rel="stylesheet" href="<?php echo assetUrl('styles/w3.css'); ?>">
 </head>
 <body class="w3-light-grey">
 <div class="w3-container w3-teal">

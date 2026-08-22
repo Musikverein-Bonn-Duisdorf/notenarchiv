@@ -9,7 +9,15 @@ function archivApiReadJsonBody() {
         return array();
     }
     $decoded = json_decode($raw, true);
-    return is_array($decoded) ? $decoded : array();
+    if(!is_array($decoded)) {
+        return array();
+    }
+    if(array_key_exists('runNote', $decoded) && trim((string)$decoded['runNote']) !== '') {
+        if(function_exists('archivSetApiRunNote') && archivApiRunNote() === '') {
+            archivSetApiRunNote((string)$decoded['runNote']);
+        }
+    }
+    return $decoded;
 }
 
 function archivApiAcceptUploadTmp($tmp) {

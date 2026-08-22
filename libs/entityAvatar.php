@@ -390,7 +390,16 @@ function archivEntityAvatarFormFields($kind, $id, $inputBg = '', $btn = '', $btn
     $html .= '<div class="profile-actions">';
     $html .= '<button type="submit" name="uploadAvatar" value="1" class="w3-button '.archivEscHtml($btn).'">Hochladen</button> ';
     if(archivEntityAvatarFind($kind, $id) !== '') {
-        $html .= '<button type="submit" name="deleteAvatar" value="1" class="w3-button w3-border '.archivEscHtml($btnDel).'">Löschen</button>';
+        $modalId = 'archivDelAvatar'.preg_replace('/[^a-zA-Z0-9]/', '', (string)$kind).(int)$id;
+        $html .= archivDeleteAction(
+            $modalId,
+            'Foto wirklich löschen?',
+            'w3-button w3-border '.archivEscHtml($btnDel),
+            '<input type="hidden" name="Index" value="'.(int)$id.'">'
+                .'<input type="hidden" name="deleteAvatar" value="1">',
+            '',
+            'Löschen'
+        );
     }
     $html .= '</div></div></div></div>';
     return $html;

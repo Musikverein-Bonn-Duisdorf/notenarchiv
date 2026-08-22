@@ -269,23 +269,97 @@ function getColorConfigParameters() {
     return $params;
 }
 
-/** Cache-busting URL for static assets (?v=release &h=contentHash-mtime). */
 function assetUrl($rel) {
     $rel = ltrim(str_replace('\\', '/', (string)$rel), '/');
-    $ver = isset($GLOBALS['version']['String']) ? (string)$GLOBALS['version']['String'] : '0';
     $path = dirname(__DIR__).'/'.$rel;
+    $ver = isset($GLOBALS['version']['String']) ? (string)$GLOBALS['version']['String'] : '0';
     $mtime = @filemtime($path);
     if($mtime === false) {
         $mtime = 0;
     }
-    // Content hash forces reload even when VERSION/mtime are stale after copy/deploy.
-    $fileHash = is_file($path) ? substr((string)hash_file('sha1', $path), 0, 12) : '0';
+    $content = '0';
+    if(is_readable($path)) {
+        $content = substr(md5_file($path), 0, 12);
+    }
     return htmlspecialchars(
-        $rel.'?v='.rawurlencode($ver).'&h='.rawurlencode($fileHash).'-'.$mtime,
+        $rel.'?v='.rawurlencode($ver).'&c='.$content.'&m='.$mtime,
         ENT_QUOTES,
         'UTF-8'
     );
 }
+
+/**
+ * Delete: button onclick opens modal; POST form lives inside modal (ARCHIV-51).
+ *
+ * @param string $modalId Unique modal element id
+ * @param string $message Confirm text in modal body
+ * @param string $btnClass CSS classes for page delete button
+ * @param string $hiddenInputs Raw HTML for hidden inputs inside modal form
+ * @param string $formAction Form action URL
+ * @param string $label Button label
+ * @param string $submitBtnClass CSS classes for modal submit (defaults to $btnClass)
+ * @return string Delete open button HTML
+ */
+function archivDeleteAction($modalId, $message, $btnClass, $hiddenInputs, $formAction, $label = 'Löschen', $submitBtnClass = '') {
+    $modalId = preg_replace('/[^a-zA-Z0-9_-]/', '', (string)$modalId);
+    if($submitBtnClass === '') {
+        $submitBtnClass = trim((string)$btnClass);
+    }
+    archivDeleteModalHtml($modalId, $message, $formAction, $hiddenInputs, $submitBtnClass);
+    return archivDeleteOpenButton($modalId, $btnClass, $label);
+}
+
+/** Page button: onclick → delete modal (no form on button). */
+function archivDeleteOpenButton($modalId, $btnClass, $label = 'Löschen') {
+    $modalId = preg_replace('/[^a-zA-Z0-9_-]/', '', (string)$modalId);
+    $idEsc = htmlspecialchars($modalId, ENT_QUOTES, 'UTF-8');
+    $btnClass = htmlspecialchars((string)$btnClass, ENT_QUOTES, 'UTF-8');
+    $labelEsc = htmlspecialchars((string)$label, ENT_QUOTES, 'UTF-8');
+    return '<button type="button" class="'.$btnClass.'"'
+        .' onclick="return archivOpenDeleteModal(\''.$idEsc.'\')">'
+        .$labelEsc.'</button>';
+}
+
+/** Modal shell with POST form; queued for footer (outside .app-main). */
+function archivDeleteModalHtml($modalId, $message, $formAction, $hiddenInputs, $submitBtnClass = 'w3-red') {
+    $modalId = preg_replace('/[^a-zA-Z0-9_-]/', '', (string)$modalId);
+    $idEsc = htmlspecialchars($modalId, ENT_QUOTES, 'UTF-8');
+    $msgEsc = htmlspecialchars((string)$message, ENT_QUOTES, 'UTF-8');
+    $action = htmlspecialchars((string)$formAction, ENT_QUOTES, 'UTF-8');
+    $submitClass = htmlspecialchars((string)$submitBtnClass, ENT_QUOTES, 'UTF-8');
+    $closeJs = 'return archivCloseDeleteModal(\''.$idEsc.'\')';
+    $backdropJs = 'if(event.target===this)archivCloseDeleteModal(\''.$idEsc.'\')';
+    $html = '<div id="'.$idEsc.'" class="w3-modal archiv-delete-modal" style="display:none;" onclick="'.$backdropJs.'">'
+        .'<div class="w3-modal-content">'
+        .'<div class="profile-shell modal-shell confirm-delete-modal">'
+        .'<header class="profile-hero">'
+        .'<div class="profile-hero-text">'
+        .'<p class="profile-kicker">Löschen</p>'
+        .'<h2 class="profile-title">Löschen</h2>'
+        .'</div>'
+        .'<div class="profile-hero-actions">'
+        .'<button type="button" class="modal-close w3-button" onclick="'.$closeJs.'" aria-label="Schließen">&times;</button>'
+        .'</div>'
+        .'</header>'
+        .'<div class="confirm-delete-body">'
+        .'<p class="profile-value">'.$msgEsc.'</p>'
+        .'<form method="post" action="'.$action.'">'
+        .$hiddenInputs
+        .'<div class="profile-actions profile-actions--confirm">'
+        .'<div class="profile-actions-primary">'
+        .'<button type="submit" class="w3-btn '.$submitClass.' w3-border w3-mobile">Löschen</button>'
+        .'</div>'
+        .'<button type="button" class="w3-btn w3-border w3-mobile" onclick="'.$closeJs.'">Abbrechen</button>'
+        .'</div>'
+        .'</form>'
+        .'</div>'
+        .'</div>'
+        .'</div>'
+        .'</div>';
+    deferPageModalHtml($html);
+}
+
+
 
 /**
  * Clickable entity chip for AJAX modals (UI-SHELL).

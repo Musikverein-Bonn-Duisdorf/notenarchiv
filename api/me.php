@@ -2,7 +2,8 @@
 /** GET /api/me.php */
 require_once __DIR__.'/_bootstrap.php';
 apiRequireMethod('GET');
-apiRequireBearerAdmin();
+$token = apiRequireBearerAdmin();
+archivLogApiSessionEstablished($token);
 
 apiJsonExit(array(
     'ok' => true,

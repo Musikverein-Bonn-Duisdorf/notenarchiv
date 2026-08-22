@@ -96,10 +96,6 @@ $delName = archivPlainText($entity->Name);
 ?>
 <div class="w3-container w3-margin-bottom termin-page">
 <div class="profile-shell termin-shell">
-<form class="profile-form" action="new-publisher.php" method="POST" enctype="multipart/form-data">
-<?php if($isEdit) { ?>
-  <input type="hidden" name="Index" value="<?php echo (int)$entity->Index; ?>">
-<?php } ?>
   <header class="profile-hero">
     <div class="profile-hero-text">
       <p class="profile-kicker">Verlag</p>
@@ -108,21 +104,28 @@ $delName = archivPlainText($entity->Name);
     <div class="profile-hero-actions">
       <div class="profile-actions">
         <div class="profile-actions-primary">
-          <input class="w3-btn profile-btn-primary <?php echo htmlspecialchars($btnSubmit, ENT_QUOTES, 'UTF-8'); ?> w3-border w3-mobile" type="submit" name="<?php echo $isEdit ? 'update' : 'insert'; ?>" value="Speichern">
+          <input class="w3-btn profile-btn-primary <?php echo htmlspecialchars($btnSubmit, ENT_QUOTES, 'UTF-8'); ?> w3-border w3-mobile" type="submit" form="archivEntityEditForm" name="<?php echo $isEdit ? 'update' : 'insert'; ?>" value="Speichern">
           <?php echo $backLink; ?>
+<?php if($isEdit) {
+    $delConfirm = ($delName !== '' ? 'Soll „'.$delName.'“ gelöscht werden?' : 'Soll dieser Eintrag gelöscht werden?');
+    echo archivDeleteAction(
+        'archivDelPublisher'.(int)$entity->Index,
+        $delConfirm,
+        'w3-btn '.htmlspecialchars($btnDelete, ENT_QUOTES, 'UTF-8').' w3-border w3-mobile',
+        '<input type="hidden" name="Index" value="'.(int)$entity->Index.'">'
+            .'<input type="hidden" name="delete" value="1">',
+        'new-publisher.php'
+    );
+} ?>
         </div>
-<?php if($isEdit) { ?>
-        <details class="profile-actions-more">
-          <summary>Weitere Aktionen</summary>
-          <div class="profile-actions-secondary">
-            <button type="button" class="w3-btn <?php echo htmlspecialchars($btnDelete, ENT_QUOTES, 'UTF-8'); ?> w3-border w3-mobile" onclick="document.getElementById('delmodal').style.display='block'">Löschen</button>
-          </div>
-        </details>
-<?php } ?>
       </div>
     </div>
   </header>
 
+<form id="archivEntityEditForm" class="profile-form" action="new-publisher.php" method="POST" enctype="multipart/form-data">
+<?php if($isEdit) { ?>
+  <input type="hidden" name="Index" value="<?php echo (int)$entity->Index; ?>">
+<?php } ?>
   <div class="termin-grid">
     <section class="profile-col" aria-labelledby="new-publisher-stamm">
       <h3 id="new-publisher-stamm" class="profile-col-title">Angaben</h3>
@@ -175,39 +178,5 @@ $delName = archivPlainText($entity->Name);
 </form>
 </div>
 </div>
-<?php if($isEdit) {
-    ob_start();
-?>
-<div id="delmodal" class="w3-modal" role="dialog" aria-modal="true" aria-labelledby="delmodalTitle" style="display:none;"
-     onclick="if(event.target===this){ this.style.display='none'; }">
-  <div class="w3-modal-content">
-    <div class="profile-shell modal-shell confirm-delete-modal">
-      <header class="profile-hero">
-        <div class="profile-hero-text">
-          <p class="profile-kicker">Verlag</p>
-          <h2 class="profile-title" id="delmodalTitle">Löschen</h2>
-        </div>
-        <div class="profile-hero-actions">
-          <button type="button" class="modal-close w3-button" onclick="document.getElementById('delmodal').style.display='none'" aria-label="Schließen">&times;</button>
-        </div>
-      </header>
-      <div class="confirm-delete-body">
-        <p class="profile-value">Soll <b><?php echo archivEscHtml($delName !== '' ? $delName : 'dieser Eintrag'); ?></b> gelöscht werden?</p>
-        <div class="profile-actions profile-actions--confirm">
-          <div class="profile-actions-primary">
-            <form action="new-publisher.php" method="POST">
-              <input type="hidden" name="Index" value="<?php echo (int)$entity->Index; ?>">
-              <button class="w3-btn profile-btn-primary <?php echo htmlspecialchars($btnDelete, ENT_QUOTES, 'UTF-8'); ?> w3-border w3-mobile" type="submit" name="delete" value="1">Löschen</button>
-            </form>
-          </div>
-          <button type="button" class="w3-btn w3-border w3-mobile" onclick="document.getElementById('delmodal').style.display='none'">Abbrechen</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-<?php
-    deferPageModalHtml(ob_get_clean());
-}
 include 'common/footer.php';
 ?>

@@ -274,6 +274,43 @@ function logAppendFilled(array &$parts, $label, $value, $valueHtml = null, $allo
     $parts[] = logPart($label, $valueHtml !== null ? $valueHtml : htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8'));
 }
 
+/** Optional API batch label prepended to DB log rows (header X-Archiv-Run-Note or JSON runNote). */
+function archivSetApiRunNote($note) {
+    $note = trim((string)$note);
+    if($note === '') {
+        unset($GLOBALS['archivApiRunNote']);
+        return;
+    }
+    $GLOBALS['archivApiRunNote'] = mb_substr($note, 0, 200);
+}
+
+function archivApiRunNote() {
+    return isset($GLOBALS['archivApiRunNote']) ? trim((string)$GLOBALS['archivApiRunNote']) : '';
+}
+
+/** Prefix run note on DB catalog log messages (types 3–5). */
+function archivPrefixLogRunNote($message, $type) {
+    $message = (string)$message;
+    $note = archivApiRunNote();
+    if($note === '' || !in_array((int)$type, array(3, 4, 5), true)) {
+        return $message;
+    }
+    $prefix = '['.htmlspecialchars($note, ENT_QUOTES, 'UTF-8').'] ';
+    if(strpos($message, $prefix) === 0) {
+        return $message;
+    }
+    return $prefix.$message;
+}
+
+/**
+ * Read optional run note from API request (header or JSON body field runNote).
+ */
+function archivApiCaptureRunNoteFromRequest() {
+    if(isset($_SERVER['HTTP_X_ARCHIV_RUN_NOTE'])) {
+        archivSetApiRunNote((string)$_SERVER['HTTP_X_ARCHIV_RUN_NOTE']);
+    }
+}
+
 /**
  * Append a Melde-style field diff ("old &rArr; <b>new</b>") when values differ.
  */

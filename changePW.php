@@ -7,8 +7,8 @@ include 'common/include.php';
 <html lang="de">
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">      
-    <link rel="stylesheet" href="styles/w3.css">
-	<link rel="stylesheet" href="styles/w3-colors-highway.css">
+    <link rel="stylesheet" href="<?php echo assetUrl('styles/w3.css'); ?>">
+	<link rel="stylesheet" href="<?php echo assetUrl('styles/w3-colors-highway.css'); ?>">
     <!-- successfully included php libraries -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">

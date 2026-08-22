@@ -3,16 +3,26 @@ require_once __DIR__.'/libs/sessionBootstrap.php';
 archivConfigureSession();
 $_SESSION['page']='home';
 $_SESSION['adminpage']=false;
+
+include_once 'common/include.php';
+mysqli_select_db($GLOBALS['conn'], $sql['database']) or die(mysqli_error($GLOBALS['conn']));
+
+// POST before any HTML (legacy Delete target — composition.php is canonical).
+if(isset($_POST['Delete']) && !empty($_SESSION['admin'])) {
+    $deleteId = (int)$_POST['Delete'];
+    if($deleteId > 0) {
+        $piece = new Composition;
+        $piece->load_by_id($deleteId);
+        if((int)$piece->Index > 0) {
+            $piece->delete();
+        }
+    }
+    header('Location: index.php');
+    exit;
+}
+
 include "common/header.php";
 requirePermission('perm_read');
-
-if(isset($_POST['Delete']) && !empty($_SESSION['admin'])) {
-    $piece = new Composition;
-    if($_POST['Delete'] > 0) {
-        $piece->load_by_id($_POST['Delete']);
-        $piece->delete();
-    }
-}
 
 $sql = sprintf('SELECT COUNT(`Index`) AS `Count` FROM `%sComposition`;',
 $GLOBALS['dbprefix']
