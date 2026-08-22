@@ -2,6 +2,13 @@
 
 Automatisch aus Git-Release-Commits erzeugt.
 
+## 2026-08-22-005a8 (2026-08-22)
+
+- ARCHIV-51: Excel-Genre-Suffixe vor Import aus Titel entfernen
+- ARCHIV-51: Dachschränke-Import, API-Session-Log, Delete-Modal abschließen
+- ARCHIV-51: Löschen-Modal früh ausgeben und zuverlässig öffnen
+- ARCHIV-51: Dachschränke-Import, API-Session-Log, Delete-Modal
+
 ## 2026-08-16-634ae (2026-08-16)
 
 - ARCHIV-49: Quick-Create-Modals vor MotD isolieren und korrekt darstellen
