@@ -12,6 +12,7 @@
  *     php scripts/importDachschraenkeApi.php --apply --file=… [--conflicts-out=conflicts.tsv]
  *
  * Duplicate policy:
+ *   - Excel genre suffixes (" - Marsch -", " - Walzer -", " - Potp. -", …) stripped from title
  *   - Same title already in DB (any reg) → skip
  *   - Same reg + same title (or leichte Abweichung) → skip (Prod behalten)
  *   - Same reg + different title → anlegen (Heftchen: mehrere Stücke pro Inv.-Nr.)

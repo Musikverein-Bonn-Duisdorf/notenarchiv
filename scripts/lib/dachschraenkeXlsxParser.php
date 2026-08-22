@@ -77,7 +77,7 @@ function archivParseDachschraenkeXlsx($path) {
         $works[] = array(
             'row' => $idx + 2,
             'registrationNumber' => (int)$regRaw,
-            'title' => $title,
+            'title' => archivCleanImportWorkTitle($title),
             'composerLabel' => isset($cells['C']) ? trim((string)$cells['C']) : '',
             'arrangerLabel' => isset($cells['D']) ? trim((string)$cells['D']) : '',
         );
@@ -108,10 +108,35 @@ function archivNormalizeWorkTitle($title) {
     return $title === null ? '' : $title;
 }
 
-/** Remove trailing genre/potp suffix when title has a distinct name part. */
+/** Genre/Potp suffix labels in Excel (not part of the work title). */
+function archivImportTitleGenreSuffixesRegex() {
+    return 'potp\\.?|potpourri|potpouri|marsch|walzer|polka|sturmmarsch|konzertwalzer|konzertmarsch';
+}
+
+/**
+ * Strip trailing Excel genre tags (" - Marsch -", " - Walzer -", " - Potp. -", …)
+ * before import; keeps the actual work title only.
+ */
+function archivCleanImportWorkTitle($title) {
+    $title = trim((string)$title);
+    if($title === '') {
+        return '';
+    }
+    $pat = '/\s*-\s*(?:'.archivImportTitleGenreSuffixesRegex().')\s*(?:-\s*)?$/ui';
+    for($i = 0; $i < 4; $i++) {
+        $next = preg_replace($pat, '', $title);
+        if($next === null || $next === $title) {
+            break;
+        }
+        $title = trim($next);
+    }
+    return trim($title);
+}
+
+/** Remove trailing genre/potp suffix when title has a distinct name part (fuzzy match). */
 function archivStripWorkTitleSuffix($title) {
     if(!preg_match(
-        '/ - (?:potp\.|potpourri|marsch|walzer|polka|sturmmarsch|konzertwalzer|konzertmarsch)(?: -)?$/ui',
+        '/\s*-\s*(?:'.archivImportTitleGenreSuffixesRegex().')\s*(?:-\s*)?$/ui',
         $title,
         $m,
         PREG_OFFSET_CAPTURE
