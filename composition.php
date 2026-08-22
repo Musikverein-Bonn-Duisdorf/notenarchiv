@@ -164,56 +164,82 @@ if($id > 0) {
 $pieceTitle = archivPlainText($piece->Title);
 $pieceComposer = archivPlainText($piece->ComposerName);
 $formTitle = $isCreate ? 'Anlegen' : ($isAdmin ? 'Bearbeiten' : $pieceTitle);
-$compositionPageModals = '';
-
+?>
+<div class="w3-container w3-margin-bottom termin-page">
+<div class="profile-shell termin-shell">
+<?php
+/*
+ * ARCHIV-51: Emit #delmodal early (before form / listParts). End-of-page buffer was
+ * often missing from the DOM; button onclick then no-oped on getElementById null.
+ */
 if(!$isCreate) {
-    ob_start();
-    ?>
-<div id="delmodal" class="w3-modal" style="display:none;">
+?>
+<div id="delmodal" class="w3-modal" style="display:none;" data-archiv51="delmodal">
   <div class="w3-modal-content">
     <div class="profile-shell modal-shell confirm-delete-modal">
-    <header class="profile-hero">
-      <div class="profile-hero-text">
-        <p class="profile-kicker">Stück</p>
-        <h2 class="profile-title">Löschen</h2>
+      <header class="profile-hero">
+        <div class="profile-hero-text">
+          <p class="profile-kicker">Stück</p>
+          <h2 class="profile-title">Löschen</h2>
+        </div>
+        <div class="profile-hero-actions">
+          <button type="button" class="modal-close w3-button" onclick="document.getElementById('delmodal').style.display='none'" aria-label="Schließen">&times;</button>
+        </div>
+      </header>
+      <div class="profile-grid">
+        <div class="profile-field">
+          <p class="profile-label"><?php echo archivEscHtml($pieceTitle); ?></p>
+        </div>
+        <div class="profile-field profile-actions">
+          <form action="index.php" method="POST" style="display:inline;">
+            <button type="submit" name="Delete" value="<?php echo (int)$piece->Index; ?>" class="w3-button <?php echo htmlspecialchars((string)$GLOBALS['optionsDB']['colorBtnDelete'], ENT_QUOTES, 'UTF-8'); ?>">Löschen</button>
+          </form>
+          <button type="button" class="w3-button w3-border" onclick="document.getElementById('delmodal').style.display='none'">Abbrechen</button>
+        </div>
       </div>
-      <button type="button" class="modal-close w3-button" onclick="document.getElementById('delmodal').style.display='none'" aria-label="Schließen">&times;</button>
-    </header>
-    <div class="profile-grid">
-      <div class="profile-field">
-        <p class="profile-label"><?php echo archivEscHtml($pieceTitle); ?></p>
-      </div>
-      <div class="profile-field profile-actions">
-        <form action="index.php" method="POST" style="display:inline;">
-          <button type="submit" name="Delete" value="<?php echo (int)$piece->Index; ?>" class="w3-button <?php echo $GLOBALS['optionsDB']['colorBtnDelete']; ?>">Löschen</button>
-        </form>
-        <button type="button" class="w3-button w3-border" onclick="document.getElementById('delmodal').style.display='none'">Abbrechen</button>
-      </div>
-    </div>
     </div>
   </div>
 </div>
 <?php if(!$isAdmin) { ?>
 <div id="collmodal" class="w3-modal" style="display:none;">
-  <div class="w3-modal-content profile-shell modal-shell">
-    <header class="profile-hero">
-      <div class="profile-hero-text">
-        <p class="profile-kicker">Stück</p>
-        <h2 class="profile-title">Sammlungen</h2>
-      </div>
-      <button type="button" class="modal-close w3-button" onclick="document.getElementById('collmodal').style.display='none'" aria-label="Schließen">&times;</button>
-    </header>
-    <?php echo $piece->listCollections(); ?>
+  <div class="w3-modal-content">
+    <div class="profile-shell modal-shell">
+      <header class="profile-hero">
+        <div class="profile-hero-text">
+          <p class="profile-kicker">Stück</p>
+          <h2 class="profile-title">Sammlungen</h2>
+        </div>
+        <div class="profile-hero-actions">
+          <button type="button" class="modal-close w3-button" onclick="document.getElementById('collmodal').style.display='none'" aria-label="Schließen">&times;</button>
+        </div>
+      </header>
+      <?php echo $piece->listCollections(); ?>
+    </div>
   </div>
 </div>
 <?php } ?>
-    <?php
-    // ARCHIV-49: keep in page buffer — emit BEFORE MotD footer HTML (defer was swallowed).
-    $compositionPageModals = ob_get_clean();
+<script>
+(function() {
+  function lift(id) {
+    var el = document.getElementById(id);
+    if(el && el.parentNode !== document.body) {
+      document.body.appendChild(el);
+    }
+    return el;
+  }
+  lift('delmodal');
+  lift('collmodal');
+  window.archivOpenDelModal = function() {
+    var el = lift('delmodal');
+    if(!el) return false;
+    el.style.display = 'block';
+    return false;
+  };
+})();
+</script>
+<?php
 }
 ?>
-<div class="w3-container w3-margin-bottom termin-page">
-<div class="profile-shell termin-shell">
 <?php if($isAdmin) { ?>
 <form class="profile-form" action="composition.php<?php echo $isCreate ? '' : '?id='.(int)$piece->Index; ?>" method="POST">
   <input name="Index" type="hidden" value="<?php echo (int)$piece->Index; ?>">
@@ -229,7 +255,7 @@ if(!$isCreate) {
           <input class="w3-btn profile-btn-primary <?php echo htmlspecialchars($btnSubmit, ENT_QUOTES, 'UTF-8'); ?> w3-border w3-mobile" type="submit" name="save" value="Speichern">
           <a class="w3-button w3-border <?php echo htmlspecialchars($inputBg, ENT_QUOTES, 'UTF-8'); ?>" href="index.php">Zur Liste</a>
 <?php if(!$isCreate) { ?>
-          <button type="button" class="w3-button <?php echo htmlspecialchars($GLOBALS['optionsDB']['colorBtnDelete'], ENT_QUOTES, 'UTF-8'); ?>" onclick="(function(){var m=document.getElementById('delmodal');if(!m)return;if(m.parentNode!==document.body)document.body.appendChild(m);m.style.display='block';})()">Löschen</button>
+          <button type="button" class="w3-button <?php echo htmlspecialchars($GLOBALS['optionsDB']['colorBtnDelete'], ENT_QUOTES, 'UTF-8'); ?>" onclick="return window.archivOpenDelModal ? window.archivOpenDelModal() : false">Löschen</button>
 <?php } ?>
         </div>
       </div>
@@ -409,14 +435,6 @@ if(!$isCreate) {
 <?php } ?>
 </div>
 </div>
-<?php
-/*
- * ARCHIV-49: delmodal/collmodal before MotD footer; quick-create already inlined at Komponist field.
- */
-if(!empty($compositionPageModals)) {
-    echo $compositionPageModals;
-}
-?>
 <script>
 (function() {
   ['delmodal', 'collmodal', 'quickPersonModal', 'quickPublisherModal'].forEach(function(id) {
