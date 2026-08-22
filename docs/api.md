@@ -49,7 +49,7 @@ Non-admins receive `403`. Invalid/revoked tokens → `401`.
 | GET | `api/gaps/media.php` | `?limit=&scores=1` |
 | GET/POST/PATCH/DELETE | `api/composers.php` | `firstName`, `lastName` |
 | POST | `api/composers/avatar.php` | multipart `id`, `avatar` |
-| GET/POST/PATCH | `api/compositions.php` | `title`, `composerId`, `publisherId`, `website` (Produktseite), … |
+| GET/POST/PATCH/DELETE | `api/compositions.php` | `title`, `composerId`, `publisherId`, `website` (Produktseite), … |
 | POST | `api/compositions/cover.php` | multipart `id`, `cover` |
 | GET | `api/compositions/scores.php` | `?composition=` |
 | POST | `api/compositions/scores.php` | multipart `composition`, `instrument`, `voice`, `file` |

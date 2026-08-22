@@ -3,6 +3,7 @@
  * GET /api/compositions.php?id=&q=&limit=
  * POST JSON: title, composerId?/composerIds?, arrangerId?/arrangerIds?, publisherId?, year?, grade?, performanceTime?, registrationNumber?, website?
  * PATCH JSON: id + same optional fields
+ * DELETE ?id= or JSON id
  */
 require_once __DIR__.'/_bootstrap.php';
 
@@ -182,6 +183,22 @@ if($method === 'PATCH') {
         archivSyncCompositionPersons((int)$p->Index, 'arranger', $arrangers);
     }
     apiJsonExit(array('ok' => true, 'id' => (int)$p->Index));
+}
+
+if($method === 'DELETE') {
+    $id = isset($_GET['id']) ? (int)$_GET['id'] : (isset($body['id']) ? (int)$body['id'] : 0);
+    if($id < 1) {
+        apiJsonExit(array('error' => 'invalid_id'), 400);
+    }
+    $p = new Composition;
+    $p->load_by_id($id);
+    if((int)$p->Index < 1) {
+        apiJsonExit(array('error' => 'not_found'), 404);
+    }
+    if(!$p->delete()) {
+        apiJsonExit(array('error' => 'delete_failed'), 500);
+    }
+    apiJsonExit(array('ok' => true));
 }
 
 apiJsonExit(array('error' => 'method_not_allowed'), 405);

@@ -381,39 +381,53 @@ class Composition
     }
 
     public function delete() {
+        $id = (int)$this->Index;
+        if($id < 1) {
+            return false;
+        }
         $vars = $this->getVars();
         $sql = sprintf('DELETE FROM `%sCollectionItem` WHERE `Composition` = "%d";',
         $GLOBALS['dbprefix'],
-        $this->Index
+        $id
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
         sqlerror();
+        if(!$dbr) {
+            return false;
+        }
 
         $sql = sprintf('DELETE FROM `%sCompositionPerson` WHERE `Composition` = "%d";',
         $GLOBALS['dbprefix'],
-        $this->Index
+        $id
         );
         mysqli_query($GLOBALS['conn'], $sql);
         sqlerror();
 
         $sql = sprintf('DELETE FROM `%sScoreFile` WHERE `Composition` = "%d";',
         $GLOBALS['dbprefix'],
-        $this->Index
+        $id
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
         sqlerror();
+        if(!$dbr) {
+            return false;
+        }
 
         $sql = sprintf('DELETE FROM `%sComposition` WHERE `Index` = "%d";',
         $GLOBALS['dbprefix'],
-        $this->Index
+        $id
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
         sqlerror();
+        if(!$dbr) {
+            return false;
+        }
         if($vars !== '') {
             $logentry = new Log;
             $logentry->DBdelete($vars);
         }
-}
+        return true;
+    }
 
     public function printLine() {
         $id = (int)$this->Index;
