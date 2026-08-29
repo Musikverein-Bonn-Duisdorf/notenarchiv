@@ -2,6 +2,10 @@
 
 Automatisch aus Git-Release-Commits erzeugt.
 
+## 2026-08-29-7004d (2026-08-29)
+
+- ARCHIV-54: Aufnahme als Volume-Steuerung rechts in der Stückzeile
+
 ## 2026-08-29-1c2cc (2026-08-29)
 
 - ARCHIV-53: Aufnahme-Link am Stück mit Play-Overlay auf dem Cover
