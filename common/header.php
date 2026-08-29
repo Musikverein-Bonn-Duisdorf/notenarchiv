@@ -31,6 +31,7 @@
       <link rel="stylesheet" href="<?php echo assetUrl('styles/fontawesome-free-6.4.2-web/css/brands.css'); ?>">
       <link rel="stylesheet" href="<?php echo assetUrl('styles/fontawesome-free-6.4.2-web/css/solid.css'); ?>">
       <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+      <script defer src="<?php echo assetUrl('js/appDialog.js'); ?>"></script>
       <?php echo renderConfigColorCss(); ?>
       <?php echo renderPermissionGroupColorCss(); ?>
       <link rel="icon" href="<?php echo htmlspecialchars((string)$GLOBALS['optionsDB']['favicon'], ENT_QUOTES, 'UTF-8'); ?>" type="image/x-icon">
@@ -56,26 +57,13 @@
         $docTitle = isset($optionsDB['WebSiteName']) ? trim((string)$optionsDB['WebSiteName']) : '';
         echo htmlspecialchars($docTitle !== '' ? $docTitle : 'Notenarchiv', ENT_QUOTES, 'UTF-8');
       ?></title>
-      <script>
-      /* ARCHIV-51: inline so onclick works even if footer scripts are blocked by HTML parse issues. */
-      window.archivOpenDeleteModal = function (id) {
-        var modal = document.getElementById(id);
-        if (!modal) return false;
-        modal.style.display = 'block';
-        modal.classList.add('w3-show');
-        return false;
-      };
-      window.archivCloseDeleteModal = function (id) {
-        var modal = document.getElementById(id);
-        if (!modal) return false;
-        modal.style.display = 'none';
-        modal.classList.remove('w3-show');
-        return false;
-      };
-      </script>
   </head>
   <body class="<?php echo htmlspecialchars((string)$GLOBALS['optionsDB']['colorBackground'], ENT_QUOTES, 'UTF-8'); ?> app-layout">
 <?php
+/* ARCHIV-51: overlay hosts before page body (instrumentsOption etc. may fatal). */
+if(function_exists('archivOverlayHostsHtml')) {
+    echo archivOverlayHostsHtml();
+}
 include "common/nav.php";
 $GLOBALS['mlHeaderRendered'] = true;
 ?>

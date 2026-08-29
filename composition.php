@@ -183,7 +183,7 @@ $formTitle = $isCreate ? 'Anlegen' : ($isAdmin ? 'Bearbeiten' : $pieceTitle);
 <div class="w3-container w3-margin-bottom termin-page">
 <div class="profile-shell termin-shell">
 <?php
-/* ARCHIV-51: onclick → delete modal with POST form in modal. */
+/* ARCHIV-51: delete via data-confirm + #appConfirmModal. */
 $btnDelete = htmlspecialchars((string)$GLOBALS['optionsDB']['colorBtnDelete'], ENT_QUOTES, 'UTF-8');
 if(!$isCreate && !$isAdmin) {
 ?>

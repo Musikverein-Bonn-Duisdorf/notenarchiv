@@ -39,6 +39,9 @@
     if (!modal || !msgEl || !okBtn) {
       return Promise.resolve(mode === 'alert');
     }
+    if (modal.parentNode !== document.body) {
+      document.body.appendChild(modal);
+    }
     if (resolvePending) {
       finish(false);
     }
@@ -160,6 +163,62 @@
     }
     HTMLFormElement.prototype.submit.call(form);
   }
+
+  function resolveConfirmForm(btn) {
+    if (!btn) return null;
+    var formId = btn.getAttribute('data-confirm-form');
+    if (formId) {
+      return el(formId);
+    }
+    if (btn.form) return btn.form;
+    return btn.closest ? btn.closest('form') : null;
+  }
+
+  /**
+   * Confirm then submit (Melde config-menu style). Does not rely on submit interception.
+   */
+  window.appConfirmSubmit = function (form, message, opts) {
+    if (typeof form === 'string') {
+      form = el(form);
+    }
+    if (!form || form.nodeName !== 'FORM') {
+      return Promise.resolve(false);
+    }
+    if (typeof window.appConfirm !== 'function') {
+      return Promise.resolve(false);
+    }
+    var msg = message || confirmAttr(form);
+    if (!msg) {
+      return Promise.resolve(false);
+    }
+    opts = opts || confirmOptsFrom(form);
+    return window.appConfirm(msg, opts).then(function (ok) {
+      if (!ok) return false;
+      form.setAttribute('data-confirm-pass', '1');
+      HTMLFormElement.prototype.submit.call(form);
+      return true;
+    });
+  };
+
+  document.addEventListener(
+    'click',
+    function (e) {
+      var btn = e.target && e.target.closest
+        ? e.target.closest('[data-confirm-form]')
+        : null;
+      if (!btn) return;
+      var form = resolveConfirmForm(btn);
+      if (!form) return;
+      if (form.getAttribute('data-confirm-pass') === '1') return;
+      var msg = confirmAttr(btn) || confirmAttr(form);
+      if (!msg) return;
+      e.preventDefault();
+      e.stopPropagation();
+      var optsNode = confirmAttr(btn) ? btn : form;
+      window.appConfirmSubmit(form, msg, confirmOptsFrom(optsNode));
+    },
+    true
+  );
 
   document.addEventListener(
     'click',
