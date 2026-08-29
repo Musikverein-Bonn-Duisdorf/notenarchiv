@@ -1,9 +1,11 @@
 <?php
 /**
- * Cron / remote backup entrypoint (ARCHIV-2).
+ * Cron / remote backup entrypoint (ARCHIV-2 / ARCHIV-50).
  *
  * CLI:  php cron.php <cronId> backup > backup.zip
+ *       php cron.php <cronId> backup-files > files.zip
  * HTTP: curl -fsS "https://HOST/cron.php?id=BACKUPTOKEN&cmd=backup" -o backup.zip
+ *       curl -fsS "https://HOST/cron.php?id=BACKUPTOKEN&cmd=backup-files" -o files.zip
  *       (HTTP uses $backupToken only, never $cronID)
  */
 if(PHP_SAPI === 'cli') {
@@ -26,7 +28,7 @@ if(!isset($_GET['cmd'])) {
 
 $cmd = (string)$_GET['cmd'];
 
-if($cmd === 'backup') {
+if($cmd === 'backup' || $cmd === 'backup-files') {
     if(PHP_SAPI === 'cli') {
         if(!isset($_GET['id']) || (string)$_GET['id'] !== (string)$GLOBALS['cronID']) {
             die("ID invalid\n");
@@ -45,7 +47,12 @@ if($cmd === 'backup') {
     }
     mkAdmin();
     try {
-        sendBackupDownload();
+        if($cmd === 'backup-files') {
+            sendFilesBackupDownload();
+        }
+        else {
+            sendBackupDownload();
+        }
     }
     catch(Throwable $e) {
         http_response_code(500);

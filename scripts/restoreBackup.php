@@ -1,6 +1,8 @@
 <?php
 /**
- * CLI restore from a Notenarchiv backup ZIP (ARCHIV-2).
+ * CLI restore from a Notenarchiv backup ZIP (ARCHIV-2 / ARCHIV-50).
+ *
+ * Auto-detects database vs files ZIP.
  *
  * Usage: php scripts/restoreBackup.php /path/to/backup.zip --yes
  */
@@ -54,11 +56,32 @@ if(isset($GLOBALS['conn']) && $GLOBALS['conn']) {
 }
 
 try {
+    $kind = backupDetectZipKind($zipPath);
+    if($kind === 'files') {
+        $result = restoreFilesBackupZip($zipPath);
+        if($result['manifest']) {
+            echo "Manifest version: ".(isset($result['manifest']['version']['String']) ? $result['manifest']['version']['String'] : '?')."\n";
+            echo "Manifest createdAt: ".(isset($result['manifest']['createdAt']) ? $result['manifest']['createdAt'] : '?')."\n";
+        }
+        echo "Kind: files\n";
+        echo "Files restored: ".$result['filesRestored']."\n";
+        if(!empty($result['errors'])) {
+            fwrite(STDERR, "Errors:\n");
+            foreach($result['errors'] as $err) {
+                fwrite(STDERR, "  ".$err."\n");
+            }
+            exit(1);
+        }
+        echo "Restore finished.\n";
+        exit(0);
+    }
+
     $result = restoreBackupZip($zipPath, true);
     if($result['manifest']) {
         echo "Manifest version: ".(isset($result['manifest']['version']['String']) ? $result['manifest']['version']['String'] : '?')."\n";
         echo "Manifest createdAt: ".(isset($result['manifest']['createdAt']) ? $result['manifest']['createdAt'] : '?')."\n";
     }
+    echo "Kind: database\n";
     echo "Statements OK: ".$result['statements']."\n";
     echo "Schema repair: ".($result['repaired'] ? 'yes' : 'no')."\n";
     if(!empty($result['errors'])) {

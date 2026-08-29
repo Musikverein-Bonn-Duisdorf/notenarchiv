@@ -5,7 +5,7 @@ $_SESSION['page'] = 'backup';
 $_SESSION['adminpage'] = true;
 
 // Download must run before any HTML output (header.php)
-if(isset($_GET['download']) && $_GET['download'] === '1') {
+if(isset($_GET['download']) && ($_GET['download'] === '1' || $_GET['download'] === 'files')) {
     include_once 'common/include.php';
     mysqli_select_db($GLOBALS['conn'], $sql['database']) or die(mysqli_error($GLOBALS['conn']));
     requireLoggedInOrRedirect();
@@ -14,7 +14,12 @@ if(isset($_GET['download']) && $_GET['download'] === '1') {
     }
     require_once __DIR__.'/libs/backup.php';
     try {
-        sendBackupDownload();
+        if($_GET['download'] === 'files') {
+            sendFilesBackupDownload();
+        }
+        else {
+            sendBackupDownload();
+        }
     }
     catch(Throwable $e) {
         http_response_code(500);
@@ -42,8 +47,8 @@ if($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['restore_confirm'])) {
     elseif(empty($_POST['confirm_text']) || trim((string)$_POST['confirm_text']) !== 'RESTORE') {
         $flash = array('type' => 'error', 'message' => 'Bitte zur Bestätigung RESTORE eintippen.');
     }
-    elseif(empty($_FILES['backup_zip']) || !is_uploaded_file($_FILES['backup_zip']['tmp_name'])) {
-        $flash = array('type' => 'error', 'message' => 'Keine ZIP-Datei hochgeladen.');
+    elseif(($uploadErr = backupRestoreUploadError(isset($_FILES['backup_zip']) ? $_FILES['backup_zip'] : null)) !== '') {
+        $flash = array('type' => 'error', 'message' => $uploadErr);
     }
     else {
         try {
@@ -63,6 +68,40 @@ if($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['restore_confirm'])) {
                 );
                 $logentry = new Log;
                 $logentry->info('<b>Database restore</b> from uploaded backup ZIP');
+            }
+        }
+        catch(Throwable $e) {
+            $flash = array('type' => 'error', 'message' => 'Restore fehlgeschlagen: '.$e->getMessage());
+        }
+    }
+}
+elseif($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['restore_files_confirm'])) {
+    if(!csrf_verify(isset($_POST['csrf_token']) ? $_POST['csrf_token'] : '')) {
+        $flash = array('type' => 'error', 'message' => 'Ungültiges Sicherheits-Token.');
+    }
+    elseif(empty($_POST['confirm_text']) || trim((string)$_POST['confirm_text']) !== 'FILES') {
+        $flash = array('type' => 'error', 'message' => 'Bitte zur Bestätigung FILES eintippen.');
+    }
+    elseif(($uploadErr = backupRestoreUploadError(isset($_FILES['backup_zip']) ? $_FILES['backup_zip'] : null)) !== '') {
+        $flash = array('type' => 'error', 'message' => $uploadErr);
+    }
+    else {
+        try {
+            $restoreResult = restoreFilesBackupZip($_FILES['backup_zip']['tmp_name']);
+            if(!empty($restoreResult['errors'])) {
+                $flash = array(
+                    'type' => 'error',
+                    'message' => 'Restore mit Fehlern: '.implode('; ', $restoreResult['errors']),
+                );
+            }
+            else {
+                $filesRestored = isset($restoreResult['filesRestored']) ? (int)$restoreResult['filesRestored'] : 0;
+                $flash = array(
+                    'type' => 'ok',
+                    'message' => 'Dateien wiederhergestellt ('.$filesRestored.' Dateien).',
+                );
+                $logentry = new Log;
+                $logentry->info('<b>Files restore</b> from uploaded backup ZIP ('.$filesRestored.' files)');
             }
         }
         catch(Throwable $e) {
@@ -93,7 +132,10 @@ adminListPageBegin('System', 'Backup', array('permKey' => 'perm_editConfig'));
 
   <div class="w3-card w3-padding w3-margin-bottom">
     <h3>Download</h3>
-    <p><a class="w3-button w3-border <?php echo $GLOBALS['optionsDB']['colorBtnSubmit']; ?>" href="backup.php?download=1"><i class="fas fa-download"></i> Backup laden</a></p>
+    <p>
+      <a class="w3-button w3-border <?php echo $GLOBALS['optionsDB']['colorBtnSubmit']; ?>" href="backup.php?download=1"><i class="fas fa-download"></i> Backup laden</a>
+      <a class="w3-button w3-border <?php echo $GLOBALS['optionsDB']['colorBtnSubmit']; ?>" href="backup.php?download=files"><i class="fas fa-download"></i> Dateien laden</a>
+    </p>
   </div>
 
   <div class="w3-card w3-padding w3-margin-bottom w3-pale-red">
@@ -104,6 +146,19 @@ adminListPageBegin('System', 'Backup', array('permKey' => 'perm_editConfig'));
       <label>ZIP</label>
       <input class="w3-input w3-border w3-margin-bottom" type="file" name="backup_zip" accept=".zip,application/zip" required>
       <label>Bestätigung <code>RESTORE</code></label>
+      <input class="w3-input w3-border w3-margin-bottom" type="text" name="confirm_text" autocomplete="off" required>
+      <button type="submit" class="w3-button w3-border w3-red">Einspielen</button>
+    </form>
+  </div>
+
+  <div class="w3-card w3-padding w3-margin-bottom w3-pale-red">
+    <h3>Dateien</h3>
+    <form method="post" enctype="multipart/form-data" action="backup.php" data-app-confirm="Dateien wiederherstellen? data/ wird ersetzt.">
+      <?php echo csrf_field(); ?>
+      <input type="hidden" name="restore_files_confirm" value="1">
+      <label>ZIP</label>
+      <input class="w3-input w3-border w3-margin-bottom" type="file" name="backup_zip" accept=".zip,application/zip" required>
+      <label>Bestätigung <code>FILES</code></label>
       <input class="w3-input w3-border w3-margin-bottom" type="text" name="confirm_text" autocomplete="off" required>
       <button type="submit" class="w3-button w3-border w3-red">Einspielen</button>
     </form>
