@@ -2,6 +2,10 @@
 
 Automatisch aus Git-Release-Commits erzeugt.
 
+## 2026-08-29-09cbe (2026-08-29)
+
+- ARCHIV-52: Aktionsbuttons mit Config-Farben statt Weiß
+
 ## 2026-08-29-7004d (2026-08-29)
 
 - ARCHIV-54: Aufnahme als Volume-Steuerung rechts in der Stückzeile
