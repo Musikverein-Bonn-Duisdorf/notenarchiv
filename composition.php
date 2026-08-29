@@ -213,6 +213,7 @@ if(!$isCreate && !$isAdmin) {
       <h2 class="profile-title"><?php echo htmlspecialchars($formTitle, ENT_QUOTES, 'UTF-8'); ?></h2>
     </div>
     <div class="profile-hero-actions">
+      <?php if(!$isCreate) { echo $piece->recordingCellHtml(); } ?>
       <div class="profile-actions">
         <div class="profile-actions-primary">
           <input class="w3-btn profile-btn-primary <?php echo htmlspecialchars($btnSubmit, ENT_QUOTES, 'UTF-8'); ?> w3-border w3-mobile" type="submit" form="archivPieceEditForm" name="save" value="Speichern">
@@ -345,12 +346,13 @@ if(!$isCreate && !$isAdmin) {
 </script>
 <?php } else { ?>
   <header class="profile-hero">
-    <div class="profile-hero-thumb"><?php echo $piece->coverFrameHtml('archiv-thumb archiv-thumb--detail piece-cover piece-cover--detail'); ?></div>
+    <div class="profile-hero-thumb"><?php echo $piece->coverHtml('archiv-thumb archiv-thumb--detail piece-cover piece-cover--detail'); ?></div>
     <div class="profile-hero-text">
       <p class="profile-kicker">Stück</p>
       <h2 class="profile-title"><?php echo archivEscHtml($pieceTitle !== '' ? $pieceTitle : '—'); ?></h2>
     </div>
     <div class="profile-hero-actions">
+      <?php echo $piece->recordingCellHtml(); ?>
       <button type="button" class="w3-button <?php echo htmlspecialchars($btnEdit, ENT_QUOTES, 'UTF-8'); ?>" onclick="document.getElementById('collmodal').style.display='block'">Sammlungen</button>
       <a class="w3-button w3-border" href="index.php">Zur Liste</a>
     </div>
@@ -378,7 +380,7 @@ if(!$isCreate && !$isAdmin) {
   <section class="profile-col" aria-labelledby="edit-col-cover">
     <h3 id="edit-col-cover" class="profile-col-title">Cover</h3>
     <div class="profile-field">
-      <div class="profile-value"><?php echo $piece->coverFrameHtml('archiv-thumb archiv-thumb--detail piece-cover piece-cover--detail'); ?></div>
+      <div class="profile-value"><?php echo $piece->coverHtml('archiv-thumb archiv-thumb--detail piece-cover piece-cover--detail'); ?></div>
     </div>
     <form action="composition.php?id=<?php echo (int)$piece->Index; ?>" method="POST" enctype="multipart/form-data">
       <input class="w3-input w3-border profile-control" type="file" accept=".png,.jpeg,.gif,.jpg" name="coverImage">

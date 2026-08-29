@@ -26,12 +26,13 @@ $dash = function ($v) {
 ?>
 <div class="profile-shell modal-shell composition-modal">
   <header class="profile-hero">
-    <div class="profile-hero-thumb"><?php echo $piece->coverFrameHtml('archiv-thumb archiv-thumb--detail piece-cover piece-cover--detail'); ?></div>
+    <div class="profile-hero-thumb"><?php echo $piece->coverHtml('archiv-thumb archiv-thumb--detail piece-cover piece-cover--detail'); ?></div>
     <div class="profile-hero-text">
       <p class="profile-kicker">Stück</p>
       <h2 class="profile-title"><?php echo archivEscHtml($title !== '' ? $title : '—'); ?></h2>
     </div>
     <div class="profile-hero-actions">
+      <?php echo $piece->recordingCellHtml(); ?>
       <div class="profile-actions">
         <div class="profile-actions-primary">
           <a class="w3-btn profile-btn-primary <?php echo archivEscHtml(!empty($showEditButton) ? $btnEdit : $btnSubmit); ?> w3-border w3-mobile" href="composition.php?id=<?php echo $id; ?>"><?php echo !empty($showEditButton) ? 'Bearbeiten' : 'Öffnen'; ?></a>

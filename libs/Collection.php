@@ -248,6 +248,7 @@ class Collection
             : '';
 
         $coverHtml = '';
+        $recordingHtml = '';
         if($compId > 0) {
             $piece = new Composition;
             $piece->load_by_id($compId);
@@ -255,7 +256,8 @@ class Collection
                 if($title === '') {
                     $title = archivPlainText($piece->Title);
                 }
-                $coverHtml = $piece->coverFrameHtml('archiv-thumb piece-cover', true);
+                $coverHtml = $piece->coverHtml('archiv-thumb piece-cover');
+                $recordingHtml = $piece->recordingCellHtml(true);
             }
         }
 
@@ -283,6 +285,7 @@ class Collection
         }
         $str .= '<div class="collection-text"><div class="collection-title">'.archivEscHtml($title !== '' ? $title : '—').'</div></div>';
         $str .= '</div>';
+        $str .= $recordingHtml;
         $str .= '</div>';
         return $str;
     }

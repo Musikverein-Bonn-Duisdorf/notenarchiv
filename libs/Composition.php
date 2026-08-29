@@ -479,7 +479,7 @@ class Composition
         $str .= '</div>';
         $str .= '<div class="piece-rail" aria-hidden="true"></div>';
         $str .= '<div class="piece-main">';
-        $str .= $this->coverFrameHtml('archiv-thumb piece-cover', true);
+        $str .= $this->coverHtml('archiv-thumb piece-cover');
         $str .= '<div class="piece-text">';
         $str .= '<div class="piece-title">'.archivEscHtml($title).'</div>';
         $str .= '<div class="piece-meta-line">';
@@ -497,6 +497,7 @@ class Composition
         }
         $str .= '</div>';
         $str .= '</div></div>';
+        $str .= $this->recordingCellHtml(true);
         $str .= '</div>';
         return $str;
     }
@@ -557,7 +558,7 @@ class Composition
     }
 
     /**
-     * Play-icon link to the recording, or empty when no URL is set.
+     * Volume-icon link to the recording, or empty when no URL is set.
      *
      * @param bool $stopPropagation for links inside clickable list rows
      */
@@ -569,23 +570,20 @@ class Composition
         $extra = $stopPropagation
             ? ' onclick="event.stopPropagation();" onkeydown="event.stopPropagation();"'
             : '';
-        return '<a class="piece-recording-link" href="'.archivEscHtml($href).'" target="_blank" rel="noopener noreferrer" title="Aufnahme" aria-label="Aufnahme"'.$extra.'><i class="fa-solid fa-circle-play" aria-hidden="true"></i></a>';
+        return '<a class="piece-recording-link" href="'.archivEscHtml($href).'" target="_blank" rel="noopener noreferrer" title="Aufnahme" aria-label="Aufnahme"'.$extra.'><i class="fa-solid fa-volume" aria-hidden="true"></i></a>';
     }
 
     /**
-     * Cover with optional recording play overlay (top-right).
+     * Standalone recording control for the right of a list row / hero actions.
+     *
+     * @param bool $stopPropagation for links inside clickable list rows
      */
-    public function coverFrameHtml($cssClass = 'piece-cover', $stopPropagation = false) {
-        $cover = $this->coverHtml($cssClass);
+    public function recordingCellHtml($stopPropagation = false) {
         $link = $this->recordingLinkHtml($stopPropagation);
         if($link === '') {
-            return $cover;
+            return '';
         }
-        $frame = 'piece-cover-frame';
-        if(strpos((string)$cssClass, 'detail') !== false || strpos((string)$cssClass, '--lg') !== false) {
-            $frame .= ' piece-cover-frame--detail';
-        }
-        return '<span class="'.$frame.'">'.$cover.$link.'</span>';
+        return '<div class="piece-recording">'.$link.'</div>';
     }
 
     public function getModalHtml($showEditButton = false) {
