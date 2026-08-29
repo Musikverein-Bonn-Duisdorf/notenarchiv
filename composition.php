@@ -295,6 +295,10 @@ if(!$isCreate && !$isAdmin) {
         <input id="editWebsite" class="w3-input w3-border profile-control <?php echo htmlspecialchars($inputBg, ENT_QUOTES, 'UTF-8'); ?>" name="Website" type="url" value="<?php echo archivEscHtml($piece->Website); ?>" placeholder="https://…">
       </div>
       <div class="profile-field">
+        <label class="profile-label" for="editRecording">Aufnahme</label>
+        <input id="editRecording" class="w3-input w3-border profile-control <?php echo htmlspecialchars($inputBg, ENT_QUOTES, 'UTF-8'); ?>" name="Recording" type="url" value="<?php echo archivEscHtml($piece->Recording); ?>" placeholder="https://…">
+      </div>
+      <div class="profile-field">
         <label class="profile-label" for="editGrade">Schwierigkeit</label>
         <input id="editGrade" class="w3-input w3-border profile-control <?php echo htmlspecialchars($inputBg, ENT_QUOTES, 'UTF-8'); ?>" name="Grade" type="number" step="0.5" min="0" max="6" value="<?php echo archivEscHtml($piece->Grade); ?>">
       </div>
@@ -341,7 +345,7 @@ if(!$isCreate && !$isAdmin) {
 </script>
 <?php } else { ?>
   <header class="profile-hero">
-    <div class="profile-hero-thumb" aria-hidden="true"><?php echo $piece->coverHtml('archiv-thumb archiv-thumb--detail piece-cover piece-cover--detail'); ?></div>
+    <div class="profile-hero-thumb"><?php echo $piece->coverFrameHtml('archiv-thumb archiv-thumb--detail piece-cover piece-cover--detail'); ?></div>
     <div class="profile-hero-text">
       <p class="profile-kicker">Stück</p>
       <h2 class="profile-title"><?php echo archivEscHtml($pieceTitle !== '' ? $pieceTitle : '—'); ?></h2>
@@ -374,7 +378,7 @@ if(!$isCreate && !$isAdmin) {
   <section class="profile-col" aria-labelledby="edit-col-cover">
     <h3 id="edit-col-cover" class="profile-col-title">Cover</h3>
     <div class="profile-field">
-      <div class="profile-value"><?php echo $piece->coverHtml('archiv-thumb archiv-thumb--detail piece-cover piece-cover--detail'); ?></div>
+      <div class="profile-value"><?php echo $piece->coverFrameHtml('archiv-thumb archiv-thumb--detail piece-cover piece-cover--detail'); ?></div>
     </div>
     <form action="composition.php?id=<?php echo (int)$piece->Index; ?>" method="POST" enctype="multipart/form-data">
       <input class="w3-input w3-border profile-control" type="file" accept=".png,.jpeg,.gif,.jpg" name="coverImage">

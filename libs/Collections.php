@@ -266,7 +266,7 @@ class Collections
                 $piece->load_by_id($compId);
                 if((int)$piece->Index > 0) {
                     $title = archivPlainText($piece->Title);
-                    $coverHtml = $piece->coverHtml('archiv-thumb piece-cover');
+                    $coverHtml = $piece->coverFrameHtml('archiv-thumb piece-cover', true);
                 }
             }
             $items[] = array(

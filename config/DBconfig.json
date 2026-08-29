@@ -39,7 +39,8 @@
         "PerformanceTime": {"Type": "text", "Null": "YES", "Collation": "utf8mb4_unicode_ci"},
         "Grade": {"Type": "double", "Null": "YES"},
         "FilePath": {"Type": "text", "Null": "YES", "Collation": "utf8mb4_unicode_ci"},
-        "Website": {"Type": "text", "Null": "YES", "Collation": "utf8mb4_unicode_ci"}
+        "Website": {"Type": "text", "Null": "YES", "Collation": "utf8mb4_unicode_ci"},
+        "Recording": {"Type": "text", "Null": "YES", "Collation": "utf8mb4_unicode_ci"}
     },
     "ScoreFile": {
         "Index": {"Type": "int", "Extra": "AUTO_INCREMENT"},

@@ -13,6 +13,7 @@ class Composition
         'Grade' => null,
         'FilePath' => null,
         'Website' => null,
+        'Recording' => null,
         'ComposerName' => null,
         'ArrangerName' => null,
         'PublisherName' => null,
@@ -35,6 +36,7 @@ class Composition
 	    case 'PerformanceTime':
         case 'FilePath':
         case 'Website':
+        case 'Recording':
             return $this->_data[$key];
             break;
         default:
@@ -63,6 +65,7 @@ class Composition
 	    case 'PerformanceTime':
 	    case 'FilePath':
 	    case 'Website':
+	    case 'Recording':
 	    case 'PublisherWebsite':
             $this->_data[$key] = is_string($val) ? trim($val) : $val;
             break;
@@ -228,6 +231,7 @@ class Composition
         logAppendFilled($parts, 'Grade', $this->Grade, (string)$this->Grade, true);
         logAppendFilled($parts, 'PerformanceTime', $this->PerformanceTime);
         logAppendFilled($parts, 'Website', $this->Website);
+        logAppendFilled($parts, 'Recording', $this->Recording);
         return implode(', ', $parts);
     }
 
@@ -283,6 +287,7 @@ class Composition
         logAppendChange($parts, 'PerformanceTime', $old->PerformanceTime, $this->PerformanceTime);
         logAppendChange($parts, 'FilePath', $old->FilePath, $this->FilePath);
         logAppendChange($parts, 'Website', $old->Website, $this->Website);
+        logAppendChange($parts, 'Recording', $old->Recording, $this->Recording);
         if(!$parts) {
             return '';
         }
@@ -319,7 +324,7 @@ class Composition
     }
     
     protected function insert() {
-        $sql = sprintf('INSERT INTO `%sComposition` (`RegistrationNumber`, `Title`, `Composer`, `Arranger`, `Publisher`, `Year`, `Grade`, `PerformanceTime`, `FilePath`, `Website`) VALUES (%s, "%s", %s, %s, %s, %s, "%f", "%s", "%s", "%s");',
+        $sql = sprintf('INSERT INTO `%sComposition` (`RegistrationNumber`, `Title`, `Composer`, `Arranger`, `Publisher`, `Year`, `Grade`, `PerformanceTime`, `FilePath`, `Website`, `Recording`) VALUES (%s, "%s", %s, %s, %s, %s, "%f", "%s", "%s", "%s", "%s");',
         $GLOBALS['dbprefix'],
         mkNULLonNull($this->RegistrationNumber),
         mysqli_real_escape_string($GLOBALS['conn'], $this->Title),
@@ -330,7 +335,8 @@ class Composition
         $this->Grade,
         mysqli_real_escape_string($GLOBALS['conn'], (string)$this->PerformanceTime),
         mysqli_real_escape_string($GLOBALS['conn'], (string)$this->FilePath),
-        mysqli_real_escape_string($GLOBALS['conn'], (string)$this->Website)
+        mysqli_real_escape_string($GLOBALS['conn'], (string)$this->Website),
+        mysqli_real_escape_string($GLOBALS['conn'], (string)$this->Recording)
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
         sqlerror();
@@ -346,7 +352,7 @@ class Composition
         return true;
     }
     protected function update() {
-        $sql = sprintf('UPDATE `%sComposition` SET `RegistrationNumber` = %s, `Title` = "%s", `Composer` = %s, `Arranger` = %s, `Publisher` = %s, `Year` = %s, `Grade` = "%.1f", `PerformanceTime` = "%s", `FilePath` = "%s", `Website` = "%s" WHERE `Index` = "%d";',
+        $sql = sprintf('UPDATE `%sComposition` SET `RegistrationNumber` = %s, `Title` = "%s", `Composer` = %s, `Arranger` = %s, `Publisher` = %s, `Year` = %s, `Grade` = "%.1f", `PerformanceTime` = "%s", `FilePath` = "%s", `Website` = "%s", `Recording` = "%s" WHERE `Index` = "%d";',
         $GLOBALS['dbprefix'],
         mkNULLonNull($this->RegistrationNumber),
         mysqli_real_escape_string($GLOBALS['conn'], $this->Title),
@@ -358,6 +364,7 @@ class Composition
         mysqli_real_escape_string($GLOBALS['conn'], (string)$this->PerformanceTime),
         mysqli_real_escape_string($GLOBALS['conn'], (string)$this->FilePath),
         mysqli_real_escape_string($GLOBALS['conn'], (string)$this->Website),
+        mysqli_real_escape_string($GLOBALS['conn'], (string)$this->Recording),
         $this->Index
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
@@ -472,7 +479,7 @@ class Composition
         $str .= '</div>';
         $str .= '<div class="piece-rail" aria-hidden="true"></div>';
         $str .= '<div class="piece-main">';
-        $str .= $this->coverHtml('archiv-thumb piece-cover');
+        $str .= $this->coverFrameHtml('archiv-thumb piece-cover', true);
         $str .= '<div class="piece-text">';
         $str .= '<div class="piece-title">'.archivEscHtml($title).'</div>';
         $str .= '<div class="piece-meta-line">';
@@ -540,6 +547,45 @@ class Composition
             ? ' onclick="event.stopPropagation();" onkeydown="event.stopPropagation();"'
             : '';
         return '<a href="'.archivEscHtml($href).'" target="_blank" rel="noopener noreferrer"'.$extra.'>'.archivEscHtml($label).'</a>';
+    }
+
+    /**
+     * Absolute http(s) URL for a stored recording value, or empty string.
+     */
+    public function recordingUrl() {
+        return self::normalizeWebsiteUrl($this->Recording);
+    }
+
+    /**
+     * Play-icon link to the recording, or empty when no URL is set.
+     *
+     * @param bool $stopPropagation for links inside clickable list rows
+     */
+    public function recordingLinkHtml($stopPropagation = false) {
+        $href = $this->recordingUrl();
+        if($href === '') {
+            return '';
+        }
+        $extra = $stopPropagation
+            ? ' onclick="event.stopPropagation();" onkeydown="event.stopPropagation();"'
+            : '';
+        return '<a class="piece-recording-link" href="'.archivEscHtml($href).'" target="_blank" rel="noopener noreferrer" title="Aufnahme" aria-label="Aufnahme"'.$extra.'><i class="fa-solid fa-circle-play" aria-hidden="true"></i></a>';
+    }
+
+    /**
+     * Cover with optional recording play overlay (top-right).
+     */
+    public function coverFrameHtml($cssClass = 'piece-cover', $stopPropagation = false) {
+        $cover = $this->coverHtml($cssClass);
+        $link = $this->recordingLinkHtml($stopPropagation);
+        if($link === '') {
+            return $cover;
+        }
+        $frame = 'piece-cover-frame';
+        if(strpos((string)$cssClass, 'detail') !== false || strpos((string)$cssClass, '--lg') !== false) {
+            $frame .= ' piece-cover-frame--detail';
+        }
+        return '<span class="'.$frame.'">'.$cover.$link.'</span>';
     }
 
     public function getModalHtml($showEditButton = false) {
