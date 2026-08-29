@@ -2,6 +2,12 @@
 
 Automatisch aus Git-Release-Commits erzeugt.
 
+## 2026-08-29-1c2cc (2026-08-29)
+
+- ARCHIV-53: Aufnahme-Link am Stück mit Play-Overlay auf dem Cover
+- ARCHIV-51: Löschen-Bestätigung über #appConfirmModal im Header
+- ARCHIV-53: Aufnahme-Link am Stück
+
 ## 2026-08-22-bc5ed (2026-08-22)
 
 - ARCHIV-29: DELETE für Stücke per JSON-API
