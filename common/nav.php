@@ -193,7 +193,7 @@ if($motdShort !== '') {
         $motdBody = isset($optionsDB['MessageOfTheDay']) ? (string)$optionsDB['MessageOfTheDay'] : '';
         echo archivSanitizeMotdHtml($motdBody);
       ?>
-      <div class="w3-center"><button class="w3-btn w3-blue w3-padding w3-center" onclick="document.getElementById('MessageOfTheDay').style.display='none'">Verstanden</button></div>
+      <div class="w3-center"><button class="w3-btn w3-padding w3-center <?php echo htmlspecialchars((string)$optionsDB['colorBtnSubmit'], ENT_QUOTES, 'UTF-8'); ?>" onclick="document.getElementById('MessageOfTheDay').style.display='none'">Verstanden</button></div>
       <div class="w3-container">&nbsp;</div>
     </div>
   </div>

@@ -354,7 +354,7 @@ if(!$isCreate && !$isAdmin) {
     <div class="profile-hero-actions">
       <?php echo $piece->recordingCellHtml(); ?>
       <button type="button" class="w3-button <?php echo htmlspecialchars($btnEdit, ENT_QUOTES, 'UTF-8'); ?>" onclick="document.getElementById('collmodal').style.display='block'">Sammlungen</button>
-      <a class="w3-button w3-border" href="index.php">Zur Liste</a>
+      <a class="w3-button w3-border <?php echo htmlspecialchars($inputBg, ENT_QUOTES, 'UTF-8'); ?>" href="index.php">Zur Liste</a>
     </div>
   </header>
   <div class="profile-grid profile-grid--2">
@@ -416,7 +416,7 @@ if(!$isCreate && !$isAdmin) {
     </select>
     <input type="hidden" name="pieceID" value="<?php echo (int)$piece->Index; ?>">
     <input class="w3-input w3-col l1" type="number" name="part" value="1">
-    <button class="w3-button w3-round w3-teal w3-col l1" type="submit"><i class="fas fa-plus"></i></button>
+    <button class="w3-button w3-round w3-col l1 <?php echo htmlspecialchars($btnSubmit, ENT_QUOTES, 'UTF-8'); ?>" type="submit"><i class="fas fa-plus"></i></button>
   </form>
 </div>
 <?php } ?>

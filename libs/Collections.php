@@ -202,7 +202,10 @@ class Collections
             $str .= ' <span class="mail-recipient-chip mail-recipient-chip--collection">Archiviert</span>';
         }
         $str .= '</span>';
-        $str .= '<button type="button" class="collection-section-detail w3-button w3-small w3-border"'
+        $btnEdit = isset($GLOBALS['optionsDB']['colorBtnEdit'])
+            ? (string)$GLOBALS['optionsDB']['colorBtnEdit']
+            : '';
+        $str .= '<button type="button" class="collection-section-detail w3-button w3-small w3-border '.archivEscHtml($btnEdit).'"'
             .' onclick="event.preventDefault();event.stopPropagation();'.$openJs.';"'
             .' aria-label="Details">Details</button>';
         $str .= '</summary>';

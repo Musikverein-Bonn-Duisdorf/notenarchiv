@@ -5,14 +5,19 @@ include 'common/include.php';
 
 header('Content-Type: text/html; charset=utf-8');
 
+$btnClose = 'w3-button';
+if(isset($GLOBALS['optionsDB']['colorBtnSubmit']) && (string)$GLOBALS['optionsDB']['colorBtnSubmit'] !== '') {
+    $btnClose .= ' '.htmlspecialchars((string)$GLOBALS['optionsDB']['colorBtnSubmit'], ENT_QUOTES, 'UTF-8');
+}
+
 if(!isset($_SESSION['userid']) || !(int)$_SESSION['userid']) {
     http_response_code(401);
-    echo '<div class="w3-container w3-padding"><p>Nicht angemeldet.</p><button class="w3-button" onclick="closeModal()">Schließen</button></div>';
+    echo '<div class="w3-container w3-padding"><p>Nicht angemeldet.</p><button class="'.$btnClose.'" onclick="closeModal()">Schließen</button></div>';
     exit;
 }
 if(!hasPermission('perm_read')) {
     http_response_code(403);
-    echo '<div class="w3-container w3-padding"><p>Keine Berechtigung.</p><button class="w3-button" onclick="closeModal()">Schließen</button></div>';
+    echo '<div class="w3-container w3-padding"><p>Keine Berechtigung.</p><button class="'.$btnClose.'" onclick="closeModal()">Schließen</button></div>';
     exit;
 }
 
@@ -20,7 +25,7 @@ $type = isset($_GET['type']) ? (string)$_GET['type'] : '';
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 if($id <= 0 || $type === '') {
     http_response_code(400);
-    echo '<div class="w3-container w3-padding"><p>Ungültige Anfrage.</p><button class="w3-button" onclick="closeModal()">Schließen</button></div>';
+    echo '<div class="w3-container w3-padding"><p>Ungültige Anfrage.</p><button class="'.$btnClose.'" onclick="closeModal()">Schließen</button></div>';
     exit;
 }
 
@@ -97,7 +102,7 @@ case 'user':
 
 default:
     http_response_code(400);
-    echo '<div class="w3-container w3-padding"><p>Unbekannter Typ.</p><button class="w3-button" onclick="closeModal()">Schließen</button></div>';
+    echo '<div class="w3-container w3-padding"><p>Unbekannter Typ.</p><button class="'.$btnClose.'" onclick="closeModal()">Schließen</button></div>';
     exit;
 }
 ?>

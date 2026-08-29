@@ -797,6 +797,11 @@ function archivFooterParseReset() {
  * @return string
  */
 function archivOverlayHostsHtml() {
+    $okClass = trim(
+        'w3-btn profile-btn-primary w3-border w3-mobile '
+        .(isset($GLOBALS['optionsDB']['colorBtnSubmit']) ? (string)$GLOBALS['optionsDB']['colorBtnSubmit'] : '')
+    );
+    $okClassEsc = htmlspecialchars($okClass, ENT_QUOTES, 'UTF-8');
     return '<div id="ajaxModalHost" class="w3-modal" onclick="if(event.target===this)closeModal();">'
         .'<div id="ajaxModalContent" class="w3-modal-content"></div>'
         .'</div>'
@@ -816,7 +821,7 @@ function archivOverlayHostsHtml() {
         .'<p class="profile-value" id="appConfirmMessage"></p>'
         .'<div class="profile-actions profile-actions--confirm">'
         .'<div class="profile-actions-primary">'
-        .'<button type="button" class="w3-btn profile-btn-primary w3-border w3-mobile" id="appConfirmOk">OK</button>'
+        .'<button type="button" class="'.$okClassEsc.'" id="appConfirmOk" data-default-ok-class="'.$okClassEsc.'">OK</button>'
         .'</div>'
         .'<button type="button" class="w3-btn w3-border w3-mobile" id="appConfirmCancel">Abbrechen</button>'
         .'</div>'

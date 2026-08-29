@@ -26,6 +26,10 @@ $title = $titles[$code];
 $message = $messages[$code];
 require_once __DIR__.'/../common/version.php';
 require_once __DIR__.'/../libs/uiShell.php';
+$btnHomeRaw = (isset($GLOBALS['optionsDB']['colorBtnSubmit']) && (string)$GLOBALS['optionsDB']['colorBtnSubmit'] !== '')
+    ? (string)$GLOBALS['optionsDB']['colorBtnSubmit']
+    : '#9C27B0';
+$btnHomeClass = colorToCssClass($btnHomeRaw);
 ?><!DOCTYPE html>
 <html lang="de">
 <head>
@@ -36,6 +40,7 @@ require_once __DIR__.'/../libs/uiShell.php';
   <link rel="stylesheet" href="../<?php echo assetUrl('styles/w3-colors-highway.css'); ?>">
   <link rel="stylesheet" href="../<?php echo assetUrl('styles/w3-color-mvd.css'); ?>">
   <link rel="stylesheet" href="../<?php echo assetUrl('styles/custom.css'); ?>">
+  <?php echo renderConfigColorCss(); ?>
 </head>
 <body class="w3-light-grey">
   <div class="w3-container w3-indigo">
@@ -46,7 +51,7 @@ require_once __DIR__.'/../libs/uiShell.php';
       <p class="w3-large w3-text-grey" style="margin:0 0 .5rem;"><?php echo (int)$code; ?></p>
       <h2 style="margin-top:0;"><?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?></h2>
       <p><?php echo htmlspecialchars($message, ENT_QUOTES, 'UTF-8'); ?></p>
-      <p><a class="w3-button w3-border" href="<?php echo htmlspecialchars($homeUrl, ENT_QUOTES, 'UTF-8'); ?>">Zur Startseite</a></p>
+      <p><a class="w3-button w3-border <?php echo htmlspecialchars($btnHomeClass, ENT_QUOTES, 'UTF-8'); ?>" href="<?php echo htmlspecialchars($homeUrl, ENT_QUOTES, 'UTF-8'); ?>">Zur Startseite</a></p>
     </div>
   </div>
 </body>

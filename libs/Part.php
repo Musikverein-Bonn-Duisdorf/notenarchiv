@@ -124,10 +124,13 @@ class Part
             $str=$str.$row->print();
 
             $modalId = 'archivDelPart'.(int)$this->Index;
+            $btnDel = isset($GLOBALS['optionsDB']['colorBtnDelete'])
+                ? (string)$GLOBALS['optionsDB']['colorBtnDelete']
+                : '';
             $str = $str.archivDeleteAction(
                 $modalId,
                 'Stimme wirklich löschen?',
-                'w3-button',
+                trim('w3-button '.$btnDel),
                 '<input type="hidden" name="pIndex" value="'.(int)$this->Index.'">'
                     .'<input type="hidden" name="Index" value="'.(int)$this->Composition.'">'
                     .'<input type="hidden" name="partdelete" value="delete">',
