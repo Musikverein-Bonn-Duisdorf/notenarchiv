@@ -1,7 +1,8 @@
 <?php
 /**
  * GET /api/compositions.php?id=&q=&limit=
- * POST JSON: title, composerId?/composerIds?, arrangerId?/arrangerIds?, publisherId?, year?, grade?, performanceTime?, registrationNumber?, website?
+ * POST JSON: title, composerId?/composerIds?, arrangerId?/arrangerIds?, publisherId?, year?, grade?, performanceTime?, registrationNumber?, website?, recording?
+ * PATCH JSON: id + same optional fields
  * PATCH JSON: id + same optional fields
  * DELETE ?id= or JSON id
  */
@@ -17,6 +18,7 @@ $defaultCover = isset($GLOBALS['optionsDB']['defaultCompositionCover'])
 function apiCompositionPayload(Composition $p, $defaultCover) {
     $cover = $p->getCover();
     $website = trim((string)$p->Website);
+    $recording = trim((string)$p->Recording);
     $composerIds = $p->getPersonIds('composer');
     $arrangerIds = $p->getPersonIds('arranger');
     return array(
@@ -32,6 +34,7 @@ function apiCompositionPayload(Composition $p, $defaultCover) {
         'grade' => $p->Grade !== null && $p->Grade !== '' ? (float)$p->Grade : null,
         'performanceTime' => archivPlainText($p->PerformanceTime),
         'website' => $website !== '' ? $website : null,
+        'recording' => $recording !== '' ? $recording : null,
         'publisherUrl' => (($u = $p->publisherExternalUrl()) !== '') ? $u : null,
         'cover' => ($cover !== '' && $cover !== $defaultCover) ? $cover : null,
         'hasCustomCover' => ($cover !== '' && $cover !== $defaultCover),
@@ -78,7 +81,7 @@ if($method === 'GET') {
         $where = ' WHERE `Title` LIKE "%'.$esc.'%" OR CAST(`RegistrationNumber` AS CHAR) LIKE "%'.$esc.'%"';
     }
     $sql = sprintf(
-        'SELECT `Index`, `Title`, `RegistrationNumber`, `Composer`, `Arranger`, `Publisher`, `Year`, `Grade`, `PerformanceTime`, `FilePath`, `Website`
+        'SELECT `Index`, `Title`, `RegistrationNumber`, `Composer`, `Arranger`, `Publisher`, `Year`, `Grade`, `PerformanceTime`, `FilePath`, `Website`, `Recording`
          FROM `%sComposition`%s ORDER BY `RegistrationNumber` DESC LIMIT %d;',
         $GLOBALS['dbprefix'],
         $where,
@@ -119,6 +122,7 @@ if($method === 'POST') {
     $p->Grade = isset($body['grade']) && $body['grade'] !== '' && $body['grade'] !== null ? (float)$body['grade'] : 0;
     $p->PerformanceTime = isset($body['performanceTime']) ? trim((string)$body['performanceTime']) : '';
     $p->Website = isset($body['website']) ? trim((string)$body['website']) : '';
+    $p->Recording = isset($body['recording']) ? trim((string)$body['recording']) : '';
     $p->RegistrationNumber = isset($body['registrationNumber']) && (int)$body['registrationNumber'] > 0
         ? (int)$body['registrationNumber']
         : nextArchiverNumber();
@@ -171,6 +175,9 @@ if($method === 'PATCH') {
     }
     if(array_key_exists('website', $body)) {
         $p->Website = $body['website'] !== null ? trim((string)$body['website']) : '';
+    }
+    if(array_key_exists('recording', $body)) {
+        $p->Recording = $body['recording'] !== null ? trim((string)$body['recording']) : '';
     }
     if(array_key_exists('registrationNumber', $body) && (int)$body['registrationNumber'] > 0) {
         $p->RegistrationNumber = (int)$body['registrationNumber'];

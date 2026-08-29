@@ -26,7 +26,7 @@ $dash = function ($v) {
 ?>
 <div class="profile-shell modal-shell composition-modal">
   <header class="profile-hero">
-    <div class="profile-hero-thumb" aria-hidden="true"><?php echo $piece->coverHtml('archiv-thumb archiv-thumb--detail piece-cover piece-cover--detail'); ?></div>
+    <div class="profile-hero-thumb"><?php echo $piece->coverFrameHtml('archiv-thumb archiv-thumb--detail piece-cover piece-cover--detail'); ?></div>
     <div class="profile-hero-text">
       <p class="profile-kicker">Stück</p>
       <h2 class="profile-title"><?php echo archivEscHtml($title !== '' ? $title : '—'); ?></h2>

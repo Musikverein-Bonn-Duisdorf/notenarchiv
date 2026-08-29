@@ -255,7 +255,7 @@ class Collection
                 if($title === '') {
                     $title = archivPlainText($piece->Title);
                 }
-                $coverHtml = $piece->coverHtml('archiv-thumb piece-cover');
+                $coverHtml = $piece->coverFrameHtml('archiv-thumb piece-cover', true);
             }
         }
 
