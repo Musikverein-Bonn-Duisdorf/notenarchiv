@@ -54,7 +54,9 @@
       setVisible(kickerEl, !!opts.kicker);
     }
     okBtn.textContent = opts.okLabel || 'OK';
-    okBtn.className = opts.okClass || 'w3-btn profile-btn-primary w3-border w3-mobile';
+    okBtn.className = opts.okClass
+      || okBtn.getAttribute('data-default-ok-class')
+      || 'w3-btn profile-btn-primary w3-border w3-mobile';
     setVisible(cancelBtn, mode === 'confirm' && !opts.hideCancel);
     if (cancelBtn) {
       cancelBtn.textContent = opts.cancelLabel || 'Abbrechen';
