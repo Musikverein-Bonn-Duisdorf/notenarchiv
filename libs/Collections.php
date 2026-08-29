@@ -261,12 +261,14 @@ class Collections
             $seen[$compId] = true;
             $title = '';
             $coverHtml = '';
+            $recordingHtml = '';
             if($compId > 0) {
                 $piece = new Composition;
                 $piece->load_by_id($compId);
                 if((int)$piece->Index > 0) {
                     $title = archivPlainText($piece->Title);
-                    $coverHtml = $piece->coverFrameHtml('archiv-thumb piece-cover', true);
+                    $coverHtml = $piece->coverHtml('archiv-thumb piece-cover');
+                    $recordingHtml = $piece->recordingCellHtml(true);
                 }
             }
             $items[] = array(
@@ -276,6 +278,7 @@ class Collections
                 'id' => $compId,
                 'title' => $title,
                 'coverHtml' => $coverHtml,
+                'recordingHtml' => $recordingHtml,
             );
         }
         return $items;

@@ -60,6 +60,7 @@ $items = isset($items) && is_array($items) ? $items : array();
         $num = isset($item['number']) ? (string)$item['number'] : '';
         $title = isset($item['title']) ? (string)$item['title'] : '';
         $cover = isset($item['coverHtml']) ? (string)$item['coverHtml'] : '';
+        $recording = isset($item['recordingHtml']) ? (string)$item['recordingHtml'] : '';
         echo '<div class="profile-field collection-modal-item">';
         echo '<span class="profile-label">'.archivEscHtml($num !== '' ? $num : '—').'</span>';
         echo '<div class="profile-value collection-modal-piece">';
@@ -67,6 +68,7 @@ $items = isset($items) && is_array($items) ? $items : array();
             echo $cover;
         }
         echo '<span class="collection-modal-piece-title">'.archivEscHtml($title !== '' ? $title : '—').'</span>';
+        echo $recording;
         echo '</div>';
         echo '</div>';
         $shown++;
