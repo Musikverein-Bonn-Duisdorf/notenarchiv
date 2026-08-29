@@ -2,6 +2,10 @@
 
 Automatisch aus Git-Release-Commits erzeugt.
 
+## 2026-08-29-e0bb2 (2026-08-29)
+
+- ARCHIV-50: Separates Datei-Backup für data/ neben dem DB-ZIP
+
 ## 2026-08-29-09cbe (2026-08-29)
 
 - ARCHIV-52: Aktionsbuttons mit Config-Farben statt Weiß
