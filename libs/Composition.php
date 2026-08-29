@@ -679,19 +679,28 @@ class Composition
     }
     
     public function listParts() {
-        $sql = sprintf('SELECT `Index` FROM `%sScoreFile` INNER JOIN (SELECT `Index` AS `iIndex`, `CustomOrder` FROM `%sInstrument`) `%sInstrument` ON `iIndex` = `Instrument` WHERE `Composition` = "%d" ORDER BY `CustomOrder`, `VoiceLabel`;',
-        $GLOBALS['dbprefix'],
-        identityPrefix(),
-        identityPrefix(),
-        $this->Index
+        $str = '';
+        $sql = sprintf(
+            'SELECT sf.`Index` FROM `%sScoreFile` sf LEFT JOIN `%sInstrument` i ON i.`Index` = sf.`Instrument` LEFT JOIN `%sRegister` r ON r.`Index` = i.`Register` WHERE sf.`Composition` = "%d" ORDER BY COALESCE(r.`Sortierung`, 9999), COALESCE(i.`Sortierung`, 9999), sf.`VoiceLabel`;',
+            $GLOBALS['dbprefix'],
+            identityPrefix(),
+            identityPrefix(),
+            (int)$this->Index
         );
-        $dbr = mysqli_query($GLOBALS['conn'], $sql);
+        try {
+            $dbr = mysqli_query($GLOBALS['conn'], $sql);
+        }
+        catch(Throwable $e) {
+            return $str;
+        }
         sqlerror();
-        $str = "";
+        if(!$dbr) {
+            return $str;
+        }
         while($row = mysqli_fetch_array($dbr)) {
             $part = new Part;
             $part->load_by_id($row['Index']);
-            $str=$str.$part->printLine();
+            $str = $str.$part->printLine();
         }
         return $str;
     }

@@ -515,38 +515,52 @@ function bool2string($val) {
     return "nein";
 }
 
-function instrumentsOptionNull($val) {
-    $str='';
-    $str=$str."<option value=\"0\">keins</option>\n";
-    $sql = sprintf('SELECT * FROM `%sInstrument` INNER JOIN (SELECT `Index` AS `rIndex`, `CustomOrder` AS `rSort` FROM `%sRegister`) `%sRegister` ON `rIndex` = `Register` ORDER BY `rSort`, `CustomOrder`;',
-    identityPrefix(),
-    identityPrefix(),
-    identityPrefix()
+/** Melde identity Instrument list ordered by Sortierung. */
+function archivIdentityInstrumentSelectSql() {
+    $ip = identityPrefix();
+    return sprintf(
+        'SELECT `%1$sInstrument`.* FROM `%1$sInstrument` LEFT JOIN (SELECT `Index` AS `rIndex`, `Sortierung` AS `rSort` FROM `%1$sRegister`) `%1$sRegister` ON `rIndex` = `Register` ORDER BY COALESCE(`rSort`, 9999), `Sortierung`;',
+        $ip
     );
-    $dbr = mysqli_query($GLOBALS['conn'], $sql);
-    sqlerror();
-    while($row = mysqli_fetch_array($dbr)) {
-        if($val == $row['Index']) {
-            $str=$str."<option value=\"".$row['Index']."\" selected>".$row['Name']."</option>\n";
+}
+
+function instrumentsOptionNull($val) {
+    $str = "<option value=\"0\">keins</option>\n";
+    try {
+        $dbr = mysqli_query($GLOBALS['conn'], archivIdentityInstrumentSelectSql());
+        sqlerror();
+        if(!$dbr) {
+            return $str;
         }
-        else {
-            $str=$str."<option value=\"".$row['Index']."\">".$row['Name']."</option>\n";
+        while($row = mysqli_fetch_array($dbr)) {
+            if($val == $row['Index']) {
+                $str = $str."<option value=\"".$row['Index']."\" selected>".$row['Name']."</option>\n";
+            }
+            else {
+                $str = $str."<option value=\"".$row['Index']."\">".$row['Name']."</option>\n";
+            }
         }
+    }
+    catch(Throwable $e) {
+        return $str;
     }
     return $str;
 }
 
 function instrumentsOption() {
-    $str='';
-    $sql = sprintf('SELECT * FROM `%sInstrument` INNER JOIN (SELECT `Index` AS `rIndex`, `CustomOrder` AS `rSort` FROM `%sRegister`) `%sRegister` ON `rIndex` = `Register` ORDER BY `rSort`, `CustomOrder`;',
-    identityPrefix(),
-    identityPrefix(),
-    identityPrefix()
-    );
-    $dbr = mysqli_query($GLOBALS['conn'], $sql);
-    sqlerror();
-    while($row = mysqli_fetch_array($dbr)) {
-        $str=$str."<option value=\"".$row['Index']."\">".$row['Name']."</option>\n";
+    $str = '';
+    try {
+        $dbr = mysqli_query($GLOBALS['conn'], archivIdentityInstrumentSelectSql());
+        sqlerror();
+        if(!$dbr) {
+            return $str;
+        }
+        while($row = mysqli_fetch_array($dbr)) {
+            $str = $str."<option value=\"".$row['Index']."\">".$row['Name']."</option>\n";
+        }
+    }
+    catch(Throwable $e) {
+        return $str;
     }
     return $str;
 }
@@ -566,11 +580,19 @@ function collectionsOption() {
 }
 
 function RegistersOption($val) {
-    $sql = sprintf('SELECT * FROM `%sRegister` ORDER BY `CustomOrder`;',
+    $sql = sprintf('SELECT * FROM `%sRegister` ORDER BY `Sortierung`;',
 		   identityPrefix()
     );
-    $dbr = mysqli_query($GLOBALS['conn'], $sql);
+    try {
+        $dbr = mysqli_query($GLOBALS['conn'], $sql);
+    }
+    catch(Throwable $e) {
+        return;
+    }
     sqlerror();
+    if(!$dbr) {
+        return;
+    }
     while($row = mysqli_fetch_array($dbr)) {
         if($val == $row['Index']) {
             echo "<option value=\"".$row['Index']."\" selected>".$row['Name']."</option>\n";

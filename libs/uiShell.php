@@ -289,74 +289,76 @@ function assetUrl($rel) {
 }
 
 /**
- * Delete: button onclick opens modal; POST form lives inside modal (ARCHIV-51).
+ * POST form with appConfirmModal (#appConfirmModal + data-confirm).
  *
- * @param string $modalId Unique modal element id
- * @param string $message Confirm text in modal body
- * @param string $btnClass CSS classes for page delete button
- * @param string $hiddenInputs Raw HTML for hidden inputs inside modal form
+ * @param string $message Confirm text
+ * @param string $btnClass CSS classes for submit button
+ * @param string $hiddenInputs Raw HTML for hidden inputs
+ * @param string $formAction Form action URL (empty = current page)
+ * @param string $label Submit button label
+ * @param string $formId Optional form id (for form-attribute buttons)
+ * @param string $btnOkClass Optional data-confirm-ok-class for OK button styling
+ * @param bool $includeButton Include submit button in form markup
+ * @return string Form HTML (and optional button)
+ */
+function archivConfirmDeleteForm($message, $btnClass, $hiddenInputs, $formAction, $label = 'Löschen', $formId = '', $btnOkClass = '', $includeButton = true) {
+    $msgEsc = htmlspecialchars((string)$message, ENT_QUOTES, 'UTF-8');
+    $action = htmlspecialchars((string)$formAction, ENT_QUOTES, 'UTF-8');
+    $btnClassEsc = htmlspecialchars((string)$btnClass, ENT_QUOTES, 'UTF-8');
+    $labelEsc = htmlspecialchars((string)$label, ENT_QUOTES, 'UTF-8');
+    $idAttr = '';
+    $formRef = '';
+    if($formId !== '') {
+        $formId = preg_replace('/[^a-zA-Z0-9_-]/', '', (string)$formId);
+        $formRef = htmlspecialchars($formId, ENT_QUOTES, 'UTF-8');
+        $idAttr = ' id="'.$formRef.'"';
+    }
+    $okClassAttr = '';
+    if($btnOkClass !== '') {
+        $okClassAttr = ' data-confirm-ok-class="'.htmlspecialchars((string)$btnOkClass, ENT_QUOTES, 'UTF-8').'"';
+    }
+    $button = '';
+    if($includeButton && $formRef !== '') {
+        $button = '<button type="button" class="'.$btnClassEsc.'" data-confirm-form="'.$formRef.'">'.$labelEsc.'</button>';
+    }
+    return '<form method="post" action="'.$action.'" class="archiv-confirm-delete-form" style="display:inline;"'.$idAttr
+        .' data-confirm="'.$msgEsc.'" data-confirm-ok="Löschen"'.$okClassAttr.'>'
+        .$hiddenInputs
+        .$button
+        .'</form>';
+}
+
+/** type=button trigger for a deferred confirm form (avatar delete). */
+function archivConfirmDeleteButton($formId, $btnClass, $label = 'Löschen') {
+    $formId = preg_replace('/[^a-zA-Z0-9_-]/', '', (string)$formId);
+    $idEsc = htmlspecialchars($formId, ENT_QUOTES, 'UTF-8');
+    $btnClassEsc = htmlspecialchars((string)$btnClass, ENT_QUOTES, 'UTF-8');
+    $labelEsc = htmlspecialchars((string)$label, ENT_QUOTES, 'UTF-8');
+    return '<button type="button" class="'.$btnClassEsc.'" data-confirm-form="'.$idEsc.'">'.$labelEsc.'</button>';
+}
+
+/** Queue bare confirm form in footer (avatar delete inside edit forms). */
+function archivConfirmDeleteFormDeferred($formId, $message, $hiddenInputs, $formAction, $btnOkClass = '') {
+    deferPageModalHtml(archivConfirmDeleteForm($message, '', $hiddenInputs, $formAction, '', $formId, $btnOkClass, false));
+}
+
+/**
+ * Delete action: POST form with data-confirm (ARCHIV-51).
+ *
+ * @param string $formId Unique form id (legacy param name $modalId)
+ * @param string $message Confirm text
+ * @param string $btnClass CSS classes for submit button
+ * @param string $hiddenInputs Raw HTML for hidden inputs
  * @param string $formAction Form action URL
  * @param string $label Button label
- * @param string $submitBtnClass CSS classes for modal submit (defaults to $btnClass)
- * @return string Delete open button HTML
+ * @param string $submitBtnClass CSS for confirm OK button (defaults to $btnClass)
+ * @return string Delete form HTML
  */
-function archivDeleteAction($modalId, $message, $btnClass, $hiddenInputs, $formAction, $label = 'Löschen', $submitBtnClass = '') {
-    $modalId = preg_replace('/[^a-zA-Z0-9_-]/', '', (string)$modalId);
+function archivDeleteAction($formId, $message, $btnClass, $hiddenInputs, $formAction, $label = 'Löschen', $submitBtnClass = '') {
     if($submitBtnClass === '') {
         $submitBtnClass = trim((string)$btnClass);
     }
-    archivDeleteModalHtml($modalId, $message, $formAction, $hiddenInputs, $submitBtnClass);
-    return archivDeleteOpenButton($modalId, $btnClass, $label);
-}
-
-/** Page button: onclick → delete modal (no form on button). */
-function archivDeleteOpenButton($modalId, $btnClass, $label = 'Löschen') {
-    $modalId = preg_replace('/[^a-zA-Z0-9_-]/', '', (string)$modalId);
-    $idEsc = htmlspecialchars($modalId, ENT_QUOTES, 'UTF-8');
-    $btnClass = htmlspecialchars((string)$btnClass, ENT_QUOTES, 'UTF-8');
-    $labelEsc = htmlspecialchars((string)$label, ENT_QUOTES, 'UTF-8');
-    return '<button type="button" class="'.$btnClass.'"'
-        .' onclick="return archivOpenDeleteModal(\''.$idEsc.'\')">'
-        .$labelEsc.'</button>';
-}
-
-/** Modal shell with POST form; queued for footer (outside .app-main). */
-function archivDeleteModalHtml($modalId, $message, $formAction, $hiddenInputs, $submitBtnClass = 'w3-red') {
-    $modalId = preg_replace('/[^a-zA-Z0-9_-]/', '', (string)$modalId);
-    $idEsc = htmlspecialchars($modalId, ENT_QUOTES, 'UTF-8');
-    $msgEsc = htmlspecialchars((string)$message, ENT_QUOTES, 'UTF-8');
-    $action = htmlspecialchars((string)$formAction, ENT_QUOTES, 'UTF-8');
-    $submitClass = htmlspecialchars((string)$submitBtnClass, ENT_QUOTES, 'UTF-8');
-    $closeJs = 'return archivCloseDeleteModal(\''.$idEsc.'\')';
-    $backdropJs = 'if(event.target===this)archivCloseDeleteModal(\''.$idEsc.'\')';
-    $html = '<div id="'.$idEsc.'" class="w3-modal archiv-delete-modal" style="display:none;" onclick="'.$backdropJs.'">'
-        .'<div class="w3-modal-content">'
-        .'<div class="profile-shell modal-shell confirm-delete-modal">'
-        .'<header class="profile-hero">'
-        .'<div class="profile-hero-text">'
-        .'<p class="profile-kicker">Löschen</p>'
-        .'<h2 class="profile-title">Löschen</h2>'
-        .'</div>'
-        .'<div class="profile-hero-actions">'
-        .'<button type="button" class="modal-close w3-button" onclick="'.$closeJs.'" aria-label="Schließen">&times;</button>'
-        .'</div>'
-        .'</header>'
-        .'<div class="confirm-delete-body">'
-        .'<p class="profile-value">'.$msgEsc.'</p>'
-        .'<form method="post" action="'.$action.'">'
-        .$hiddenInputs
-        .'<div class="profile-actions profile-actions--confirm">'
-        .'<div class="profile-actions-primary">'
-        .'<button type="submit" class="w3-btn '.$submitClass.' w3-border w3-mobile">Löschen</button>'
-        .'</div>'
-        .'<button type="button" class="w3-btn w3-border w3-mobile" onclick="'.$closeJs.'">Abbrechen</button>'
-        .'</div>'
-        .'</form>'
-        .'</div>'
-        .'</div>'
-        .'</div>'
-        .'</div>';
-    deferPageModalHtml($html);
+    return archivConfirmDeleteForm($message, $btnClass, $hiddenInputs, $formAction, $label, $formId, $submitBtnClass);
 }
 
 
@@ -788,6 +790,40 @@ function deferMotdHtml($html) {
  */
 function archivFooterParseReset() {
     echo '</script></style></textarea><!-- -->';
+}
+
+/**
+ * Shared overlay hosts (ARCHIV-51). Emitted in header, before page body that may fatal.
+ * @return string
+ */
+function archivOverlayHostsHtml() {
+    return '<div id="ajaxModalHost" class="w3-modal" onclick="if(event.target===this)closeModal();">'
+        .'<div id="ajaxModalContent" class="w3-modal-content"></div>'
+        .'</div>'
+        .'<div id="appConfirmModal" class="w3-modal" role="dialog" aria-modal="true" aria-labelledby="appConfirmTitle" style="display:none;">'
+        .'<div class="w3-modal-content">'
+        .'<div class="profile-shell modal-shell confirm-delete-modal">'
+        .'<header class="profile-hero">'
+        .'<div class="profile-hero-text">'
+        .'<p class="profile-kicker" id="appConfirmKicker" style="display:none;"></p>'
+        .'<h2 class="profile-title" id="appConfirmTitle">Bestätigen</h2>'
+        .'</div>'
+        .'<div class="profile-hero-actions">'
+        .'<button type="button" class="modal-close w3-button" id="appConfirmClose" aria-label="Schließen">&times;</button>'
+        .'</div>'
+        .'</header>'
+        .'<div class="confirm-delete-body">'
+        .'<p class="profile-value" id="appConfirmMessage"></p>'
+        .'<div class="profile-actions profile-actions--confirm">'
+        .'<div class="profile-actions-primary">'
+        .'<button type="button" class="w3-btn profile-btn-primary w3-border w3-mobile" id="appConfirmOk">OK</button>'
+        .'</div>'
+        .'<button type="button" class="w3-btn w3-border w3-mobile" id="appConfirmCancel">Abbrechen</button>'
+        .'</div>'
+        .'</div>'
+        .'</div>'
+        .'</div>'
+        .'</div>';
 }
 
 /** Queue modal HTML outside .app-main (overflow/z-index). */
