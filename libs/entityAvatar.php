@@ -365,12 +365,12 @@ function archivEntityAvatarHtml($kind, $id, $initials, $cssClass = 'entity-avata
     }
     // Same thumb schema for composers and publishers (3:4 frame like covers).
     $clsEsc = archivEscHtml($cls);
-    $iniRaw = mb_substr(trim((string)$initials), 0, 2, 'UTF-8');
-    $ini = archivEscHtml($iniRaw);
     if($url !== '') {
         $mtime = @filemtime(archivEntityAvatarFsDir($kind, $id).basename($url));
         return '<span class="'.$clsEsc.'" aria-hidden="true"><img src="'.archivEscHtml($url).'?'.rawurlencode((string)$mtime).'" alt=""></span>';
     }
+    $iniRaw = archivMbSubstr(trim((string)$initials), 0, 2, 'UTF-8');
+    $ini = archivEscHtml($iniRaw);
     $hue = (int)(sprintf('%u', crc32($kind.'|'.(int)$id.'|'.$iniRaw)) % 360);
     return '<span class="'.$clsEsc.' entity-avatar--placeholder" style="background-color:hsl('.$hue.',42%,38%)" aria-hidden="true">'
         .'<span class="entity-avatar-initials">'.($ini !== '' ? $ini : '—').'</span></span>';

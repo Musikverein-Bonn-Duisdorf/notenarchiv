@@ -192,6 +192,35 @@ function archivEscHtml($value) {
     return htmlspecialchars(archivPlainText($value), ENT_QUOTES, 'UTF-8');
 }
 
+/** UTF-8 substr with ASCII fallback when mbstring is missing. */
+function archivMbSubstr($str, $start, $length = null, $encoding = 'UTF-8') {
+    $str = (string)$str;
+    if(function_exists('mb_substr')) {
+        return $length === null
+            ? mb_substr($str, (int)$start, null, $encoding)
+            : mb_substr($str, (int)$start, (int)$length, $encoding);
+    }
+    return $length === null ? substr($str, (int)$start) : substr($str, (int)$start, (int)$length);
+}
+
+/** UTF-8 uppercasing with ASCII fallback when mbstring is missing. */
+function archivMbStrtoupper($str, $encoding = 'UTF-8') {
+    $str = (string)$str;
+    if(function_exists('mb_strtoupper')) {
+        return mb_strtoupper($str, $encoding);
+    }
+    return strtoupper($str);
+}
+
+/** UTF-8 lowercasing with ASCII fallback when mbstring is missing. */
+function archivMbStrtolower($str, $encoding = 'UTF-8') {
+    $str = (string)$str;
+    if(function_exists('mb_strtolower')) {
+        return mb_strtolower($str, $encoding);
+    }
+    return strtolower($str);
+}
+
 function archivRequest($key, $default = null) {
     if(isset($_POST[$key])) {
         return $_POST[$key];
@@ -281,7 +310,7 @@ function archivSetApiRunNote($note) {
         unset($GLOBALS['archivApiRunNote']);
         return;
     }
-    $GLOBALS['archivApiRunNote'] = mb_substr($note, 0, 200);
+    $GLOBALS['archivApiRunNote'] = archivMbSubstr($note, 0, 200);
 }
 
 function archivApiRunNote() {
