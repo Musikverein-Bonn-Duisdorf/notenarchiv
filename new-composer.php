@@ -189,5 +189,6 @@ $delName = trim(archivPlainText($entity->FirstName).' '.archivPlainText($entity-
 </form>
 </div>
 </div>
+<?php
 include 'common/footer.php';
 ?>

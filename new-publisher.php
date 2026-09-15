@@ -178,5 +178,6 @@ $delName = archivPlainText($entity->Name);
 </form>
 </div>
 </div>
+<?php
 include 'common/footer.php';
 ?>
