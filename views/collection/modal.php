@@ -1,6 +1,6 @@
 <?php
 /**
- * Collection detail modal (read-only). Expects: $collection, $showEditButton, $itemCount, $items
+ * Collection detail modal (read-only). Expects: $collection, $showEditButton, $itemCount, $items, $numbered
  * $items: list of array{number:string,title:string,coverHtml?:string}
  */
 $name = archivPlainText($collection->Name);
@@ -10,6 +10,7 @@ $btnEdit = isset($GLOBALS['optionsDB']['colorBtnEdit'])
     : '';
 $itemCount = isset($itemCount) ? (int)$itemCount : 0;
 $items = isset($items) && is_array($items) ? $items : array();
+$numbered = !empty($numbered) || (isset($collection) && (int)$collection->Numbered);
 ?>
 <div class="profile-shell modal-shell collection-modal">
   <header class="profile-hero">
@@ -39,6 +40,10 @@ $items = isset($items) && is_array($items) ? $items : array();
         <div class="profile-value"><?php echo (int)$collection->Archived ? 'ja' : 'nein'; ?></div>
       </div>
       <div class="profile-field">
+        <span class="profile-label">Nummeriert</span>
+        <div class="profile-value"><?php echo $numbered ? 'ja' : 'nein'; ?></div>
+      </div>
+      <div class="profile-field">
         <span class="profile-label">Stücke</span>
         <div class="profile-value"><?php echo $itemCount; ?></div>
       </div>
@@ -62,7 +67,12 @@ $items = isset($items) && is_array($items) ? $items : array();
         $cover = isset($item['coverHtml']) ? (string)$item['coverHtml'] : '';
         $recording = isset($item['recordingHtml']) ? (string)$item['recordingHtml'] : '';
         echo '<div class="profile-field collection-modal-item">';
-        echo '<span class="profile-label">'.archivEscHtml($num !== '' ? $num : '—').'</span>';
+        if($numbered && $num !== '') {
+            echo '<span class="profile-label"><span class="collection-nr collection-nr--badge">'.archivEscHtml($num).'</span></span>';
+        }
+        else {
+            echo '<span class="profile-label"></span>';
+        }
         echo '<div class="profile-value collection-modal-piece">';
         if($cover !== '') {
             echo $cover;

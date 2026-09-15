@@ -204,7 +204,6 @@ class Publisher
             .' role="button" tabindex="0"'
             .' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();'.$openJs.';}">';
         $str .= '<div class="publisher-id"><div class="publisher-id-num">'.archivEscHtml((string)$id).'</div></div>';
-        $str .= '<div class="publisher-rail" aria-hidden="true"></div>';
         $str .= '<div class="publisher-main">';
         $str .= archivEntityAvatarHtml('Publishers', $id, $this->avatarInitials(), 'archiv-thumb entity-avatar');
         $str .= '<div class="publisher-text">';

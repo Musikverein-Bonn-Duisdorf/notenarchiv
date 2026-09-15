@@ -40,6 +40,8 @@
     this.chipClass = opts.chipClass || 'mail-recipient-chip--composition';
     this.inputBg = opts.inputBg || '';
     this.hideNumbers = !!opts.hideNumbers;
+    this.showReorder = !!opts.showReorder;
+    this.numbersByCatalog = !!opts.numbersByCatalog;
     this.items = normalizeItems(opts.initial);
     this._active = -1;
     this._bound = false;
@@ -60,6 +62,13 @@
     return null;
   };
 
+  CollectionChips.prototype.isNumbered = function(id) {
+    if(this.hideNumbers) return false;
+    if(!this.numbersByCatalog) return true;
+    var cat = this.catalogById(id);
+    return !!(cat && cat.numbered);
+  };
+
   CollectionChips.prototype.labelFor = function(id) {
     var row = this.catalogById(id);
     if(!row) return '#' + id;
@@ -69,11 +78,14 @@
   };
 
   CollectionChips.prototype.nextNumber = function() {
-    var max = 0;
+    var used = {};
     this.items.forEach(function(it) {
-      if(Number(it.number) > max) max = Number(it.number);
+      var n = Number(it.number);
+      if(isFinite(n) && n > 0) used[n] = true;
     });
-    return max + 1;
+    var i = 1;
+    while(used[i]) i++;
+    return i;
   };
 
   CollectionChips.prototype.hasId = function(id) {
@@ -90,14 +102,40 @@
     }
   };
 
+  CollectionChips.prototype.sortByNumber = function() {
+    this.items.sort(function(a, b) {
+      var na = Number(a.number);
+      var nb = Number(b.number);
+      if(na !== nb) return na - nb;
+      return Number(a.id) - Number(b.id);
+    });
+  };
+
   CollectionChips.prototype.add = function(id) {
     id = Number(id);
     if(!(id > 0) || this.hasId(id)) return;
     if(this.hideNumbers) {
       this.items.push({id: id, number: this.items.length + 1});
       this.renumber();
+    } else if(this.numbersByCatalog) {
+      var cat = this.catalogById(id);
+      var num = 0;
+      if(cat && cat.numbered) {
+        var suggested = Number(cat.nextNumber);
+        num = (isFinite(suggested) && suggested > 0) ? suggested : 1;
+      }
+      this.items.push({id: id, number: num});
     } else {
-      this.items.push({id: id, number: this.nextNumber()});
+      var numAll = this.nextNumber();
+      var catAll = this.catalogById(id);
+      if(catAll && catAll.nextNumber != null) {
+        var sug = Number(catAll.nextNumber);
+        if(isFinite(sug) && sug > 0) {
+          numAll = sug;
+        }
+      }
+      this.items.push({id: id, number: numAll});
+      this.sortByNumber();
     }
     this.notify();
   };
@@ -109,7 +147,44 @@
     this.notify();
   };
 
-  CollectionChips.prototype.setNumber = function(id, number) {
+  CollectionChips.prototype.indexOfId = function(id) {
+    id = Number(id);
+    for(var i = 0; i < this.items.length; i++) {
+      if(Number(this.items[i].id) === id) return i;
+    }
+    return -1;
+  };
+
+  CollectionChips.prototype.moveUp = function(id) {
+    var i = this.indexOfId(id);
+    if(i < 1) return;
+    var tmp = this.items[i - 1];
+    this.items[i - 1] = this.items[i];
+    this.items[i] = tmp;
+    this.renumber();
+    this.notify();
+  };
+
+  CollectionChips.prototype.moveDown = function(id) {
+    var i = this.indexOfId(id);
+    if(i < 0 || i >= this.items.length - 1) return;
+    var tmp = this.items[i + 1];
+    this.items[i + 1] = this.items[i];
+    this.items[i] = tmp;
+    this.renumber();
+    this.notify();
+  };
+
+  CollectionChips.prototype.setHideNumbers = function(hide) {
+    this.hideNumbers = !!hide;
+    // Numbered → order by Nr (no arrows). Unnumbered → list order via arrows.
+    this.showReorder = !!hide;
+    if(this.hideNumbers) this.renumber();
+    else this.sortByNumber();
+    this.notify();
+  };
+
+  CollectionChips.prototype.setNumber = function(id, number, resort) {
     id = Number(id);
     var num = Number(number);
     if(!isFinite(num)) num = 0;
@@ -118,6 +193,11 @@
         this.items[i].number = num;
         break;
       }
+    }
+    if(resort && !this.hideNumbers && !this.numbersByCatalog) {
+      this.sortByNumber();
+      this.notify();
+      return;
     }
     this.syncHidden();
   };
@@ -136,12 +216,13 @@
     if(!this.chipsEl) return;
     var self = this;
     this.chipsEl.innerHTML = '';
-    this.items.forEach(function(it) {
+    this.items.forEach(function(it, idx) {
+      var showNr = self.isNumbered(it.id);
       var row = document.createElement('div');
-      row.className = 'collection-chip-row' + (self.hideNumbers ? ' collection-chip-row--plain' : '');
+      row.className = 'collection-chip-row' + (showNr ? '' : ' collection-chip-row--plain');
       row.setAttribute('data-id', String(it.id));
 
-      if(!self.hideNumbers) {
+      if(showNr) {
         var nrWrap = document.createElement('label');
         nrWrap.className = 'collection-chip-nr';
         var nrLab = document.createElement('span');
@@ -154,14 +235,42 @@
         nrInput.value = String(it.number);
         nrInput.setAttribute('aria-label', 'Nr');
         nrInput.addEventListener('change', function() {
-          self.setNumber(it.id, nrInput.value);
+          self.setNumber(it.id, nrInput.value, true);
         });
         nrInput.addEventListener('input', function() {
-          self.setNumber(it.id, nrInput.value);
+          self.setNumber(it.id, nrInput.value, false);
         });
         nrWrap.appendChild(nrLab);
         nrWrap.appendChild(nrInput);
         row.appendChild(nrWrap);
+      }
+
+      if(self.showReorder && self.hideNumbers) {
+        var move = document.createElement('div');
+        move.className = 'collection-chip-reorder';
+        var up = document.createElement('button');
+        up.type = 'button';
+        up.className = 'w3-button w3-border collection-chip-reorder-btn';
+        up.setAttribute('aria-label', 'Nach oben');
+        up.textContent = '\u2191';
+        up.disabled = idx === 0;
+        up.addEventListener('click', function(e) {
+          e.preventDefault();
+          self.moveUp(it.id);
+        });
+        var down = document.createElement('button');
+        down.type = 'button';
+        down.className = 'w3-button w3-border collection-chip-reorder-btn';
+        down.setAttribute('aria-label', 'Nach unten');
+        down.textContent = '\u2193';
+        down.disabled = idx === self.items.length - 1;
+        down.addEventListener('click', function(e) {
+          e.preventDefault();
+          self.moveDown(it.id);
+        });
+        move.appendChild(up);
+        move.appendChild(down);
+        row.appendChild(move);
       }
 
       var chip = document.createElement('span');
@@ -282,6 +391,15 @@
 
   CollectionChips.init = function(opts) {
     var inst = new CollectionChips(opts);
+    // Keep arrows only for unnumbered (hideNumbers); numbered uses Nr order.
+    if(inst.numbersByCatalog) {
+      inst.showReorder = false;
+    } else if(!inst.hideNumbers) {
+      inst.showReorder = false;
+      inst.sortByNumber();
+    } else if(opts && opts.showReorder) {
+      inst.showReorder = true;
+    }
     inst.bind();
     // Always render; only rewrite the hidden field when initial was usable.
     // Avoid wiping a server-provided itemsSpec if catalog/initial parse failed.

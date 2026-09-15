@@ -186,7 +186,6 @@ class Composer
             .' role="button" tabindex="0"'
             .' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();'.$openJs.';}">';
         $str .= '<div class="composer-id"><div class="composer-id-num">'.archivEscHtml((string)$id).'</div></div>';
-        $str .= '<div class="composer-rail" aria-hidden="true"></div>';
         $str .= '<div class="composer-main">';
         $str .= archivEntityAvatarHtml('Composers', $id, $this->avatarInitials(), 'archiv-thumb entity-avatar');
         $str .= '<div class="composer-text">';

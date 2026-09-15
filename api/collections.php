@@ -1,8 +1,8 @@
 <?php
 /**
  * GET /api/collections.php?id=&archived=1
- * POST JSON: name, archived?
- * PATCH JSON: id, name?, archived?
+ * POST JSON: name, archived?, numbered?
+ * PATCH JSON: id, name?, archived?, numbered?
  * DELETE JSON/query: id
  */
 require_once __DIR__.'/_bootstrap.php';
@@ -24,6 +24,7 @@ if($method === 'GET') {
                 'id' => (int)$col->Index,
                 'name' => archivPlainText($col->Name),
                 'archived' => (int)$col->Archived ? true : false,
+                'numbered' => (int)$col->Numbered ? true : false,
                 'items' => $col->getItemsChipSpec(),
             ),
         ));
@@ -31,7 +32,7 @@ if($method === 'GET') {
     $includeArchived = isset($_GET['archived']) && (string)$_GET['archived'] === '1';
     $where = $includeArchived ? '' : ' WHERE COALESCE(`Archived`, 0) = 0';
     $sql = sprintf(
-        'SELECT `Index`, `Name`, `Archived` FROM `%sCollection`%s ORDER BY `Index` DESC LIMIT 200;',
+        'SELECT `Index`, `Name`, `Archived`, `Numbered` FROM `%sCollection`%s ORDER BY `Index` DESC LIMIT 200;',
         $GLOBALS['dbprefix'],
         $where
     );
@@ -43,6 +44,7 @@ if($method === 'GET') {
             'id' => (int)$row['Index'],
             'name' => archivPlainText($row['Name']),
             'archived' => !empty($row['Archived']),
+            'numbered' => !empty($row['Numbered']),
         );
     }
     apiJsonExit(array('ok' => true, 'collections' => $list));
@@ -58,6 +60,7 @@ if($method === 'POST') {
     $col = new Collections;
     $col->Name = $name;
     $col->Archived = !empty($body['archived']) ? 1 : 0;
+    $col->Numbered = !empty($body['numbered']) ? 1 : 0;
     $col->save();
     if((int)$col->Index < 1) {
         apiJsonExit(array('error' => 'save_failed'), 500);
@@ -84,6 +87,9 @@ if($method === 'PATCH') {
     }
     if(array_key_exists('archived', $body)) {
         $col->Archived = !empty($body['archived']) ? 1 : 0;
+    }
+    if(array_key_exists('numbered', $body)) {
+        $col->Numbered = !empty($body['numbered']) ? 1 : 0;
     }
     $col->save();
     apiJsonExit(array('ok' => true, 'id' => (int)$col->Index));

@@ -16,6 +16,7 @@ if(empty($_SESSION['admin'])) {
 
 if(isset($_POST['insert'])) {
     $_POST['Archived'] = !empty($_POST['Archived']) ? 1 : 0;
+    $_POST['Numbered'] = !empty($_POST['Numbered']) ? 1 : 0;
     $n = new Collections;
     $n->fill_from_array($_POST);
     $n->save();
@@ -25,6 +26,7 @@ if(isset($_POST['insert'])) {
 
 if(isset($_POST['update']) && isset($_POST['Index']) && (int)$_POST['Index'] > 0) {
     $_POST['Archived'] = !empty($_POST['Archived']) ? 1 : 0;
+    $_POST['Numbered'] = !empty($_POST['Numbered']) ? 1 : 0;
     $n = new Collections;
     $n->load_by_id((int)$_POST['Index']);
     if((int)$n->Index > 0) {
@@ -119,8 +121,15 @@ $delName = archivPlainText($entity->Name);
         <label class="profile-label" for="collectionArchived">Archiviert</label>
         <input id="collectionArchived" name="Archived" type="checkbox" class="w3-check" value="1"<?php echo ($isEdit && (int)$entity->Archived) ? ' checked' : ''; ?>>
       </div>
+      <div class="profile-field">
+        <label class="profile-label" for="collectionNumbered">Nummeriert</label>
+        <input id="collectionNumbered" name="Numbered" type="checkbox" class="w3-check" value="1"<?php echo ($isEdit && (int)$entity->Numbered) ? ' checked' : ''; ?>>
+      </div>
     </section>
-<?php if($isEdit) { ?>
+<?php if($isEdit) {
+    $hideNumbers = !((int)$entity->Numbered);
+    $showReorder = $hideNumbers;
+?>
     <section class="profile-col" aria-labelledby="new-collection-inhalt">
       <h3 id="new-collection-inhalt" class="profile-col-title">Inhalt</h3>
       <?php
@@ -130,10 +139,25 @@ $delName = archivPlainText($entity->Name);
             'itemsSpec',
             archivCompositionsCatalog(),
             $entity->getItemsChipSpec(),
-            'Stück…'
+            'Stück…',
+            $hideNumbers,
+            $showReorder
         );
       ?>
     </section>
+<script>
+(function() {
+  var cb = document.getElementById('collectionNumbered');
+  var hid = document.getElementById('coll-items-spec');
+  if(!cb || !hid) return;
+  cb.addEventListener('change', function() {
+    var ed = hid._collectionChips;
+    if(ed && typeof ed.setHideNumbers === 'function') {
+      ed.setHideNumbers(!cb.checked);
+    }
+  });
+})();
+</script>
 <?php } ?>
   </div>
 </form>

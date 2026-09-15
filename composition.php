@@ -321,9 +321,12 @@ if(!$isCreate && !$isAdmin) {
             'piece-edit-coll',
             'mail-recipient-chip--collection',
             'collectionsSpec',
-            archivCollectionsCatalog($collIncludeIds),
+            archivCollectionsCatalog($collIncludeIds, (int)$piece->Index),
             $collSpec,
-            'Sammlung…'
+            'Sammlung…',
+            false,
+            false,
+            true
         );
       ?>
     </section>

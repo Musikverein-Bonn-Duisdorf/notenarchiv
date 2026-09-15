@@ -638,19 +638,24 @@ function mkNULLonNull($val) {
 }
 
 function nextArchiverNumber() {
-    $sql = sprintf('SELECT `RegistrationNumber` FROM `%sComposition` ORDER BY `RegistrationNumber` ASC;',
-		   $GLOBALS['dbprefix']
+    $sql = sprintf(
+        'SELECT `RegistrationNumber` FROM `%sComposition` WHERE `RegistrationNumber` IS NOT NULL ORDER BY `RegistrationNumber` ASC;',
+        $GLOBALS['dbprefix']
     );
     $dbr = mysqli_query($GLOBALS['conn'], $sql);
     sqlerror();
-    $Numbers = array();
-    while($row = mysqli_fetch_array($dbr)) {
-        array_push($Numbers, $row['RegistrationNumber']);
+    $used = array();
+    if($dbr) {
+        while($row = mysqli_fetch_array($dbr)) {
+            $n = (int)$row['RegistrationNumber'];
+            if($n > 0) {
+                $used[$n] = true;
+            }
+        }
     }
     $i = 1;
-    while(true) {
-        if(array_search($i, $Numbers)) $i++;
-        else break;
+    while(isset($used[$i])) {
+        $i++;
     }
     return $i;
 }
@@ -1373,9 +1378,10 @@ function archivCompositionsCatalog() {
  * Archived collections are omitted unless listed in $includeIds (e.g. already assigned).
  *
  * @param array $includeIds collection ids always included even when archived
+ * @param int $exceptCompositionId ignore this composition when computing nextNumber
  * @return array
  */
-function archivCollectionsCatalog(array $includeIds = array()) {
+function archivCollectionsCatalog(array $includeIds = array(), $exceptCompositionId = 0) {
     $out = array();
     $keep = array();
     foreach($includeIds as $id) {
@@ -1384,8 +1390,27 @@ function archivCollectionsCatalog(array $includeIds = array()) {
             $keep[$id] = true;
         }
     }
+    $exceptCompositionId = (int)$exceptCompositionId;
+    $usedByCol = array();
+    $sqlUsed = sprintf(
+        'SELECT `Collections`, `Composition`, `CollectionNumber` FROM `%sCollectionItem`;',
+        $GLOBALS['dbprefix']
+    );
+    $dbrUsed = mysqli_query($GLOBALS['conn'], $sqlUsed);
+    sqlerror();
+    if($dbrUsed) {
+        while($urow = mysqli_fetch_array($dbrUsed)) {
+            if($exceptCompositionId > 0 && (int)$urow['Composition'] === $exceptCompositionId) {
+                continue;
+            }
+            $n = (int)$urow['CollectionNumber'];
+            if($n > 0) {
+                $usedByCol[(int)$urow['Collections']][$n] = true;
+            }
+        }
+    }
     $sql = sprintf(
-        'SELECT `Index`, `Name`, `Archived` FROM `%sCollection` ORDER BY `Name`;',
+        'SELECT `Index`, `Name`, `Archived`, `Numbered` FROM `%sCollection` ORDER BY `Name`;',
         $GLOBALS['dbprefix']
     );
     $dbr = mysqli_query($GLOBALS['conn'], $sql);
@@ -1397,10 +1422,14 @@ function archivCollectionsCatalog(array $includeIds = array()) {
             continue;
         }
         $name = archivPlainText($row['Name']);
+        $used = isset($usedByCol[$id]) ? $usedByCol[$id] : array();
+        $numbered = !empty($row['Numbered']);
         $out[] = array(
             'id' => $id,
             'label' => $name !== '' ? $name : ('Sammlung #'.$id),
             'meta' => $archived ? 'archiviert' : '',
+            'numbered' => $numbered,
+            'nextNumber' => $numbered ? archivNextFreePositiveInt($used) : 0,
         );
     }
     return $out;
@@ -1495,6 +1524,77 @@ function archivEnsureCollectionItemUniqueIndex() {
 }
 
 /**
+ * Lowest unused positive integer (expects map number => truthy).
+ * @param array $usedMap
+ * @return int
+ */
+function archivNextFreePositiveInt(array $usedMap) {
+    $i = 1;
+    while(!empty($usedMap[$i])) {
+        $i++;
+    }
+    return $i;
+}
+
+/**
+ * Fill missing/zero numbers with the next free slot; keep explicit numbers.
+ * @param array $ordered list of {id, number}
+ * @return array
+ */
+function archivAssignCollectionNumbers(array $ordered) {
+    $used = array();
+    foreach($ordered as $row) {
+        $n = isset($row['number']) ? (int)$row['number'] : 0;
+        if($n > 0) {
+            $used[$n] = true;
+        }
+    }
+    foreach($ordered as $i => $row) {
+        $n = isset($row['number']) ? (int)$row['number'] : 0;
+        if($n < 1) {
+            $n = archivNextFreePositiveInt($used);
+            $ordered[$i]['number'] = $n;
+            $used[$n] = true;
+        }
+    }
+    return $ordered;
+}
+
+/**
+ * Next free CollectionNumber inside one collection (optionally ignore one composition).
+ * @param int $collectionId
+ * @param int $exceptCompositionId
+ * @return int
+ */
+function archivNextFreeCollectionNumber($collectionId, $exceptCompositionId = 0) {
+    $collectionId = (int)$collectionId;
+    $exceptCompositionId = (int)$exceptCompositionId;
+    $used = array();
+    if($collectionId < 1) {
+        return 1;
+    }
+    $sql = sprintf(
+        'SELECT `CollectionNumber`, `Composition` FROM `%sCollectionItem` WHERE `Collections` = "%d";',
+        $GLOBALS['dbprefix'],
+        $collectionId
+    );
+    $dbr = mysqli_query($GLOBALS['conn'], $sql);
+    sqlerror();
+    if($dbr) {
+        while($row = mysqli_fetch_array($dbr)) {
+            if($exceptCompositionId > 0 && (int)$row['Composition'] === $exceptCompositionId) {
+                continue;
+            }
+            $n = (int)$row['CollectionNumber'];
+            if($n > 0) {
+                $used[$n] = true;
+            }
+        }
+    }
+    return archivNextFreePositiveInt($used);
+}
+
+/**
  * Parse chip spec JSON into list of {id, number}.
  * Returns null if JSON is invalid (callers must not treat that as "clear all").
  * @param string $json
@@ -1535,13 +1635,20 @@ function archivSyncCollectionItemsForCollection($collectionId, array $items) {
     if($collectionId < 1) {
         return;
     }
-    $wanted = array();
+    $ordered = array();
     foreach($items as $row) {
         $compId = (int)$row['id'];
         if($compId < 1) {
             continue;
         }
-        $wanted[$compId] = (int)$row['number'];
+        $num = isset($row['number']) ? (int)$row['number'] : 0;
+        $ordered[] = array('id' => $compId, 'number' => $num);
+    }
+    $ordered = archivAssignCollectionNumbers($ordered);
+
+    $wanted = array();
+    foreach($ordered as $row) {
+        $wanted[(int)$row['id']] = (int)$row['number'];
     }
 
     $existing = array();
@@ -1596,6 +1703,7 @@ function archivSyncCollectionItemsForCollection($collectionId, array $items) {
 
 /**
  * Sync CollectionItem rows for one composition (id = Collections).
+ * Missing/zero numbers get the next free slot inside that collection.
  * @param int $compositionId
  * @param array $items list of {id: collectionId, number}
  */
@@ -1610,7 +1718,11 @@ function archivSyncCollectionItemsForComposition($compositionId, array $items) {
         if($colId < 1) {
             continue;
         }
-        $wanted[$colId] = (int)$row['number'];
+        $num = (int)$row['number'];
+        if($num < 1) {
+            $num = archivNextFreeCollectionNumber($colId, $compositionId);
+        }
+        $wanted[$colId] = $num;
     }
 
     $existing = array();
@@ -1671,9 +1783,12 @@ function archivSyncCollectionItemsForComposition($compositionId, array $items) {
  * @param array $catalog
  * @param array $initial [{id,number},...]
  * @param string $placeholder
+ * @param bool $hideNumbers hide Nr inputs (unnumbered list order)
+ * @param bool $showReorder up/down buttons (only when unnumbered / hideNumbers)
+ * @param bool $numbersByCatalog show Nr only when catalog entry has numbered=true
  * @return string
  */
-function archivCollectionChipsEditorHtml($prefix, $chipClass, $hiddenName, array $catalog, array $initial, $placeholder) {
+function archivCollectionChipsEditorHtml($prefix, $chipClass, $hiddenName, array $catalog, array $initial, $placeholder, $hideNumbers = false, $showReorder = false, $numbersByCatalog = false) {
     $inputBg = isset($GLOBALS['optionsDB']['colorInputBackground'])
         ? (string)$GLOBALS['optionsDB']['colorInputBackground']
         : '';
@@ -1701,7 +1816,7 @@ function archivCollectionChipsEditorHtml($prefix, $chipClass, $hiddenName, array
     $html .= 'var catEl=document.getElementById('.json_encode($catalogId).');';
     $html .= 'var catalog=[]; try{ catalog=JSON.parse(catEl.textContent||"[]"); }catch(e){}';
     $html .= 'var hid=document.getElementById('.json_encode($hiddenId).');';
-    $html .= 'CollectionChips.init({';
+    $html .= 'var editor=CollectionChips.init({';
     $html .= 'chipsEl:document.getElementById('.json_encode($chipsId).'),';
     $html .= 'inputEl:document.getElementById('.json_encode($inputId).'),';
     $html .= 'suggestEl:document.getElementById('.json_encode($suggestId).'),';
@@ -1709,8 +1824,13 @@ function archivCollectionChipsEditorHtml($prefix, $chipClass, $hiddenName, array
     $html .= 'catalog:catalog,';
     $html .= 'initial:'.json_encode(array_values($initial), JSON_UNESCAPED_UNICODE).',';
     $html .= 'chipClass:'.json_encode($chipClass).',';
-    $html .= 'inputBg:'.json_encode($inputBg);
-    $html .= '});})();</script>';
+    $html .= 'inputBg:'.json_encode($inputBg).',';
+    $html .= 'hideNumbers:'.($hideNumbers ? 'true' : 'false').',';
+    $html .= 'showReorder:'.($showReorder ? 'true' : 'false').',';
+    $html .= 'numbersByCatalog:'.($numbersByCatalog ? 'true' : 'false');
+    $html .= '});';
+    $html .= 'if(hid){ hid._collectionChips=editor; }';
+    $html .= '})();</script>';
     return $html;
 }
 

@@ -1,12 +1,13 @@
 <?php
 class Collections
 {
-    private $_data = array('Index' => null, 'Name' => null, 'Archived' => 0);
+    private $_data = array('Index' => null, 'Name' => null, 'Archived' => 0, 'Numbered' => 0);
     public function __get($key) {
         switch($key) {
 	    case 'Index':
 	    case 'Name':
 	    case 'Archived':
+	    case 'Numbered':
             return $this->_data[$key];
             break;
         default:
@@ -20,6 +21,7 @@ class Collections
             $this->_data[$key] = $val;
             break;
 	    case 'Archived':
+	    case 'Numbered':
             $this->_data[$key] = ((int)$val) ? 1 : 0;
             break;
         default:
@@ -51,6 +53,9 @@ class Collections
         if((int)$this->Archived) {
             logAppendFilled($parts, 'Archived', bool2string($this->Archived));
         }
+        if((int)$this->Numbered) {
+            logAppendFilled($parts, 'Numbered', bool2string($this->Numbered));
+        }
         return implode(', ', $parts);
     }
 
@@ -64,6 +69,12 @@ class Collections
             'Archived',
             bool2string((int)$old->Archived),
             bool2string((int)$this->Archived)
+        );
+        logAppendChange(
+            $parts,
+            'Numbered',
+            bool2string((int)$old->Numbered),
+            bool2string((int)$this->Numbered)
         );
         if(!$parts) {
             return '';
@@ -111,6 +122,9 @@ class Collections
         if(array_key_exists('Archived', $row)) {
             $this->Archived = $row['Archived'];
         }
+        if(array_key_exists('Numbered', $row)) {
+            $this->Numbered = $row['Numbered'];
+        }
     }
     public function is_valid() {
         if(!$this->Name) return false;
@@ -118,10 +132,11 @@ class Collections
     }
     protected function insert() {
         $sql = sprintf(
-            'INSERT INTO `%sCollection` (`Name`, `Archived`) VALUES ("%s", %d);',
+            'INSERT INTO `%sCollection` (`Name`, `Archived`, `Numbered`) VALUES ("%s", %d, %d);',
             $GLOBALS['dbprefix'],
             mysqli_real_escape_string($GLOBALS['conn'], (string)$this->Name),
-            (int)$this->Archived ? 1 : 0
+            (int)$this->Archived ? 1 : 0,
+            (int)$this->Numbered ? 1 : 0
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
         sqlerror();
@@ -131,10 +146,11 @@ class Collections
     }
     protected function update() {
         $sql = sprintf(
-            'UPDATE `%sCollection` SET `Name` = "%s", `Archived` = %d WHERE `Index` = "%d";',
+            'UPDATE `%sCollection` SET `Name` = "%s", `Archived` = %d, `Numbered` = %d WHERE `Index` = "%d";',
             $GLOBALS['dbprefix'],
             mysqli_real_escape_string($GLOBALS['conn'], (string)$this->Name),
             (int)$this->Archived ? 1 : 0,
+            (int)$this->Numbered ? 1 : 0,
             (int)$this->Index
         );
         $dbr = mysqli_query($GLOBALS['conn'], $sql);
@@ -160,7 +176,7 @@ class Collections
         $id = (int)$this->Index;
         $name = archivPlainText($this->Name);
         $archived = (int)$this->Archived ? 1 : 0;
-        $openJs = 'openModal(\'collection\', '.$id.')';
+        $numbered = (int)$this->Numbered ? 1 : 0;
 
         $sql = sprintf(
             'SELECT `Index`, `Composition` FROM `%sCollectionItem` WHERE `Collections` = "%d" ORDER BY `CollectionNumber` ASC, `Index` ASC;',
@@ -183,16 +199,22 @@ class Collections
                 }
                 $content = new Collection;
                 $content->load_by_id($row['Index']);
+                $content->showCollectionNumber = $numbered ? true : false;
                 $lines .= $content->printLine();
                 $itemCount++;
             }
         }
 
-        $str = '<details class="collection-section" id="collectionID'.$id.'"'
+        $sectionClass = 'collection-section';
+        if($numbered) {
+            $sectionClass .= ' collection-section--numbered';
+        }
+        $str = '<details class="'.$sectionClass.'" id="collectionID'.$id.'"'
             .' data-search="'.archivEscHtml($name).'"'
             .' data-sort-name="'.archivEscHtml($name).'"'
             .' data-sort-index="'.archivEscHtml((string)$id).'"'
             .' data-archived="'.$archived.'"'
+            .' data-numbered="'.$numbered.'"'
             .' data-item-count="'.$itemCount.'">';
         $str .= '<summary class="collection-section-summary">';
         $str .= '<span class="collection-section-summary-main">';
@@ -202,12 +224,15 @@ class Collections
             $str .= ' <span class="mail-recipient-chip mail-recipient-chip--collection">Archiviert</span>';
         }
         $str .= '</span>';
-        $btnEdit = isset($GLOBALS['optionsDB']['colorBtnEdit'])
-            ? (string)$GLOBALS['optionsDB']['colorBtnEdit']
-            : '';
-        $str .= '<button type="button" class="collection-section-detail w3-button w3-small w3-border '.archivEscHtml($btnEdit).'"'
-            .' onclick="event.preventDefault();event.stopPropagation();'.$openJs.';"'
-            .' aria-label="Details">Details</button>';
+        if(!empty($_SESSION['admin'])) {
+            $btnEdit = isset($GLOBALS['optionsDB']['colorBtnEdit'])
+                ? (string)$GLOBALS['optionsDB']['colorBtnEdit']
+                : '';
+            $str .= '<a class="collection-section-detail w3-button w3-small w3-border '.archivEscHtml($btnEdit).'"'
+                .' href="new-collection.php?id='.$id.'"'
+                .' onclick="event.preventDefault();event.stopPropagation();window.location.href=this.href;"'
+                .' aria-label="Bearbeiten">Bearbeiten</a>';
+        }
         $str .= '</summary>';
         $str .= '<div class="collection-section-list">'.$lines.'</div>';
         $str .= '</details>';
@@ -244,6 +269,7 @@ class Collections
 
     public function getItemSummaries() {
         $id = (int)$this->Index;
+        $numbered = (int)$this->Numbered ? true : false;
         $items = array();
         if($id < 1) {
             return $items;
@@ -274,10 +300,12 @@ class Collections
                     $recordingHtml = $piece->recordingCellHtml(true);
                 }
             }
+            $num = '';
+            if($numbered && $row['CollectionNumber'] !== null && $row['CollectionNumber'] !== '') {
+                $num = (string)(int)$row['CollectionNumber'];
+            }
             $items[] = array(
-                'number' => $row['CollectionNumber'] !== null && $row['CollectionNumber'] !== ''
-                    ? (string)$row['CollectionNumber']
-                    : '',
+                'number' => $num,
                 'id' => $compId,
                 'title' => $title,
                 'coverHtml' => $coverHtml,
@@ -294,6 +322,7 @@ class Collections
             'showEditButton' => (bool)$showEditButton,
             'itemCount' => count($items),
             'items' => $items,
+            'numbered' => (int)$this->Numbered ? true : false,
         ));
     }
 };
