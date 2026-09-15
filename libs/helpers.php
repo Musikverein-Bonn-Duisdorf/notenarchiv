@@ -1265,6 +1265,21 @@ function renderChangelogHtml() {
 }
 
 /**
+ * Grade label for UI: empty when unset or 0 (incl. 0.0).
+ * @param mixed $grade
+ * @return string
+ */
+function archivCompositionGradeLabel($grade) {
+    if($grade === null || $grade === '') {
+        return '';
+    }
+    if(!is_numeric($grade) || (float)$grade <= 0) {
+        return '';
+    }
+    return (string)$grade;
+}
+
+/**
  * Chip short label for a composition: "{ID} {Titel} - {Komponist}, {Arrangeur} ({Verlag})".
  * Only set parts; no empty separators.
  *
