@@ -2,6 +2,15 @@
 
 Automatisch aus Git-Release-Commits erzeugt.
 
+## 2026-09-15-604f4 (2026-09-15)
+
+- ARCHIV-57: Schwierigkeitsgrad 0 in Liste und Detail ausblenden
+- ARCHIV-57: Sammlungen nummerierbar, Listen-Eckenoptik und Chip-Reihenfolge
+- ARCHIV-58: mb-Fallbacks für Listen und CURRENT_TIMESTAMP()-Default-Parität
+- ARCHIV-57: Schwierigkeitsgrad 0 ausblenden
+- ARCHIV-57: Sammlungen nummerierbar
+- ARCHIV-58: mb-Fallbacks und Schema-Default CURRENT_TIMESTAMP()
+
 ## 2026-09-15-11320 (2026-09-15)
 
 - ARCHIV-56: Footer-Include auf Anlege-Seiten wieder als PHP ausführen
