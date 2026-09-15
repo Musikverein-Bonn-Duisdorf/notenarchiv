@@ -86,10 +86,10 @@ class Composer
     }
 
     public function avatarInitials() {
-        $a = mb_substr(trim(archivPlainText($this->FirstName)), 0, 1, 'UTF-8');
-        $b = mb_substr(trim(archivPlainText($this->LastName)), 0, 1, 'UTF-8');
+        $a = archivMbSubstr(trim(archivPlainText($this->FirstName)), 0, 1, 'UTF-8');
+        $b = archivMbSubstr(trim(archivPlainText($this->LastName)), 0, 1, 'UTF-8');
         $s = $a.$b;
-        return $s !== '' ? mb_strtoupper($s, 'UTF-8') : '—';
+        return $s !== '' ? archivMbStrtoupper($s, 'UTF-8') : '—';
     }
 
     public function uploadAvatar(array $file) {

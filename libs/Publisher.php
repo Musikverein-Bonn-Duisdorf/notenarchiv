@@ -97,8 +97,8 @@ class Publisher
 
     public function avatarInitials() {
         $name = trim(archivPlainText($this->Name));
-        $s = mb_substr($name, 0, 2, 'UTF-8');
-        return $s !== '' ? mb_strtoupper($s, 'UTF-8') : '—';
+        $s = archivMbSubstr($name, 0, 2, 'UTF-8');
+        return $s !== '' ? archivMbStrtoupper($s, 'UTF-8') : '—';
     }
 
     public function uploadAvatar(array $file) {

@@ -629,13 +629,13 @@ class Composition
             if($plain === null || $plain === '') {
                 continue;
             }
-            if(in_array(mb_strtolower($plain, 'UTF-8'), $skip, true)) {
+            if(in_array(archivMbStrtolower($plain, 'UTF-8'), $skip, true)) {
                 continue;
             }
             if($firstWord === '') {
                 $firstWord = $plain;
             }
-            $letters[] = mb_strtoupper(mb_substr($plain, 0, 1, 'UTF-8'), 'UTF-8');
+            $letters[] = archivMbStrtoupper(archivMbSubstr($plain, 0, 1, 'UTF-8'), 'UTF-8');
             if(count($letters) >= 2) {
                 break;
             }
@@ -644,10 +644,10 @@ class Composition
             return implode('', $letters);
         }
         if($firstWord !== '') {
-            return mb_strtoupper(mb_substr($firstWord, 0, 2, 'UTF-8'), 'UTF-8');
+            return archivMbStrtoupper(archivMbSubstr($firstWord, 0, 2, 'UTF-8'), 'UTF-8');
         }
         $compact = preg_replace('/\s+/u', '', $title);
-        return mb_strtoupper(mb_substr((string)$compact, 0, 2, 'UTF-8'), 'UTF-8');
+        return archivMbStrtoupper(archivMbSubstr((string)$compact, 0, 2, 'UTF-8'), 'UTF-8');
     }
 
     /**
