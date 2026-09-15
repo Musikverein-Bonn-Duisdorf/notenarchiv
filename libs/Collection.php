@@ -2,6 +2,8 @@
 class Collection
 {
     private $_data = array('Index' => null, 'Collections' => null, 'Composition' => null, 'CollectionNumber' => null, 'Title' => null, 'CollectionName' => null);
+    /** @var bool Transient: show CollectionNumber badge in printLine */
+    public $showCollectionNumber = false;
     public function __get($key) {
         switch($key) {
 	    case 'Index':
@@ -229,13 +231,17 @@ class Collection
     }
 
     public function printLine() {
-        $num = $this->CollectionNumber !== null && $this->CollectionNumber !== ''
-            ? (string)$this->CollectionNumber
+        $showNr = !empty($this->showCollectionNumber);
+        $num = $showNr && $this->CollectionNumber !== null && $this->CollectionNumber !== ''
+            ? (string)(int)$this->CollectionNumber
             : '';
         $title = archivPlainText($this->Title);
         $search = trim(preg_replace('/\s+/', ' ', implode(' ', array($num, $title, (string)$this->Composition))));
 
         $classes = array('collection-row', 'list-row');
+        if($showNr) {
+            $classes[] = 'collection-row--numbered';
+        }
         $hover = isset($GLOBALS['optionsDB']['HoverEffect']) ? (string)$GLOBALS['optionsDB']['HoverEffect'] : '';
         if($hover !== '') {
             $classes[] = $hover;
@@ -277,8 +283,9 @@ class Collection
                 .' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();'.$openJs.'}"';
         }
         $str .= '>';
-        $str .= '<div class="collection-id"><div class="collection-nr">'.archivEscHtml($num !== '' ? $num : '—').'</div></div>';
-        $str .= '<div class="collection-rail" aria-hidden="true"></div>';
+        if($showNr && $num !== '') {
+            $str .= '<div class="collection-id"><span class="collection-nr">'.archivEscHtml($num).'</span></div>';
+        }
         $str .= '<div class="collection-main">';
         if($coverHtml !== '') {
             $str .= $coverHtml;
@@ -290,4 +297,3 @@ class Collection
         return $str;
     }
 };
-?>

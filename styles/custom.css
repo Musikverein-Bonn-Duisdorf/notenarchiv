@@ -2477,7 +2477,10 @@ a.app-titlebar-logo {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
+  width: max-content;
   max-width: 100%;
+  flex: 0 1 auto;
+  box-sizing: border-box;
   padding: 0.2rem 0.45rem;
   border: 1px solid rgba(0, 0, 0, 0.2);
   border-radius: 0.25rem;
@@ -2571,6 +2574,26 @@ a.app-titlebar-logo {
   vertical-align: middle;
 }
 
+/* ARCHIV-57: Sammlungs-Inhalt — ein Stück pro Zeile, Chip nur so breit wie nötig */
+.collection-chips-editor:not(.person-chips-editor) > .mail-recipient-chips {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+}
+
+.collection-chips-editor:not(.person-chips-editor) .collection-chip-row {
+  display: inline-flex;
+  width: auto;
+  max-width: 100%;
+  margin: 0 0 0.4rem;
+  box-sizing: border-box;
+}
+
+.collection-chips-editor:not(.person-chips-editor) .collection-chip-reorder {
+  flex: 0 0 auto;
+}
+
 .collection-chip-nr {
   display: inline-flex;
   align-items: center;
@@ -2589,6 +2612,24 @@ a.app-titlebar-logo {
   min-width: 3.5rem;
   padding: 0.2rem 0.35rem;
   margin: 0;
+}
+
+.collection-chip-reorder {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.collection-chip-reorder-btn {
+  padding: 0 0.35rem !important;
+  min-width: 1.6rem;
+  line-height: 1.2;
+  font-size: 0.75rem;
+}
+
+.collection-chip-reorder-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
 }
 
 .mail-recipient-chip--audience,
@@ -5224,24 +5265,89 @@ select.profile-control {
 
 .piece-row,
 .composer-row,
-.publisher-row,
-.collection-row {
-  /* ID/Nr. only — narrower than Melde Inventar (Reg+Typ). */
-  --archiv-id-col-w: 5rem;
-  --archiv-rail-w: 0.35rem;
+.publisher-row {
   --archiv-rail-color: var(--page-title-accent, #345A95);
   --archiv-row-pad-y: 0.85rem;
-  --archiv-rail-inset: 0.4rem;
+  --archiv-nr-col-w: 3.25rem;
   display: grid;
-  grid-template-columns: var(--archiv-id-col-w) var(--archiv-rail-w) minmax(0, 1fr);
-  column-gap: 0.85rem;
-  align-items: start;
+  grid-template-columns: var(--archiv-nr-col-w) minmax(0, 1fr);
+  column-gap: 0.75rem;
+  align-items: stretch;
+  box-sizing: border-box;
+  padding: var(--archiv-row-pad-y) 1rem;
+  padding-left: 0;
+  margin: 0 0 0.55rem;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 0.35rem;
+  overflow: hidden;
+}
+
+.piece-row {
+  --archiv-nr-col-w: 3.5rem;
+}
+
+/* ARCHIV-57: unnummeriert ohne Rail; nummeriert gefüllte Nr.-Ecke. */
+.collection-row {
+  --archiv-rail-color: var(--page-title-accent, #345A95);
+  --archiv-row-pad-y: 0.85rem;
+  --archiv-nr-col-w: 2.75rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  column-gap: 0.75rem;
+  align-items: center;
   box-sizing: border-box;
   padding: var(--archiv-row-pad-y) 1rem;
   margin: 0 0 0.55rem;
   border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 0.35rem;
   overflow: hidden;
+}
+
+.collection-row--numbered {
+  grid-template-columns: var(--archiv-nr-col-w) minmax(0, 1fr);
+  padding-left: 0;
+  align-items: stretch;
+}
+
+.piece-row > .piece-id,
+.composer-row > .composer-id,
+.publisher-row > .publisher-id,
+.collection-row--numbered > .collection-id {
+  width: var(--archiv-nr-col-w);
+  min-width: var(--archiv-nr-col-w);
+  max-width: none;
+  box-sizing: border-box;
+  align-self: stretch;
+  margin-top: calc(-1 * var(--archiv-row-pad-y));
+  margin-bottom: calc(-1 * var(--archiv-row-pad-y));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  background: var(--archiv-rail-color);
+  color: #fff;
+}
+
+.piece-row > .piece-id .piece-reg,
+.composer-row > .composer-id .composer-id-num,
+.publisher-row > .publisher-id .publisher-id-num,
+.collection-row--numbered > .collection-id .collection-nr {
+  font-weight: 700;
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: inherit;
+  word-break: break-word;
+  text-align: center;
+  padding: 0.15rem 0.25rem;
+}
+
+.piece-row > .piece-id .piece-chip {
+  border-color: rgba(255, 255, 255, 0.45);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.14);
+  opacity: 1;
 }
 
 .piece-row,
@@ -5263,15 +5369,8 @@ select.profile-control {
 .composer-id,
 .publisher-id,
 .collection-id {
-  width: var(--archiv-id-col-w);
-  max-width: var(--archiv-id-col-w);
   min-width: 0;
   box-sizing: border-box;
-  align-self: start;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.3rem;
 }
 
 .piece-reg,
@@ -5283,6 +5382,24 @@ select.profile-control {
   font-variant-numeric: tabular-nums;
   line-height: 1.2;
   word-break: break-word;
+}
+
+.collection-nr--badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+  padding: 0.35rem 0.55rem;
+  border-radius: 0.45rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  background: #e8eef6;
+  border: 1px solid #7f9dc1;
+  color: #243447;
+  box-sizing: border-box;
 }
 
 .piece-chip {
@@ -5301,25 +5418,12 @@ select.profile-control {
   box-sizing: border-box;
 }
 
-.piece-rail,
-.composer-rail,
-.publisher-rail,
-.collection-rail {
-  width: var(--archiv-rail-w);
-  align-self: stretch;
-  margin-top: calc(-1 * var(--archiv-row-pad-y) + var(--archiv-rail-inset));
-  margin-bottom: calc(-1 * var(--archiv-row-pad-y) + var(--archiv-rail-inset));
-  min-height: calc(100% + 2 * var(--archiv-row-pad-y) - 2 * var(--archiv-rail-inset));
-  background: var(--archiv-rail-color);
-  border-radius: 2px;
-}
-
 .piece-main,
 .composer-main,
 .publisher-main,
 .collection-main {
   min-width: 0;
-  align-self: start;
+  align-self: center;
 }
 
 .piece-main,
@@ -5479,9 +5583,16 @@ select.profile-control {
   content: "\f028";
 }
 
-.piece-row:has(> .piece-recording),
+.piece-row:has(> .piece-recording) {
+  grid-template-columns: var(--archiv-nr-col-w) minmax(0, 1fr) auto;
+}
+
 .collection-row:has(> .piece-recording) {
-  grid-template-columns: var(--archiv-id-col-w) var(--archiv-rail-w) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.collection-row--numbered:has(> .piece-recording) {
+  grid-template-columns: var(--archiv-nr-col-w) minmax(0, 1fr) auto;
 }
 
 .piece-recording {
@@ -5676,10 +5787,20 @@ select.profile-control {
   .piece-row,
   .composer-row,
   .publisher-row,
-  .collection-row {
-    --archiv-id-col-w: 3.5rem;
+  .collection-row--numbered {
+    --archiv-nr-col-w: 3rem;
     --archiv-row-pad-y: 0.75rem;
     column-gap: 0.55rem;
+    padding-left: 0;
+    padding-right: 0.75rem;
+  }
+
+  .piece-row {
+    --archiv-nr-col-w: 3.25rem;
+  }
+
+  .collection-row:not(.collection-row--numbered) {
+    --archiv-row-pad-y: 0.75rem;
     padding-left: 0.75rem;
     padding-right: 0.75rem;
   }

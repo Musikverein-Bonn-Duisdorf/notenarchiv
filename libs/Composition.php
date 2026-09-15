@@ -477,7 +477,6 @@ class Composition
             $str .= '<span class="piece-chip">'.archivEscHtml($grade).'</span>';
         }
         $str .= '</div>';
-        $str .= '<div class="piece-rail" aria-hidden="true"></div>';
         $str .= '<div class="piece-main">';
         $str .= $this->coverHtml('archiv-thumb piece-cover');
         $str .= '<div class="piece-text">';
@@ -790,9 +789,12 @@ class Composition
             'piece-coll',
             'mail-recipient-chip--collection',
             'collectionsSpec',
-            archivCollectionsCatalog($includeIds),
+            archivCollectionsCatalog($includeIds, (int)$this->Index),
             $spec,
-            'Sammlung…'
+            'Sammlung…',
+            false,
+            false,
+            true
         );
         $str .= '</div>';
         $btn = isset($GLOBALS['optionsDB']['colorBtnSubmit'])
