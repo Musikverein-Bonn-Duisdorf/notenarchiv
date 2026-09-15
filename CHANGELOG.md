@@ -2,6 +2,10 @@
 
 Automatisch aus Git-Release-Commits erzeugt.
 
+## 2026-09-15-11320 (2026-09-15)
+
+- ARCHIV-56: Footer-Include auf Anlege-Seiten wieder als PHP ausführen
+
 ## 2026-08-29-e0bb2 (2026-08-29)
 
 - ARCHIV-50: Separates Datei-Backup für data/ neben dem DB-ZIP
@@ -167,3 +171,19 @@ Automatisch aus Git-Release-Commits erzeugt.
 - ARCHIV-7: SSO-Landing und Melde-Nav
 - ARCHIV-16: Ops-Grenzen in PLATFORM.md
 - ARCHIV-4: Schema, Identity, Migration, Stimmsatz, SSO
+
+## 2022-11-04-7249b (2022-11-04)
+
+- Änderungen in Stücke / Katalog
+- Änderungen in Stimmsatz
+- Änderungen in libs
+
+## 2022-11-04-13175 (2022-11-04)
+
+- (keine weiteren Notizen)
+
+## 2022-08-12-02d92 (2022-08-12)
+
+- copied basic files from meldeliste
+- added makeVersion script
+- Initial commit
