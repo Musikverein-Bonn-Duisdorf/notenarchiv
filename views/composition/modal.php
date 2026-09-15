@@ -7,7 +7,7 @@ $composer = archivPlainText($piece->ComposerName);
 $arranger = archivPlainText($piece->ArrangerName);
 $publisher = archivPlainText($piece->PublisherName);
 $year = $piece->Year !== null && $piece->Year !== '' ? (string)$piece->Year : '';
-$grade = $piece->Grade !== null && $piece->Grade !== '' ? (string)$piece->Grade : '';
+$grade = archivCompositionGradeLabel($piece->Grade);
 $reg = $piece->RegistrationNumber !== null && $piece->RegistrationNumber !== ''
     ? (string)$piece->RegistrationNumber
     : '';

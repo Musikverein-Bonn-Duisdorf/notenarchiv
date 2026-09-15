@@ -443,7 +443,7 @@ class Composition
         $arranger = archivPlainText($this->ArrangerName);
         $publisher = archivPlainText($this->PublisherName);
         $year = $this->Year !== null && $this->Year !== '' ? (string)$this->Year : '';
-        $grade = $this->Grade !== null && $this->Grade !== '' ? (string)$this->Grade : '';
+        $grade = archivCompositionGradeLabel($this->Grade);
         $reg = $this->RegistrationNumber !== null && $this->RegistrationNumber !== ''
             ? (string)$this->RegistrationNumber
             : '';

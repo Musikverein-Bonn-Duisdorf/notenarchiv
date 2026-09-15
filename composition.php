@@ -371,7 +371,10 @@ if(!$isCreate && !$isAdmin) {
       <h3 class="profile-col-title">Verlag &amp; Angaben</h3>
       <div class="profile-field"><span class="profile-label">Verlag</span><div class="profile-value"><?php echo $piece->publisherLinkHtml(); ?></div></div>
       <div class="profile-field"><span class="profile-label">Jahr</span><div class="profile-value"><?php echo archivEscHtml($piece->Year); ?></div></div>
-      <div class="profile-field"><span class="profile-label">Schwierigkeit</span><div class="profile-value"><?php echo archivEscHtml($piece->Grade); ?></div></div>
+      <div class="profile-field"><span class="profile-label">Schwierigkeit</span><div class="profile-value"><?php
+        $gradeLabel = archivCompositionGradeLabel($piece->Grade);
+        echo archivEscHtml($gradeLabel !== '' ? $gradeLabel : '—');
+      ?></div></div>
       <div class="profile-field"><span class="profile-label">Spielzeit</span><div class="profile-value"><?php echo archivEscHtml($piece->PerformanceTime); ?></div></div>
     </section>
   </div>
