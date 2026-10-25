@@ -15,20 +15,33 @@ if($method === 'GET') {
         apiJsonExit(array('error' => 'invalid_composition'), 400);
     }
     $sql = sprintf(
-        'SELECT `Index`, `Composition`, `Instrument`, `VoiceLabel`, `FilePath` FROM `%sScoreFile` WHERE `Composition` = %d ORDER BY `Instrument` ASC, `VoiceLabel` ASC;',
+        'SELECT sf.`Index`, sf.`Composition`, sf.`Instrument`, sf.`VoiceLabel`, sf.`FilePath`, sf.`NextcloudPath`, i.`Name` AS InstrumentName
+         FROM `%sScoreFile` sf
+         LEFT JOIN `%sInstrument` i ON i.`Index` = sf.`Instrument`
+         WHERE sf.`Composition` = %d
+         ORDER BY sf.`Instrument` ASC, sf.`VoiceLabel` ASC;',
         $GLOBALS['dbprefix'],
+        identityPrefix(),
         $compositionId
     );
     $dbr = mysqli_query($GLOBALS['conn'], $sql);
     sqlerror();
     $list = array();
+    $piece = new Composition;
+    $piece->load_by_id($compositionId);
     while($dbr && ($row = mysqli_fetch_assoc($dbr))) {
+        $sf = new ScoreFile;
+        $sf->fill_from_array($row);
+        $resolved = ScoreMirror::resolveScorePath($sf, $piece);
         $list[] = array(
             'id' => (int)$row['Index'],
             'compositionId' => (int)$row['Composition'],
             'instrumentId' => (int)$row['Instrument'],
+            'instrumentName' => $row['InstrumentName'] !== null ? (string)$row['InstrumentName'] : null,
             'voice' => (string)$row['VoiceLabel'],
             'filePath' => $row['FilePath'] !== null && $row['FilePath'] !== '' ? (string)$row['FilePath'] : null,
+            'nextcloudPath' => $row['NextcloudPath'] !== null && $row['NextcloudPath'] !== '' ? (string)$row['NextcloudPath'] : null,
+            'filePresent' => $resolved !== null,
         );
     }
     apiJsonExit(array('ok' => true, 'scores' => $list));
@@ -65,9 +78,10 @@ if($method === 'DELETE') {
     }
     $piece = new Composition;
     $piece->load_by_id((int)$sf->Composition);
-    if($sf->FilePath && (int)$piece->Index > 0) {
-        $path = $piece->getFilePathPHP().$sf->FilePath;
-        if(is_file($path)) {
+    if($sf->FilePath && (int)$piece->Index > 0 && $piece->FilePath) {
+        $path = ScoreMirror::resolveScorePath($sf, $piece);
+        $compDir = rtrim(str_replace('\\', '/', $piece->getFilePathPHP()), '/').'/';
+        if($path !== null && strpos(str_replace('\\', '/', $path), $compDir) === 0) {
             @unlink($path);
         }
     }

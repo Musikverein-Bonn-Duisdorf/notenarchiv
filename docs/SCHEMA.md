@@ -6,7 +6,9 @@
 | Publisher | Verlag |
 | Collection / CollectionItem | Sammlungen |
 | Composition | Werk inkl. RegistrationNumber (Inventar) |
-| ScoreFile | PDF-Stimme (Nextcloud-Pfad, Instrument, voice_label) |
+| ScoreFile | PDF-Stimme (`FilePath` lokal/Upload oder Spiegel-Relativpfad, optional `NextcloudPath`, Instrument, `VoiceLabel`) |
+| data/Notenarchiv/ | Lokaler PDF-Spiegel (gitignored); Details: [`SCORE-MIRROR.md`](SCORE-MIRROR.md) |
+| PDF-Dateinamen | `{nn}_{Instrument}_{Stimme}.pdf` — siehe [`SCORE-MIRROR.md`](SCORE-MIRROR.md) |
 | RehearsalPhase / RehearsalPiece | Probenphase + Repertoire |
 | config / Log | App-Config + Audit |
 

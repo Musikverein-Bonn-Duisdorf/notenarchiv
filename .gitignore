@@ -1,4 +1,5 @@
 *~
+# Local media + PDF score mirror (ARCHIV-11); never commit Noten PDFs
 data/*
 !data/.htaccess
 common/config.php

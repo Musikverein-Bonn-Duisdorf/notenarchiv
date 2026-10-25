@@ -15,8 +15,8 @@ if((int)$sf->Index < 1 || !$sf->FilePath) {
 }
 $piece = new Composition;
 $piece->load_by_id((int)$sf->Composition);
-$path = $piece->getFilePathPHP().$sf->FilePath;
-if(!is_file($path)) {
+$path = ScoreMirror::resolveScorePath($sf, $piece);
+if($path === null) {
     apiJsonExit(array('error' => 'file_missing'), 404);
 }
 

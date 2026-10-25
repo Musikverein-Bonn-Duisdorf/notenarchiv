@@ -224,6 +224,32 @@ function archivApiMediaGaps($limit = 100, $includeMissingScores = false) {
                 'registrationNumber' => $row['RegistrationNumber'] !== null ? (int)$row['RegistrationNumber'] : null,
             );
         }
+
+        $out['score_index_unmatched'] = array();
+        $report = null;
+        if(class_exists('ScoreMirror')) {
+            $reportFile = rtrim(ScoreMirror::absoluteRoot(), '/').'/_index_unmatched.json';
+            if(is_readable($reportFile)) {
+                $raw = file_get_contents($reportFile);
+                $decoded = is_string($raw) ? json_decode($raw, true) : null;
+                if(is_array($decoded) && isset($decoded['unmatched']) && is_array($decoded['unmatched'])) {
+                    $report = $decoded['unmatched'];
+                }
+            }
+        }
+        if(is_array($report)) {
+            $n = 0;
+            foreach($report as $item) {
+                if($n >= $limit) {
+                    break;
+                }
+                if(!is_array($item)) {
+                    continue;
+                }
+                $out['score_index_unmatched'][] = $item;
+                $n++;
+            }
+        }
     }
 
     return $out;
