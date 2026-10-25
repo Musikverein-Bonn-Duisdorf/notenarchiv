@@ -1,6 +1,7 @@
 <?php
 /**
- * Nextcloud WebDAV client stub (config-driven).
+ * Nextcloud WebDAV client stub (config-driven) — ARCHIV-10, optional.
+ * Local workflow uses filesystem mirror data/Notenarchiv/ (ARCHIV-11) instead.
  * TODO: implement PROPFIND list and GET download with proper auth headers.
  */
 class NextcloudClient

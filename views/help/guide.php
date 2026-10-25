@@ -76,8 +76,9 @@ $sections[] = array(
     'id' => 'stimmsatz',
     'title' => 'Stimmsatz',
     'body' => '
-<p>Zum Stück gehört ein <b>Stimmsatz</b> (Instrumentenstimmen). Über <b>Stimmsatz drucken</b> erzeugst du eine druckfähige Übersicht für Proben und Auftritte.</p>
-<p>In der Meldeliste können Musiker eine primäre Stimme und Fallback-Instrumente hinterlegen – das Archiv nutzt diese Zuordnung für die Stimmsatz-Darstellung, sofern konfiguriert.</p>
+<p>Zum Stück gehört ein <b>Stimmsatz</b> (Instrumentenstimmen). Die Stückseite listet die Stimmen; Download öffnet die PDF aus dem lokalen Spiegel oder dem Upload.</p>
+<p>PDF-Spiegel: Ordner <code>data/Notenarchiv/{Inventarnummer} - Titel/</code> (lokale Kopie, nicht in Git). Dateiname: <code>{nn}_{Instrument}_{Stimme}.pdf</code> (z. B. <code>03_Clarinet_1.pdf</code>, <code>00_Score.pdf</code>). Screening/Umbenennung: <code>python scripts/normalizeScoreMirrorNames.py</code> und <code>python scripts/screenReviewScores.py</code> (OCR der Stimmenköpfe). Index: <code>php scripts/indexLocalScoreMirror.php</code>.</p>
+<p>Über <b>Stimmsatz drucken</b> erzeugst du eine Übersicht für Proben. In der Meldeliste hinterlegte Stimmen/Fallbacks nutzt das Archiv dafür, sofern konfiguriert.</p>
 '
 );
 

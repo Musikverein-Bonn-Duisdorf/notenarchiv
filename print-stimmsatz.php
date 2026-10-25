@@ -100,10 +100,14 @@ adminListPageBegin('Archiv', 'Stimmsatz drucken');
       <?php foreach($files as $sf) { ?>
       <li>
         <?php echo htmlspecialchars($sf->InstrumentName.' — Stimme '.$sf->VoiceLabel); ?>
-        <?php if($sf->FilePath) { ?>
-          — <a href="<?php echo htmlspecialchars($comp->FilePath.$sf->FilePath); ?>" target="_blank">PDF</a>
+        <?php
+          $scoreUrl = ((int)$sf->Index > 0) ? ('score-file.php?id='.(int)$sf->Index) : '';
+          $resolved = ScoreMirror::resolveScorePath($sf, $comp);
+        ?>
+        <?php if($resolved !== null && $scoreUrl !== '') { ?>
+          — <a href="<?php echo htmlspecialchars($scoreUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener">PDF</a>
         <?php } elseif($sf->NextcloudPath) { ?>
-          — Nextcloud: <?php echo htmlspecialchars($sf->NextcloudPath); ?>
+          — Spiegel: <?php echo htmlspecialchars($sf->NextcloudPath); ?>
         <?php } else { ?>
           — <span class="w3-text-red">keine Datei</span>
         <?php } ?>

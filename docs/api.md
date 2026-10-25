@@ -51,16 +51,18 @@ Non-admins receive `403`. Invalid/revoked tokens → `401`.
 | POST | `api/composers/avatar.php` | multipart `id`, `avatar` |
 | GET/POST/PATCH/DELETE | `api/compositions.php` | `title`, `composerId`, `publisherId`, `website` (Produktseite), `recording` (Aufnahme-URL), … |
 | POST | `api/compositions/cover.php` | multipart `id`, `cover` |
-| GET | `api/compositions/scores.php` | `?composition=` |
+| GET | `api/compositions/scores.php` | `?composition=` — inkl. `instrumentName`, `nextcloudPath`, `filePresent` |
 | POST | `api/compositions/scores.php` | multipart `composition`, `instrument`, `voice`, `file` |
-| GET | `api/compositions/scores/download.php` | `?id=` file stream |
-| DELETE | `api/compositions/scores.php` | `?id=` |
+| GET | `api/compositions/scores/download.php` | `?id=` file stream (Upload oder Spiegel) |
+| DELETE | `api/compositions/scores.php` | `?id=` (löscht nur Upload-Dateien unter Composition, nicht den Spiegel) |
 | GET/POST/PATCH/DELETE | `api/publishers.php` | Verlage; JSON `name`, `website`, `address` |
 | POST | `api/publishers/avatar.php` | multipart `id`, `avatar` |
 | GET/POST/PATCH/DELETE | `api/collections.php` | CRUD Mappe |
 | PUT | `api/collections/items.php` | JSON `{id, items:[{id,number}]}` |
 
 All write endpoints require Bearer admin auth except `auth/token.php`.
+
+Session-UI-Download: `score-file.php?id=` (`perm_read`). Index-Gaps: `api/gaps/media.php?scores=1` liefert `score_index_unmatched` aus `data/Notenarchiv/_index_unmatched.json`.
 
 ### Run note (optional)
 

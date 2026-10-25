@@ -123,7 +123,13 @@ function getConfigDefaults() {
             'Parameter' => 'nextcloudBaseUrl',
             'Value' => '',
             'Type' => 'string',
-            'Description' => 'Nextcloud WebDAV base URL (empty = disabled)',
+            'Description' => 'Nextcloud WebDAV base URL (empty = disabled; optional, ARCHIV-10)',
+        ),
+        array(
+            'Parameter' => 'scoreMirrorDirectory',
+            'Value' => 'data/Notenarchiv/',
+            'Type' => 'string',
+            'Description' => 'Lokaler PDF-Spiegel (gitignored); Indexer/Download lesen nur hier',
         ),
         array(
             'Parameter' => 'urlMeldeliste',
